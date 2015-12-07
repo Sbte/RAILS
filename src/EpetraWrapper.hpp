@@ -144,6 +144,11 @@ public:
             ptr_->Scale(factor);
         }
 
+    void set(double factor)
+        {
+            ptr_->PutScalar(factor);
+        }
+
     void resize(int m)
         {
             // Check if ptr_allocated_ is set
@@ -157,10 +162,12 @@ public:
             // Allocate more memory if needed, and copy the old vector
             if (capacity_ < m)
             {
-                ptr_allocated_ = Teuchos::rcp(new WrapperType(ptr_allocated_->Map(), m));
+                Teuchos::RCP<WrapperType> new_ptr = Teuchos::rcp(
+                    new WrapperType(ptr_allocated_->Map(), m));
                 if (!ptr_.is_null())
-                    ptr_->ExtractCopy(ptr_allocated_->Values(), ptr_allocated_->MyLength());
-                ptr_ = ptr_allocated_;
+                    ptr_->ExtractCopy(new_ptr->Values(), new_ptr->MyLength());
+                ptr_ = new_ptr;
+                ptr_allocated_ = new_ptr;
                 capacity_ = m;
             }
             else if (!m)

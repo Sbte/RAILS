@@ -73,6 +73,11 @@ public:
             *s_ *= factor;
         }
 
+    void set(double factor)
+        {
+            *s_ = factor;
+        }
+
     void resize(int m, int n = 0)
         {
             if (capacity_ < m)

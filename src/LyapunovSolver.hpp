@@ -18,8 +18,8 @@ Solver<Matrix, MultiVector, DenseMatrix>::Solver(Matrix const &A,
     A_(A),
     B_(B),
     M_(M),
-    max_iter_(200),
-    tol_(1e-5)
+    max_iter_(1000),
+    tol_(1e-4)
 {
 }
 
@@ -37,7 +37,8 @@ template<class Matrix, class MultiVector, class DenseMatrix>
 int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix &T)
 {
     int n = V.GlobalLength();
-    MultiVector AV(V, max_iter_);
+    int expand_per_iteration = 3;
+    MultiVector AV(V, max_iter_ * expand_per_iteration + 1);
     AV.resize(0);
 
     V.resize(1);
@@ -46,7 +47,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
 
     MultiVector W(V);
 
-    DenseMatrix VAV(max_iter_, max_iter_);
+    DenseMatrix VAV(max_iter_ * expand_per_iteration + 1, max_iter_ * expand_per_iteration + 1);
     double r0 = B_.norm_frobenius();
     for (int iter = 0; iter < max_iter_; iter++)
     {
@@ -100,14 +101,15 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
 
         double res = eigenvalues.norm_inf();
 
-        std::cout << "Iteration " << iter
+        std::cout << "Iteration " << iter+1
                   << ". Estimate Lanczos, absolute: " << res
                   << ", relative: " << std::abs(res) / r0 / r0 << std::endl;
 
         if (std::abs(res) / r0 / r0 < tol_ || iter >= max_iter_ || V.num_vectors() >= n)
             break;
 
-        int expand_vectors = std::min(std::min(3, eigenvalues.M()), n - V.num_vectors());
+        int expand_vectors = std::min(std::min(expand_per_iteration,
+            eigenvalues.M()), n - V.num_vectors());
 
         // Find the vectors belonging to the largest eigenvalues
         std::vector<int> indices;
@@ -172,7 +174,13 @@ int Solver<Matrix, MultiVector, DenseMatrix>::lanczos(MultiVector const &AV, Mul
 
         beta = Q.view(iter+1).norm();
         if (beta < 1e-14)
+        {
+            // Beta is zero, but the offdiagonal elements of H
+            // might still be large, in which case we need those.
+            // We can't continue because then we would divide by 0.
+            iter++;
             break;
+        }
 
         H(iter+1, iter) = beta;
         H(iter, iter+1) = beta;
@@ -182,8 +190,8 @@ int Solver<Matrix, MultiVector, DenseMatrix>::lanczos(MultiVector const &AV, Mul
         iter++;
     }
 
-    H.resize(iter+1, iter+1);
-    Q.resize(iter+1);
+    H.resize(iter, iter);
+    Q.resize(iter);
 
     DenseMatrix v;
     H.eigs(v, eigenvalues);
