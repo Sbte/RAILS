@@ -36,10 +36,10 @@ TEST(LyapunovSolverEpetraTest, DenseSolver)
 
     solver.dense_solve(AW, BW, XW);
 
-    EXPECT_NEAR(0.62, (*XW)[0][0], 1e-14);
-    EXPECT_NEAR(-0.5, (*XW)[1][0], 1e-14);
-    EXPECT_NEAR(-0.5, (*XW)[0][1], 1e-14);
-    EXPECT_NEAR(0.6, (*XW)[1][1], 1e-14);
+    EXPECT_NEAR(-0.62, (*XW)[0][0], 1e-14);
+    EXPECT_NEAR(0.5, (*XW)[1][0], 1e-14);
+    EXPECT_NEAR(0.5, (*XW)[0][1], 1e-14);
+    EXPECT_NEAR(-0.6, (*XW)[1][1], 1e-14);
 }
 
 TEST(LyapunovSolverEpetraTest, Solver)
@@ -88,8 +88,61 @@ TEST(LyapunovSolverEpetraTest, Solver)
     tmp->Multiply('N', 'N', 1.0, *VW, *T_mv, 0.0);
     X->Multiply('N', 'T', 1.0, *tmp, *VW, 0.0);
 
-    EXPECT_NEAR(-0.62, (*X)[0][0], 1e-14);
-    EXPECT_NEAR(0.5, (*X)[1][0], 1e-14);
-    EXPECT_NEAR(0.5, (*X)[0][1], 1e-14);
-    EXPECT_NEAR(-0.6, (*X)[1][1], 1e-14);
+    EXPECT_NEAR(0.62, (*X)[0][0], 1e-14);
+    EXPECT_NEAR(-0.5, (*X)[1][0], 1e-14);
+    EXPECT_NEAR(-0.5, (*X)[0][1], 1e-14);
+    EXPECT_NEAR(0.6, (*X)[1][1], 1e-14);
+}
+
+TEST(LyapunovSolverEpetraTest, Lanczos)
+{
+    Teuchos::RCP<Epetra_SerialComm> comm = Teuchos::rcp(new Epetra_SerialComm);
+    Teuchos::RCP<Epetra_Map> map = Teuchos::rcp(new Epetra_Map(2, 0, *comm));
+
+    Teuchos::RCP<Epetra_CrsMatrix> A = Teuchos::rcp(new Epetra_CrsMatrix(Copy, *map, 2));
+
+    // A = [0,1;-5,-5];
+    double A_val[4] = {0, 1, -5, -5};
+    int A_idx[2] = {0, 1};
+    A->InsertGlobalValues(0, 2, A_val, A_idx);
+    A->InsertGlobalValues(1, 2, A_val+2, A_idx);
+    A->FillComplete();
+
+    Teuchos::RCP<Epetra_CrsMatrix> B = Teuchos::rcp(new Epetra_CrsMatrix(Copy, *map, 1));
+
+    // B = [-1,0;0,-1];
+    double B_val = -1;
+    int B_idx[2] = {0, 1};
+    B->InsertGlobalValues(0, 1, &B_val, B_idx);
+    B->InsertGlobalValues(1, 1, &B_val, B_idx+1);
+    B->FillComplete();
+
+    Teuchos::RCP<Epetra_CrsMatrix> M = Teuchos::null;
+
+    // Create the solver object FIXME: Use M here not B
+    Lyapunov::Solver<EpetraWrapper<Epetra_CrsMatrix>, EpetraWrapper<Epetra_MultiVector>,
+                     EpetraWrapper<Epetra_SerialDenseMatrix> > solver(A, B, B);
+
+    Teuchos::RCP<Epetra_MultiVector> V = Teuchos::rcp(new Epetra_MultiVector(*map, 2));
+    Teuchos::RCP<Epetra_SerialDenseMatrix> T = Teuchos::rcp(new Epetra_SerialDenseMatrix(2, 2));
+
+    EpetraWrapper<Epetra_MultiVector> VW(V);
+    EpetraWrapper<Epetra_SerialDenseMatrix> TW(T);
+    EpetraWrapper<Epetra_CrsMatrix> AW(A);
+
+    solver.solve(VW, TW);
+
+    Teuchos::RCP<Epetra_MultiVector> X = Teuchos::rcp(new Epetra_MultiVector(*V));
+    Teuchos::RCP<Epetra_MultiVector> tmp = Teuchos::rcp(new Epetra_MultiVector(*VW));
+
+    EpetraWrapper<Epetra_MultiVector> AV = AW.apply(VW);
+
+    int num_eigenvalues = 2;
+    EpetraWrapper<Epetra_SerialDenseMatrix> H(num_eigenvalues + 1, num_eigenvalues + 1);
+    EpetraWrapper<Epetra_SerialDenseMatrix> eigenvalues(num_eigenvalues + 1, 1);
+    EpetraWrapper<Epetra_MultiVector> eigenvectors;
+
+    solver.lanczos(AV, VW, TW, H, eigenvectors, eigenvalues, num_eigenvalues);
+    
+    EXPECT_NEAR(0.0, eigenvalues(0), 1e-14);
 }

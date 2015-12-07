@@ -19,7 +19,7 @@ public:
     // Solve A*V*T*V' + V*T*V'*A' + B*B' = 0
     int solve(MultiVector &V, DenseMatrix &T);
 
-    // Solve A*X + X*A' = B
+    // Solve A*X + X*A' + B = 0
     int dense_solve(DenseMatrix const &A, DenseMatrix const &B, DenseMatrix &X);
 
     // Get the eigenvectors of the residual R = AV*T*V' + V*T*AV' + B*B'

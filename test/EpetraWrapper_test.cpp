@@ -220,3 +220,35 @@ TEST_F(EpetraWrapperTest, Resize)
     num_vectors = (*aw).NumVectors();
     EXPECT_EQ(1, num_vectors);
 }
+
+TEST_F(EpetraWrapperTest, View)
+{
+    Teuchos::RCP<Epetra_MultiVector> a = Teuchos::rcp(new Epetra_MultiVector(*map, 1));
+    a->Random();
+
+    EpetraWrapper<Epetra_MultiVector> aw(a);
+
+    Teuchos::RCP<Epetra_MultiVector> b = Teuchos::rcp(new Epetra_MultiVector(*a));
+    b->PutScalar(1.2);
+
+    EpetraWrapper<Epetra_MultiVector> bw(b);
+
+    aw.view(0) = bw;
+
+    EXPECT_VECTOR_EQ(*b, *aw);
+}
+
+TEST_F(EpetraWrapperTest, View2)
+{
+    Teuchos::RCP<Epetra_MultiVector> a = Teuchos::rcp(new Epetra_MultiVector(*map, 1));
+    a->Random();
+
+    EpetraWrapper<Epetra_MultiVector> aw(a);
+
+    Teuchos::RCP<Epetra_MultiVector> b = Teuchos::rcp(new Epetra_MultiVector(*a));
+    b->PutScalar(1.2);
+
+    aw.view(0) = EpetraWrapper<Epetra_MultiVector>(b);
+
+    EXPECT_VECTOR_EQ(*b, *aw);
+}

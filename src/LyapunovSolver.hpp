@@ -102,9 +102,9 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
 
         std::cout << "Iteration " << iter
                   << ". Estimate Lanczos, absolute: " << res
-                  << ", relative: " << abs(res) / r0 / r0 << std::endl;
+                  << ", relative: " << std::abs(res) / r0 / r0 << std::endl;
 
-        if (abs(res) / r0 / r0 < tol_ || iter >= max_iter_ || V.num_vectors() >= n)
+        if (std::abs(res) / r0 / r0 < tol_ || iter >= max_iter_ || V.num_vectors() >= n)
             break;
 
         int expand_vectors = std::min(std::min(3, eigenvalues.M()), n - V.num_vectors());
@@ -132,6 +132,8 @@ int Solver<Matrix, MultiVector, DenseMatrix>::dense_solve(DenseMatrix const &A, 
     int n = A.M();
     sb03md('C', 'X', 'N', 'T', n, A_copy, X, &scale, &info);
 
+    X.scale(-1.0);
+
     return info;
 }
 
@@ -147,7 +149,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::lanczos(MultiVector const &AV, Mul
     double beta = 0.0;
 
     int iter = 0;
-    for (; iter < max_iter; iter++)
+    for (int i = 0; i < max_iter; i++)
     {
         Q.resize(iter + 2);
         Q.view(iter+1) = B_.apply(Q.view(iter));
@@ -176,6 +178,8 @@ int Solver<Matrix, MultiVector, DenseMatrix>::lanczos(MultiVector const &AV, Mul
         H(iter, iter+1) = beta;
 
         Q.view(iter+1) /= beta;
+
+        iter++;
     }
 
     H.resize(iter+1, iter+1);

@@ -49,7 +49,25 @@ EpetraWrapper<Epetra_SerialDenseMatrix> EpetraWrapper<Epetra_SerialDenseMatrix>:
     return out;
 }
 
-// Specialization of the assignment operator
+// Specializations of the assignment operators
+template<>
+EpetraWrapper<Epetra_MultiVector> &EpetraWrapper<Epetra_MultiVector>::operator =(EpetraWrapper<Epetra_MultiVector> &other)
+{
+    if (!is_view_)
+    {
+        ptr_ = other.ptr_;
+        capacity_ = other.capacity_;
+        size_ = other.size_;
+        orthogonalized_ = other.orthogonalized_;
+        return *this;
+    }
+
+    assert(num_vectors() == other.num_vectors());
+
+    other.ptr_->ExtractCopy(ptr_->Values(), ptr_->MyLength());
+    return *this;
+}
+
 template<>
 EpetraWrapper<Epetra_MultiVector> &EpetraWrapper<Epetra_MultiVector>::operator =(EpetraWrapper<Epetra_MultiVector> const &other)
 {
@@ -62,6 +80,18 @@ EpetraWrapper<Epetra_MultiVector> &EpetraWrapper<Epetra_MultiVector>::operator =
         return *this;
     }
 
-    ptr_->ExtractCopy(other.ptr_->Values(), other.ptr_->MyLength());
+    assert(num_vectors() == other.num_vectors());
+
+    other.ptr_->ExtractCopy(ptr_->Values(), ptr_->MyLength());
+    return *this;
+}
+
+template<>
+EpetraWrapper<Epetra_SerialDenseMatrix> &EpetraWrapper<Epetra_SerialDenseMatrix>::operator =(EpetraWrapper<Epetra_SerialDenseMatrix> const &other)
+{
+    ptr_ = other.ptr_;
+    capacity_ = other.capacity_;
+    size_ = other.size_;
+    orthogonalized_ = other.orthogonalized_;
     return *this;
 }

@@ -75,14 +75,8 @@ public:
 
     virtual ~EpetraWrapper() {}
 
-    EpetraWrapper &operator =(EpetraWrapper const &other)
-        {
-            ptr_ = other.ptr_;
-            capacity_ = other.capacity_;
-            size_ = other.size_;
-            orthogonalized_ = other.orthogonalized_;
-            return *this;
-        }
+    EpetraWrapper &operator =(EpetraWrapper &other);
+    EpetraWrapper &operator =(EpetraWrapper const &other);
 
     EpetraWrapper &operator *=(double other)
         {
@@ -143,6 +137,11 @@ public:
     double const &operator ()(int m, int n = 0) const
         {
             return (*ptr_)(m, n);
+        }
+
+    void scale(double factor)
+        {
+            ptr_->Scale(factor);
         }
 
     void resize(int m)

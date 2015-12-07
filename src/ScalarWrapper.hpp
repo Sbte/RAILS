@@ -68,6 +68,11 @@ public:
     double &operator ()(int m, int n = 0) {return s_[m];}
     double const &operator ()(int m, int n = 0) const {return s_[m];}
 
+    void scale(double factor)
+        {
+            *s_ *= factor;
+        }
+
     void resize(int m, int n = 0)
         {
             if (capacity_ < m)

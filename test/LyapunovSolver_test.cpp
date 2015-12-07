@@ -32,7 +32,7 @@ TEST(LyapunovSolverTest, ScalarDenseSolver)
 
     solver.dense_solve(A, B, X);
 
-    EXPECT_EQ(-1, X);
+    EXPECT_EQ(1, X);
 }
 
 TEST(LyapunovSolverTest, ScalarSolver)
@@ -46,5 +46,5 @@ TEST(LyapunovSolverTest, ScalarSolver)
 
     solver.solve(X, T);
 
-    EXPECT_EQ(4, X * T * X);
+    EXPECT_EQ(-4, X * T * X);
 }
