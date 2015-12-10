@@ -115,7 +115,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
                   << ". Estimate Lanczos, absolute: " << res
                   << ", relative: " << std::abs(res) / r0 / r0 << std::endl;
 
-        if (std::abs(res) / r0 / r0 < tol_ || iter >= max_iter_ || V.num_vectors() >= n)
+        if (std::abs(res) / r0 / r0 < tol_ || iter + 1 >= max_iter_ || V.num_vectors() >= n)
             break;
 
         int expand_vectors = std::min(std::min(expand_per_iteration,
@@ -131,6 +131,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
 
         W = V.view(num_vectors_V, num_vectors_V+expand_vectors-1);
     }
+
     return 0;
 }
 
