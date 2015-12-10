@@ -9,6 +9,13 @@
 #include <Epetra_CrsMatrix.h>
 #include <Epetra_LocalMap.h>
 
+// Helper functions
+Teuchos::RCP<Epetra_SerialDenseMatrix> MultiVectorToSerialDenseMatrix(
+    Epetra_DataAccess CV, Epetra_MultiVector const &src);
+Teuchos::RCP<Epetra_MultiVector> SerialDenseMatrixToMultiVector(
+    Epetra_DataAccess CV, Epetra_SerialDenseMatrix const &src,
+    Epetra_Comm const &comm);
+
 template<class WrapperType>
 class EpetraWrapper
 {
@@ -266,10 +273,11 @@ public:
 
     EpetraWrapper<Epetra_SerialDenseMatrix> dot(EpetraWrapper const &other) const
         {
-            Teuchos::RCP<Epetra_SerialDenseMatrix> mat = Teuchos::rcp(new Epetra_SerialDenseMatrix(num_vectors(), other.num_vectors()));
-            Epetra_LocalMap map(num_vectors(), 0, ptr_->Comm());
-            Epetra_MultiVector mv(View, map, mat->A(), num_vectors(), other.num_vectors());
-            mv.Multiply('T', 'N', 1.0, *ptr_, *other.ptr_, 0.0);
+            Teuchos::RCP<Epetra_SerialDenseMatrix> mat = Teuchos::rcp(
+                new Epetra_SerialDenseMatrix(num_vectors(), other.num_vectors()));
+            Teuchos::RCP<Epetra_MultiVector> mv = SerialDenseMatrixToMultiVector(
+                View, *mat, ptr_->Comm());
+            mv->Multiply('T', 'N', 1.0, *ptr_, *other.ptr_, 0.0);
 
             EpetraWrapper<Epetra_SerialDenseMatrix> out(mat);
             return out;

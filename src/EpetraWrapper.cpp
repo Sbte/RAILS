@@ -1,9 +1,27 @@
 #include "EpetraWrapper.hpp"
 
+Teuchos::RCP<Epetra_SerialDenseMatrix> MultiVectorToSerialDenseMatrix(
+    Epetra_DataAccess CV, Epetra_MultiVector const &src)
+{
+    return Teuchos::rcp(new Epetra_SerialDenseMatrix(
+                            CV, src.Values(), src.MyLength(),
+                            src.MyLength(), src.NumVectors()));;
+}
+
+Teuchos::RCP<Epetra_MultiVector> SerialDenseMatrixToMultiVector(
+    Epetra_DataAccess CV, Epetra_SerialDenseMatrix const &src,
+    Epetra_Comm const &comm)
+{
+    Epetra_LocalMap map(src.M(), 0, comm);
+    return Teuchos::rcp(new Epetra_MultiVector(
+                            CV, map, src.A(), src.M(), src.N()));;
+}
+
 // Specializations of the apply methods
 template<>
 template<>
-EpetraWrapper<Epetra_MultiVector> EpetraWrapper<Epetra_MultiVector>::apply(EpetraWrapper<Epetra_SerialDenseMatrix> const &other) const
+EpetraWrapper<Epetra_MultiVector> EpetraWrapper<Epetra_MultiVector>::apply(
+    EpetraWrapper<Epetra_SerialDenseMatrix> const &other) const
 {
     EpetraWrapper<Epetra_MultiVector> out(*this, (*other).N());
 
@@ -15,16 +33,17 @@ EpetraWrapper<Epetra_MultiVector> EpetraWrapper<Epetra_MultiVector>::apply(Epetr
         return out;
     }
 
-    Epetra_LocalMap map((*other).M(), 0, ptr_->Comm());
-    Epetra_MultiVector mv(View, map, (*other).A(), (*other).M(), (*other).N());
-    (*out).Multiply('N', 'N', 1.0, *ptr_, mv, 0.0);
+    Teuchos::RCP<Epetra_MultiVector> mv = SerialDenseMatrixToMultiVector(
+        View, *other, ptr_->Comm());
+    (*out).Multiply('N', 'N', 1.0, *ptr_, *mv, 0.0);
 
     return out;
 }
 
 template<>
 template<>
-EpetraWrapper<Epetra_MultiVector> EpetraWrapper<Epetra_CrsMatrix>::apply(EpetraWrapper<Epetra_MultiVector> const &other) const
+EpetraWrapper<Epetra_MultiVector> EpetraWrapper<Epetra_CrsMatrix>::apply(
+    EpetraWrapper<Epetra_MultiVector> const &other) const
 {
     EpetraWrapper<Epetra_MultiVector> out(Teuchos::rcp(new Epetra_MultiVector(*other)));
     ptr_->Apply(*other, *out);
@@ -32,7 +51,8 @@ EpetraWrapper<Epetra_MultiVector> EpetraWrapper<Epetra_CrsMatrix>::apply(EpetraW
 }
 
 template<>
-EpetraWrapper<Epetra_SerialDenseMatrix> EpetraWrapper<Epetra_SerialDenseMatrix>::apply(EpetraWrapper<Epetra_SerialDenseMatrix> const &other) const
+EpetraWrapper<Epetra_SerialDenseMatrix> EpetraWrapper<Epetra_SerialDenseMatrix>::apply(
+    EpetraWrapper<Epetra_SerialDenseMatrix> const &other) const
 {
     EpetraWrapper<Epetra_SerialDenseMatrix> out(Teuchos::rcp(new Epetra_SerialDenseMatrix(*other)));
     out.resize(M(), other.N());
@@ -51,7 +71,8 @@ EpetraWrapper<Epetra_SerialDenseMatrix> EpetraWrapper<Epetra_SerialDenseMatrix>:
 
 // Specializations of the assignment operators
 template<>
-EpetraWrapper<Epetra_MultiVector> &EpetraWrapper<Epetra_MultiVector>::operator =(EpetraWrapper<Epetra_MultiVector> &other)
+EpetraWrapper<Epetra_MultiVector> &EpetraWrapper<Epetra_MultiVector>::operator =(
+    EpetraWrapper<Epetra_MultiVector> &other)
 {
     if (!is_view_)
     {
@@ -69,7 +90,8 @@ EpetraWrapper<Epetra_MultiVector> &EpetraWrapper<Epetra_MultiVector>::operator =
 }
 
 template<>
-EpetraWrapper<Epetra_MultiVector> &EpetraWrapper<Epetra_MultiVector>::operator =(EpetraWrapper<Epetra_MultiVector> const &other)
+EpetraWrapper<Epetra_MultiVector> &EpetraWrapper<Epetra_MultiVector>::operator =(
+    EpetraWrapper<Epetra_MultiVector> const &other)
 {
     if (!is_view_)
     {
@@ -87,7 +109,8 @@ EpetraWrapper<Epetra_MultiVector> &EpetraWrapper<Epetra_MultiVector>::operator =
 }
 
 template<>
-EpetraWrapper<Epetra_SerialDenseMatrix> &EpetraWrapper<Epetra_SerialDenseMatrix>::operator =(EpetraWrapper<Epetra_SerialDenseMatrix> const &other)
+EpetraWrapper<Epetra_SerialDenseMatrix> &EpetraWrapper<Epetra_SerialDenseMatrix>::operator =(
+    EpetraWrapper<Epetra_SerialDenseMatrix> const &other)
 {
     ptr_ = other.ptr_;
     capacity_ = other.capacity_;
