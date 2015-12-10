@@ -23,6 +23,7 @@ template<>
 EpetraWrapper<Epetra_MultiVector> EpetraWrapper<Epetra_MultiVector>::apply(
     EpetraWrapper<Epetra_SerialDenseMatrix> const &other) const
 {
+    FUNCTION_TIMER("EpetraWrapper", "apply 1");
     EpetraWrapper<Epetra_MultiVector> out(*this, (*other).N());
 
     if ((*other).M() != ptr_->NumVectors())
@@ -45,6 +46,7 @@ template<>
 EpetraWrapper<Epetra_MultiVector> EpetraWrapper<Epetra_CrsMatrix>::apply(
     EpetraWrapper<Epetra_MultiVector> const &other) const
 {
+    FUNCTION_TIMER("EpetraWrapper", "apply 2");
     EpetraWrapper<Epetra_MultiVector> out(Teuchos::rcp(new Epetra_MultiVector(*other)));
     ptr_->Apply(*other, *out);
     return out;
@@ -54,6 +56,7 @@ template<>
 EpetraWrapper<Epetra_SerialDenseMatrix> EpetraWrapper<Epetra_SerialDenseMatrix>::apply(
     EpetraWrapper<Epetra_SerialDenseMatrix> const &other) const
 {
+    FUNCTION_TIMER("EpetraWrapper", "apply 3");
     EpetraWrapper<Epetra_SerialDenseMatrix> out(Teuchos::rcp(new Epetra_SerialDenseMatrix(*other)));
     out.resize(M(), other.N());
 
@@ -74,6 +77,7 @@ template<>
 EpetraWrapper<Epetra_MultiVector> &EpetraWrapper<Epetra_MultiVector>::operator =(
     EpetraWrapper<Epetra_MultiVector> &other)
 {
+    FUNCTION_TIMER("EpetraWrapper", "= 1");
     if (!is_view_)
     {
         ptr_ = other.ptr_;
@@ -93,6 +97,7 @@ template<>
 EpetraWrapper<Epetra_MultiVector> &EpetraWrapper<Epetra_MultiVector>::operator =(
     EpetraWrapper<Epetra_MultiVector> const &other)
 {
+    FUNCTION_TIMER("EpetraWrapper", "= 2");
     if (!is_view_)
     {
         ptr_ = other.ptr_;
@@ -112,6 +117,7 @@ template<>
 EpetraWrapper<Epetra_SerialDenseMatrix> &EpetraWrapper<Epetra_SerialDenseMatrix>::operator =(
     EpetraWrapper<Epetra_SerialDenseMatrix> const &other)
 {
+    FUNCTION_TIMER("EpetraWrapper", "= 3");
     ptr_ = other.ptr_;
     capacity_ = other.capacity_;
     size_ = other.size_;

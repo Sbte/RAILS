@@ -47,6 +47,7 @@ endif()
 
 set(SOURCES
   src/SlicotWrapper.cpp
+  src/Timer.cpp
   )
 
 set(TEST_SOURCES

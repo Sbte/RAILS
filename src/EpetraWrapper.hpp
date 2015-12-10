@@ -9,6 +9,9 @@
 #include <Epetra_CrsMatrix.h>
 #include <Epetra_LocalMap.h>
 
+#define TIMER_ON
+#include "Timer.hpp"
+
 // Helper functions
 Teuchos::RCP<Epetra_SerialDenseMatrix> MultiVectorToSerialDenseMatrix(
     Epetra_DataAccess CV, Epetra_MultiVector const &src);
@@ -49,6 +52,7 @@ public:
         :
         EpetraWrapper()
         {
+            FUNCTION_TIMER("EpetraWrapper", "constructor 1");
             ptr_ = ptr;
         }
 
@@ -56,6 +60,7 @@ public:
         :
         EpetraWrapper()
         {
+            FUNCTION_TIMER("EpetraWrapper", "constructor 2");
             if (!other.ptr_.is_null())
                 ptr_ = Teuchos::rcp(new WrapperType(*other.ptr_));
             orthogonalized_ = other.orthogonalized_;
@@ -65,6 +70,7 @@ public:
         :
         EpetraWrapper()
         {
+            FUNCTION_TIMER("EpetraWrapper", "constructor 3");
             size_ = n;
             capacity_ = n;
             if (!other.ptr_.is_null())
@@ -75,6 +81,7 @@ public:
         :
         EpetraWrapper()
         {
+            FUNCTION_TIMER("EpetraWrapper", "constructor 4");
             size_ = n;
             capacity_ = n;
             ptr_ = Teuchos::rcp(new WrapperType(m, n));
@@ -87,28 +94,33 @@ public:
 
     EpetraWrapper &operator *=(double other)
         {
+            FUNCTION_TIMER("EpetraWrapper", "*=");
             ptr_->Scale(other);
             return *this;
         }
     EpetraWrapper &operator /=(double other)
         {
+            FUNCTION_TIMER("EpetraWrapper", "/=");
             ptr_->Scale(1.0 / other);
             return *this;
         }
 
     EpetraWrapper &operator -=(EpetraWrapper const &other)
         {
+            FUNCTION_TIMER("EpetraWrapper", "-=");
             ptr_->Update(-1.0, *other, 1.0);
             return *this;
         }
     EpetraWrapper &operator +=(EpetraWrapper const &other)
         {
+            FUNCTION_TIMER("EpetraWrapper", "+=");
             ptr_->Update(1.0, *other, 1.0);
             return *this;
         }
 
     EpetraWrapper operator *(EpetraWrapper const &other) const
         {
+            FUNCTION_TIMER("EpetraWrapper", "*");
             EpetraWrapper e(*this);
             e *= other;
             return e;
@@ -116,6 +128,7 @@ public:
 
     EpetraWrapper operator +(EpetraWrapper const &other) const
         {
+            FUNCTION_TIMER("EpetraWrapper", "+");
             EpetraWrapper e(*this);
             e += other;
             return e;
@@ -123,41 +136,49 @@ public:
 
     operator double*() const
         {
+            FUNCTION_TIMER("EpetraWrapper", "double*");
             return ptr_->A();
         }
 
     WrapperType &operator *()
         {
+            FUNCTION_TIMER("EpetraWrapper", "*");
             return *ptr_;
         }
 
     WrapperType const &operator *() const
         {
+            FUNCTION_TIMER("EpetraWrapper", "* 2");
             return *ptr_;
         }
 
     double &operator ()(int m, int n = 0)
         {
+            FUNCTION_TIMER("EpetraWrapper", "()");
             return (*ptr_)(m, n);
         }
 
     double const &operator ()(int m, int n = 0) const
         {
+            FUNCTION_TIMER("EpetraWrapper", "() 2");
             return (*ptr_)(m, n);
         }
 
     void scale(double factor)
         {
+            FUNCTION_TIMER("EpetraWrapper", "scale");
             ptr_->Scale(factor);
         }
 
     void set(double factor)
         {
+            FUNCTION_TIMER("EpetraWrapper", "set");
             ptr_->PutScalar(factor);
         }
 
     void resize(int m)
         {
+            FUNCTION_TIMER("EpetraWrapper", "resize");
             // Check if ptr_allocated_ is set
             if (ptr_allocated_.is_null())
                 ptr_allocated_ = ptr_;
@@ -191,11 +212,13 @@ public:
 
     void resize(int m, int n)
         {
+            FUNCTION_TIMER("EpetraWrapper", "resize 2");
             ptr_->Reshape(m, n);
         }
 
     double norm(int n = 0)
         {
+            FUNCTION_TIMER("EpetraWrapper", "norm");
             if (num_vectors() == 1)
             {
                 double out;
@@ -207,16 +230,19 @@ public:
 
     double norm_inf(int n = 0)
         {
+            FUNCTION_TIMER("EpetraWrapper", "norm inf");
             return ptr_->NormInf();
         }
 
     double norm_frobenius(int n = 0)
         {
+            FUNCTION_TIMER("EpetraWrapper", "norm frob");
             return ptr_->NormFrobenius();
         }
 
     void orthogonalize()
         {
+            FUNCTION_TIMER("EpetraWrapper", "orthogonalize");
             for (int i = orthogonalized_; i < num_vectors(); i++)
             {
                 EpetraWrapper v = view(i);
@@ -234,6 +260,7 @@ public:
 
     EpetraWrapper view(int m, int n = 0)
         {
+            FUNCTION_TIMER("EpetraWrapper", "view");
             EpetraWrapper out;
             int num = n ? n-m+1 : 1;
             out.ptr_ = Teuchos::rcp(new WrapperType(View, *ptr_, m, num));
@@ -243,12 +270,14 @@ public:
 
     EpetraWrapper copy(int m = 0, int n = 0) const
         {
+            FUNCTION_TIMER("EpetraWrapper", "copy");
             EpetraWrapper<WrapperType> out(*this);
             return out;
         }
 
     void push_back(EpetraWrapper const &other, int m = -1)
         {
+            FUNCTION_TIMER("EpetraWrapper", "push_back");
             int n = num_vectors();
             if (m == -1)
                 m = other.num_vectors();
@@ -258,11 +287,13 @@ public:
 
     int M() const
         {
+            FUNCTION_TIMER("EpetraWrapper", "M");
             return ptr_->M();
         }
 
     int N() const
         {
+            FUNCTION_TIMER("EpetraWrapper", "N");
             return ptr_->N();
         }
 
@@ -273,18 +304,28 @@ public:
 
     EpetraWrapper<Epetra_SerialDenseMatrix> dot(EpetraWrapper const &other) const
         {
+            FUNCTION_TIMER("EpetraWrapper", "dot");
+
+            START_TIMER("EpetraWrapper", "dot copy");
             Teuchos::RCP<Epetra_SerialDenseMatrix> mat = Teuchos::rcp(
                 new Epetra_SerialDenseMatrix(num_vectors(), other.num_vectors()));
             Teuchos::RCP<Epetra_MultiVector> mv = SerialDenseMatrixToMultiVector(
                 View, *mat, ptr_->Comm());
-            mv->Multiply('T', 'N', 1.0, *ptr_, *other.ptr_, 0.0);
+            END_TIMER("EpetraWrapper", "dot copy");
 
+            START_TIMER("EpetraWrapper", "dot multiply");
+            mv->Multiply('T', 'N', 1.0, *ptr_, *other.ptr_, 0.0);
+            END_TIMER("EpetraWrapper", "dot multiply");
+
+            START_TIMER("EpetraWrapper", "dot copy 2");
             EpetraWrapper<Epetra_SerialDenseMatrix> out(mat);
+            END_TIMER("EpetraWrapper", "dot copy 2");
             return out;
         }
 
     int num_vectors() const
         {
+            FUNCTION_TIMER("EpetraWrapper", "num_vectors");
             return (size_ ? ptr_->NumVectors() : size_);
         }
 
@@ -296,6 +337,7 @@ public:
 
     void eigs(EpetraWrapper &v, EpetraWrapper &d) const
         {
+            FUNCTION_TIMER("EpetraWrapper", "eigs");
             int m = M();
             v = copy();
 
@@ -323,6 +365,7 @@ public:
 
     void random()
         {
+            FUNCTION_TIMER("EpetraWrapper", "random");
             ptr_->Random();
         }
 };
@@ -330,6 +373,7 @@ public:
 template<class WrapperType>
 EpetraWrapper<WrapperType> operator *(double d, EpetraWrapper<WrapperType> const &other)
 {
+    FUNCTION_TIMER("EpetraWrapper", "friend *");
     EpetraWrapper<WrapperType> e(other);
     e *= d;
     return e;

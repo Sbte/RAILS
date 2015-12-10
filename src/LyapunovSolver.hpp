@@ -8,6 +8,9 @@
 #include "LyapunovSolverDecl.hpp"
 #include "SlicotWrapper.hpp"
 
+#define TIMER_ON
+#include "Timer.hpp"
+
 namespace Lyapunov {
 
 template<class Matrix, class MultiVector, class DenseMatrix>
@@ -36,6 +39,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::set_parameters(ParameterList param
 template<class Matrix, class MultiVector, class DenseMatrix>
 int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix &T)
 {
+    FUNCTION_TIMER("Solver");
     int n = V.GlobalLength();
     int expand_per_iteration = 3;
     MultiVector AV(V, max_iter_ * expand_per_iteration + 1);
@@ -54,7 +58,9 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
         // Perform VAV = V'*A*V by doing VAV = [[VAV; W'*AV], V'*AW]
 
         // First compute AW
+        START_TIMER("A apply");
         MultiVector AW = A_.apply(W);
+        END_TIMER("A apply");
 
         // Now resize VAV. Resizing should not remove what was in VAV
         // previously
@@ -63,6 +69,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
         int s = num_vectors_AV + W.num_vectors();
         VAV.resize(s, s);
 
+        START_TIMER("A DOT");
         // Now compute W'*AV and put it in VAV
         // AV only exists after the first iteration
         if (iter > 0)
@@ -82,14 +89,17 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
         for (int i = 0; i < VAW_m; i++)
             for (int j = 0; j < VAW_n; j++)
                 VAV(i, j + num_vectors_AV) = VAW(i, j);
+        END_TIMER("A DOT");
 
         // Now expand AV
         AV.push_back(AW);
 
         // Compute VBV = V'*B*B'*V. TODO: This can also be done more
         // efficiently I think
+        START_TIMER("B DOT");
         MultiVector BV = B_.apply(V);
         DenseMatrix VBV = BV.dot(BV);
+        END_TIMER("B DOT");
 
         dense_solve(VAV, VBV, T);
 
@@ -127,6 +137,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
 template<class Matrix, class MultiVector, class DenseMatrix>
 int Solver<Matrix, MultiVector, DenseMatrix>::dense_solve(DenseMatrix const &A, DenseMatrix const &B, DenseMatrix &X)
 {
+    FUNCTION_TIMER("dense_solve");
     X = B.copy();
     DenseMatrix A_copy = A.copy();
     double scale = 1.0;
@@ -142,10 +153,13 @@ int Solver<Matrix, MultiVector, DenseMatrix>::dense_solve(DenseMatrix const &A, 
 template<class Matrix, class MultiVector, class DenseMatrix>
 int Solver<Matrix, MultiVector, DenseMatrix>::lanczos(MultiVector const &AV, MultiVector const &V, DenseMatrix const &T, DenseMatrix &H, MultiVector &eigenvectors, DenseMatrix &eigenvalues, int max_iter)
 {
+    FUNCTION_TIMER("Lyapunov", "lanczos");
+    START_TIMER("Lanczos", "Top");
     MultiVector Q(V, max_iter+1);
     Q.resize(1);
     Q.random();
     Q.view(0) /= Q.norm();
+    END_TIMER("Lanczos", "Top");
 
     double alpha = 0.0;
     double beta = 0.0;
@@ -154,25 +168,38 @@ int Solver<Matrix, MultiVector, DenseMatrix>::lanczos(MultiVector const &AV, Mul
     for (int i = 0; i < max_iter; i++)
     {
         Q.resize(iter + 2);
+
+        START_TIMER("Lanczos", "B apply");
         Q.view(iter+1) = B_.apply(Q.view(iter));
         Q.view(iter+1) = B_.apply(Q.view(iter+1));
+        END_TIMER("Lanczos", "B apply");
 
+        START_TIMER("Lanczos", "First part");
         DenseMatrix Z = V.dot(Q.view(iter));
         Z = T.apply(Z);
         Q.view(iter+1) += AV.apply(Z);
+        END_TIMER("Lanczos", "First part");
 
+        START_TIMER("Lanczos", "Second part");
         Z = AV.dot(Q.view(iter));
         Z = T.apply(Z);
         Q.view(iter+1) += V.apply(Z);
+        END_TIMER("Lanczos", "Second part");
         
+        START_TIMER("Lanczos", "alpha");
         alpha = Q.view(iter+1).dot(Q.view(iter))(0, 0);
         H(iter, iter) = alpha;
+        END_TIMER("Lanczos", "alpha");
 
+        START_TIMER("Lanczos", "update");
         Q.view(iter+1) -= alpha * Q.view(iter);
         if (iter > 0)
             Q.view(iter+1) -= beta * Q.view(iter-1);
+        END_TIMER("Lanczos", "update");
 
+        START_TIMER("Lanczos", "beta");
         beta = Q.view(iter+1).norm();
+        END_TIMER("Lanczos", "beta");
         if (beta < 1e-14)
         {
             // Beta is zero, but the offdiagonal elements of H
@@ -190,6 +217,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::lanczos(MultiVector const &AV, Mul
         iter++;
     }
 
+    START_TIMER("Lanczos", "eigv");
     H.resize(iter, iter);
     Q.resize(iter);
 
@@ -197,6 +225,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::lanczos(MultiVector const &AV, Mul
     H.eigs(v, eigenvalues);
 
     eigenvectors = Q.apply(v);
+    END_TIMER("Lanczos", "eigv");
 
     return 0;
 }
