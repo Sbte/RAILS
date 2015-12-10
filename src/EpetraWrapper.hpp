@@ -297,8 +297,9 @@ public:
             return ptr_->N();
         }
 
-    int GlobalLength() const
+    int length() const
         {
+            FUNCTION_TIMER("EpetraWrapper", "length");
             return ptr_->Map().NumGlobalPoints();
         }
 

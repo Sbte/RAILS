@@ -114,7 +114,7 @@ public:
 
     int M() const {return 1;}
     int N() const {return size_;}
-    int GlobalLength() {return 1;} const
+    int length() {return 1;} const
     ScalarWrapper dot(ScalarWrapper const &other) const {__scalar return *this * other;}
     int num_vectors() const {return 1;}
     ScalarWrapper apply(ScalarWrapper const &other) const {return *this * other;}

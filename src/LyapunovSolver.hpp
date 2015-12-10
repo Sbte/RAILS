@@ -40,7 +40,7 @@ template<class Matrix, class MultiVector, class DenseMatrix>
 int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix &T)
 {
     FUNCTION_TIMER("Solver");
-    int n = V.GlobalLength();
+    int n = V.length();
     int expand_per_iteration = 3;
     MultiVector AV(V, max_iter_ * expand_per_iteration + 1);
     AV.resize(0);
