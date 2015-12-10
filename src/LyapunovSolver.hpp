@@ -42,8 +42,6 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
     FUNCTION_TIMER("Solver");
     int n = V.length();
     int expand_per_iteration = 3;
-    MultiVector AV(V, max_iter_ * expand_per_iteration + 1);
-    AV.resize(0);
 
     V.resize(1);
     V.random();
@@ -51,16 +49,31 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
 
     MultiVector W(V);
 
+    MultiVector AV(V, max_iter_ * expand_per_iteration + 1);
     DenseMatrix VAV(max_iter_ * expand_per_iteration + 1, max_iter_ * expand_per_iteration + 1);
+    AV.resize(0);
+
+    MultiVector BV(V, max_iter_ * expand_per_iteration + 1);
+    DenseMatrix VBV(max_iter_ * expand_per_iteration + 1, max_iter_ * expand_per_iteration + 1);
+    BV.resize(0);
+
     double r0 = B_.norm_frobenius();
+
     for (int iter = 0; iter < max_iter_; iter++)
     {
         // Perform VAV = V'*A*V by doing VAV = [[VAV; W'*AV], V'*AW]
 
         // First compute AW
-        START_TIMER("A apply");
+        START_TIMER("Apply A");
         MultiVector AW = A_.apply(W);
-        END_TIMER("A apply");
+        END_TIMER("Apply A");
+
+        START_TIMER("Apply B");
+        // TODO: Should be transpose
+        MultiVector BW = B_.apply(W);
+        END_TIMER("Apply B");
+
+        START_TIMER("Compute VAV");
 
         // Now resize VAV. Resizing should not remove what was in VAV
         // previously
@@ -68,18 +81,24 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
         int num_vectors_AV = AV.num_vectors();
         int s = num_vectors_AV + W.num_vectors();
         VAV.resize(s, s);
+        VBV.resize(s, s);
 
-        START_TIMER("A DOT");
         // Now compute W'*AV and put it in VAV
+        // We also compute V'*B*B'*V here for maximum efficiency
         // AV only exists after the first iteration
         if (iter > 0)
         {
             DenseMatrix WAV = W.dot(AV);
+            DenseMatrix WBV = BW.dot(BV);
             int WAV_m = WAV.M();
             int WAV_n = WAV.N();
             for (int i = 0; i < WAV_m; i++)
                 for (int j = 0; j < WAV_n; j++)
+                {
                     VAV(i + num_vectors_AV, j) = WAV(i, j);
+                    VBV(i + num_vectors_AV, j) = WBV(i, j);
+                    VBV(j, i + num_vectors_AV) = WBV(i, j);
+                }
         }
 
         // Now compute V'*AW and put it in VAV
@@ -89,17 +108,20 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
         for (int i = 0; i < VAW_m; i++)
             for (int j = 0; j < VAW_n; j++)
                 VAV(i, j + num_vectors_AV) = VAW(i, j);
-        END_TIMER("A DOT");
 
-        // Now expand AV
+        // Compute the bottom-right block of VBV
+        DenseMatrix WBW = BW.dot(BW);
+        int WBW_m = WBW.M();
+        int WBW_n = WBW.N();
+        for (int i = 0; i < WBW_m; i++)
+            for (int j = 0; j < WBW_n; j++)
+                VBV(i + num_vectors_AV, j + num_vectors_AV) = WBW(i, j);
+
+        // Now expand AV and BV
         AV.push_back(AW);
+        BV.push_back(BW);
 
-        // Compute VBV = V'*B*B'*V. TODO: This can also be done more
-        // efficiently I think
-        START_TIMER("B DOT");
-        MultiVector BV = B_.apply(V);
-        DenseMatrix VBV = BV.dot(BV);
-        END_TIMER("B DOT");
+        END_TIMER("Compute VAV");
 
         dense_solve(VAV, VBV, T);
 
