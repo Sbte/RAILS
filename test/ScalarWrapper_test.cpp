@@ -128,6 +128,7 @@ TEST(ScalarWrapper, View)
 TEST(ScalarWrapper, View2)
 {
     ScalarWrapper a(1);
+    a.push_back(3);
     a.view(1) = ScalarWrapper(2);
     EXPECT_DOUBLE_EQ(1, a(0));
     EXPECT_DOUBLE_EQ(2, a(1));

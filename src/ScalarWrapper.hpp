@@ -15,7 +15,8 @@ public:
         s_(new double[1]),
         is_view_(false) ,
         size_(1),
-        capacity_(1) {}
+        capacity_(1)
+        {}
 
     ScalarWrapper(double s)
         :
@@ -23,33 +24,52 @@ public:
         is_view_(false),
         size_(1),
         capacity_(1)
-        {*s_ = s;}
+        {
+            *s_ = s;
+        }
 
-    ScalarWrapper(ScalarWrapper const &s, int n = 0)
+    ScalarWrapper(ScalarWrapper const &s)
         :
         s_(),
-        is_view_(s.is_view_),
+        is_view_(false),
+        size_(s.size_),
+        capacity_(size_)
+        {
+            s_ = new double[size_];
+            for (int i = 0; i < size_; i++)
+                s_[i] = s.s_[i];
+        }
+
+    ScalarWrapper(ScalarWrapper const &s, int n)
+        :
+        s_(),
+        is_view_(false),
         size_(n ? n : s.size_),
         capacity_(size_)
         {
-            if (is_view_)
-                s_ = s.s_;
-            else
-            {
-                s_ = new double[size_];
-                if (!n)
-                    for (int i = 0; i < size_; i++)
-                        s_[i] = s.s_[i];
-            }
+            s_ = new double[size_];
         }
 
-    virtual ~ScalarWrapper() {if (!is_view_) delete[] s_;}
+    virtual ~ScalarWrapper()
+        {
+            if (!is_view_)
+                delete[] s_;
+        }
 
     ScalarWrapper &operator =(ScalarWrapper const &other)
         {
-            size_ = other.size_;
-            for (int i = 0; i < size_; i++)
-                s_[i] = other.s_[i];
+            if (!is_view_)
+            {
+                ScalarWrapper tmp(other);
+                char *buffer = new char[sizeof(ScalarWrapper)];
+                memcpy(buffer, this, sizeof(ScalarWrapper));
+                memcpy(this, &tmp, sizeof(ScalarWrapper));
+                memcpy(&tmp, buffer, sizeof(ScalarWrapper));
+                delete[] buffer;
+                return *this;
+            }
+
+            memcpy(s_, other.s_, size_*sizeof(double));
             return *this;
         }
 
@@ -58,8 +78,8 @@ public:
     ScalarWrapper operator -=(ScalarWrapper const &other) {__scalar *s_ -= *other.s_; return *this;}
     ScalarWrapper operator +=(ScalarWrapper const &other) {__scalar *s_ += *other.s_; return *this;}
 
-    ScalarWrapper operator *(ScalarWrapper const &other) const {__scalar return ScalarWrapper(*s_ * *other.s_);}
-    ScalarWrapper operator +(ScalarWrapper const &other) const {__scalar return ScalarWrapper(*s_ + *other.s_);}
+    ScalarWrapper operator *(ScalarWrapper const &other) const {__scalar return *s_ * *other.s_;}
+    ScalarWrapper operator +(ScalarWrapper const &other) const {__scalar return *s_ + *other.s_;}
 
     operator double() const {__scalar return *s_;};
     operator double*() {return s_;};
@@ -84,6 +104,7 @@ public:
             {
                 double *s = new double[m];
                 memcpy(s, s_, capacity_ * sizeof(double));
+                delete[] s_;
                 s_ = s;
                 capacity_ = m;
             }
@@ -110,13 +131,17 @@ public:
             return *this;
         }
 
-    void push_back(ScalarWrapper s, int n = 0) {s_[size_] = s; size_++;}
+    void push_back(ScalarWrapper s, int n = 0)
+        {
+            resize(size_+1);
+            s_[size_-1] = s;
+        }
 
     int M() const {return 1;}
     int N() const {return size_;}
     int length() {return 1;} const
     ScalarWrapper dot(ScalarWrapper const &other) const {__scalar return *this * other;}
-    int num_vectors() const {return 1;}
+    int num_vectors() const {return size_;}
     ScalarWrapper apply(ScalarWrapper const &other) const {return *this * other;}
     void eigs(ScalarWrapper &v, ScalarWrapper &d) const {__scalar  *v.s_ = 1; *d.s_ = *s_;}
 
