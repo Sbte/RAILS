@@ -51,9 +51,9 @@ set(SOURCES
   )
 
 set(TEST_SOURCES
-  test/ScalarWrapper_test.cpp
-  test/SlicotWrapper_test.cpp
-  test/LyapunovSolver_test.cpp
+  test/ScalarWrapper_test
+  test/SlicotWrapper_test
+  test/LyapunovSolver_test
   )
 
 # Manually add headers without source file
@@ -78,8 +78,8 @@ if (${Trilinos_FOUND})
     )
 
   list(APPEND TEST_SOURCES
-    test/Epetra_MultiVectorWrapper_test.cpp
-    test/LyapunovSolverEpetra_test.cpp
+    test/Epetra_MultiVectorWrapper_test
+    test/LyapunovSolverEpetra_test
     )
 
   list(APPEND HEADERS
@@ -102,24 +102,23 @@ enable_testing()
 find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS})
 
-add_executable(tests ${TEST_SOURCES} ${SOURCES})
-target_link_libraries(tests ${GTEST_BOTH_LIBRARIES})
-target_link_libraries(tests "slicot")
-
 if (${Trilinos_FOUND})
-  target_link_libraries(tests ${Trilinos_LIBRARIES})
-  target_link_libraries(tests ${Trilinos_TPL_LIBRARIES})
-
-  add_test(EpetraWrapperTest tests)
-  add_test(LyapunovSolverEpetraTest tests)
-
   add_executable(main ${SOURCES} src/main.cpp)
   target_link_libraries(main "slicot")
   target_link_libraries(main ${Trilinos_LIBRARIES})
   target_link_libraries(main ${Trilinos_TPL_LIBRARIES})
 endif()
 
-add_test(LyapunovSolverTest tests)
-add_test(ScalarWrapperTest tests)
-add_test(SlicotWrapperTest tests)
-add_test(EpetraWrapperTest tests)
+foreach(test_source ${TEST_SOURCES})
+  get_filename_component(test_name ${test_source} NAME)
+  add_executable(${test_name} ${test_source} ${SOURCES})
+  target_link_libraries(${test_name} ${GTEST_BOTH_LIBRARIES})
+  target_link_libraries(${test_name} "slicot")
+
+  if (${Trilinos_FOUND})
+    target_link_libraries(${test_name} ${Trilinos_LIBRARIES})
+    target_link_libraries(${test_name} ${Trilinos_TPL_LIBRARIES})
+  endif()
+
+  add_test(${test_name} ${test_name})
+endforeach()
