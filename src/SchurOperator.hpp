@@ -46,6 +46,8 @@ public:
 
     int ApplyInverse(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const;
 
+    double Trace() const;
+
     double NormInf() const;
 
     const char * Label() const;

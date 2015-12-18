@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
         Teuchos::updateParametersFromXmlFile(argv[1], params.ptr());
     }
 
-    Epetra_CrsMatrix *A_ptr, *B_ptr, *M_ptr, *SC_ptr;
+    Epetra_CrsMatrix *A_ptr, *B_ptr, *M_ptr;
 
     std::cout << "Loading matrices" << std::endl;
 
@@ -145,18 +145,20 @@ int main(int argc, char *argv[])
     Schur_wrapper.eigs(eigenvectors, eigenvalues,
                        eig_params.get("Number of Eigenvalues", 10));
 
+    END_TIMER("Compute eigenvalues");
+
+    START_TIMER("Compute trace");
+    double trace = Schur->Trace();
+
     int num_eigs = eigenvalues.M();
-    double sum = 0.0;
-    for (int i = 0; i < num_eigs; i++)
-        sum += eigenvalues(i);
     for (int i = 0; i < num_eigs; i++)
     {
         std::cout << std::setw(20) << eigenvalues(i)
-                  << std::setw(20) << eigenvalues(i) / sum
+                  << std::setw(20) << eigenvalues(i) / trace
                   << std::endl;
     }
 
-    END_TIMER("Compute eigenvalues");
+    END_TIMER("Compute trace");
 
     if (!MyPID)
         SAVE_PROFILES("");

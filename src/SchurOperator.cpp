@@ -121,9 +121,11 @@ int SchurOperator::Compute()
     double val = 1.0;
     int idx1 = len;
     int idx2 = len+1;
+
+    //TODO: Don't hardcode this! 
     int nx = 4;
-    int ny = 32;
-    int nz = 16;
+    int ny = 128;
+    // int nz = 16;
     for (int i = 0; i < A11_->NumMyRows(); i++)
     {
         if (A11_->GRID(i) % 6 == 3)
@@ -289,7 +291,53 @@ int SchurOperator::Apply(const Epetra_MultiVector& X, Epetra_MultiVector& Y) con
     return 0;
 }
 
-const Epetra_Comm &SchurOperator:: Comm() const
+double SchurOperator::Trace() const
+{
+    if (!hasSolution_)
+    {
+        std::cerr << "Solution was not set so can't compute the trace" << std::endl;
+        return 0.0;
+    }
+
+    Epetra_MultiVectorWrapper VW(
+        Teuchos::rcp_const_cast<Epetra_MultiVector>(V_));
+    Epetra_SerialDenseMatrixWrapper TW(
+        Teuchos::rcp_const_cast<Epetra_SerialDenseMatrix>(T_));
+
+    double trace = 0.0;
+    for (int i = 0; i < TW.M(); i++)
+        trace += TW(i, i);
+
+    // Trace(A11\A12*C22*A12'*A11^{-1}) = Trace(T*V'*A12'*A11\A11'\A12*V)
+    Epetra_MultiVector tmp1(A11_->DomainMap(), VW.N());
+    Epetra_MultiVector tmp2(A11_->DomainMap(), VW.N());
+    Epetra_MultiVector tmp3(A22_->DomainMap(), VW.N());
+    A12_->Apply(*VW, tmp1);
+
+    problem_->SetLHS(&tmp2);
+    problem_->SetRHS(&tmp1);
+    CHECK_ZERO(solver_->Solve());
+
+    CHECK_ZERO(solver_->SetUseTranspose(true));
+    problem_->SetLHS(&tmp1);
+    problem_->SetRHS(&tmp2);
+    CHECK_ZERO(solver_->Solve());
+    CHECK_ZERO(solver_->SetUseTranspose(false));
+
+    CHECK_ZERO(A12_->SetUseTranspose(true));
+    CHECK_ZERO(A12_->Apply(tmp1, tmp3));
+    CHECK_ZERO(A12_->SetUseTranspose(false));
+
+    Epetra_MultiVectorWrapper tmpW(Teuchos::rcp(&tmp3, false));
+    Epetra_SerialDenseMatrixWrapper T11 = TW * VW.dot(tmpW);
+
+    for (int i = 0; i < T11.M(); i++)
+        trace += T11(i, i);
+
+    return trace;
+}
+
+const Epetra_Comm &SchurOperator::Comm() const
 {
     return A_->Comm();
 }
