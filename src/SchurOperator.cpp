@@ -25,7 +25,7 @@ SchurOperator::SchurOperator(Teuchos::RCP<Epetra_CrsMatrix> const &A,
     solver_(new Amesos_Klu(*problem_)),
     hasSolution_(false)
 {}
-    
+
 int SchurOperator::Compute()
 {
     FUNCTION_TIMER("SchurOperator", "Compute");
@@ -116,8 +116,6 @@ int SchurOperator::Compute()
 
     // Add nullspace
     double val = 1.0;
-    // int idx1 = colMap1.LID(len);
-    // int idx2 = colMap1.LID(len+1);
     int idx1 = len;
     int idx2 = len+1;
     int nx = 4;
@@ -130,13 +128,13 @@ int SchurOperator::Compute()
             int m = A11_->GRID(i) / 6;
             if ((m % nx + (m / nx) % ny) % 2 == 0)
             {
-                // CHECK_ZERO(A11_->InsertMyValues(i, 1, &val, &idx1));
-                CHECK_ZERO(A11_->InsertGlobalValues(A11_->GRID(i), 1, &val, &idx1));
+                CHECK_ZERO(A11_->InsertGlobalValues(
+                    A11_->GRID(i), 1, &val, &idx1));
             }
             else
             {
-                // CHECK_ZERO(A11_->InsertMyValues(i, 1, &val, &idx2));
-                CHECK_ZERO(A11_->InsertGlobalValues(A11_->GRID(i), 1, &val, &idx2));
+                CHECK_ZERO(A11_->InsertGlobalValues(
+                               A11_->GRID(i), 1, &val, &idx2));
             }
         }
     }
@@ -153,22 +151,20 @@ int SchurOperator::Compute()
                 int m = i / 6;
                 if ((m % nx + (m / nx) % ny) % 2 == 0)
                 {
-                    // indices1[i / 6 / 2] = colMap1.LID(i);
                     indices1[i / 6 / 2] = i;
                     values1[i / 6 / 2] = 1.0;
                 }
                 else
                 {
-                    // indices2[i / 6 / 2] = colMap1.LID(i);
                     indices2[i / 6 / 2] = i;
                     values2[i / 6 / 2] = 1.0;
                 }
             }
         }
-        CHECK_ZERO(A11_->InsertGlobalValues(len, len / 6 / 2, values1, indices1));
-        CHECK_ZERO(A11_->InsertGlobalValues(len + 1, len / 6 / 2, values2, indices2));
-        // CHECK_ZERO(A11_->InsertMyValues(A11_->LRID(len), len / 6 / 2, values1, indices1));
-        // CHECK_ZERO(A11_->InsertMyValues(A11_->LRID(len + 1), len / 6 / 2, values2, indices2));
+        CHECK_ZERO(A11_->InsertGlobalValues(
+                       len, len / 6 / 2, values1, indices1));
+        CHECK_ZERO(A11_->InsertGlobalValues(
+                       len + 1, len / 6 / 2, values2, indices2));
         delete[] indices1;
         delete[] indices2;
         delete[] values1;
@@ -223,7 +219,7 @@ int SchurOperator::Apply(const Epetra_MultiVector& X, Epetra_MultiVector& Y) con
         END_TIMER("SchurOperator", "Apply A21");
 
         CHECK_ZERO(Y.Update(-1.0, tmp3, 1.0));
-        
+
         return 0;
     }
 
@@ -317,7 +313,7 @@ int SchurOperator::SetUseTranspose(bool UseTranspose)
     return -1;
 }
 
-double SchurOperator::NormInf() const 
+double SchurOperator::NormInf() const
 {
     std::cerr << "NormInf not implemented" << std::endl;
     return 0.0;
