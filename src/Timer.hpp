@@ -3,6 +3,7 @@
 
 #include <mpi.h>
 #include <ctime>
+#include <string>
 
 class Timer
 {
