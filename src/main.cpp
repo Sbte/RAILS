@@ -1,7 +1,6 @@
 #include <iostream>
 
 #include <Teuchos_RCP.hpp>
-#include "Teuchos_StandardCatchMacros.hpp"
 #include "Teuchos_ParameterList.hpp"
 
 #include "Epetra_Map.h"
@@ -25,32 +24,11 @@
 #include "Epetra_SerialDenseMatrixWrapper.hpp"
 #include "Epetra_OperatorWrapper.hpp"
 #include "LyapunovSolver.hpp"
+#include "LyapunovMacros.hpp"
+#include "SchurOperator.hpp"
 
 #define TIMER_ON
 #include "Timer.hpp"
-
-#ifndef CHECK_ZERO
-#define CHECK_ZERO(funcall) {                                           \
-        int ierr = 0;                                                   \
-        bool status = true;                                             \
-        try { ierr = funcall; }                                         \
-        TEUCHOS_STANDARD_CATCH_STATEMENTS(true, std::cerr, status);     \
-        if (!status) {                                                  \
-            std::string msg = "Caught an exception in call " +          \
-                std::string(#funcall) +                                 \
-                " on line " + Teuchos::toString(__LINE__) +             \
-                " of file " + Teuchos::toString(__FILE__);              \
-            std::cerr << msg << std::endl;                              \
-            return -1;}                                                 \
-        if (ierr) {                                                     \
-            std::string msg = "Error code " + Teuchos::toString(ierr) + \
-                " returned from call " + std::string(#funcall) +        \
-                " on line " + Teuchos::toString(__LINE__) +             \
-                " of file " + Teuchos::toString(__FILE__);              \
-            std::cerr << msg << std::endl;                              \
-            return ierr;}                                               \
-    }
-#endif
 
 // Parallel Projection Lanczos Lyapunov Solver
 int main(int argc, char *argv[])
@@ -133,10 +111,10 @@ int main(int argc, char *argv[])
     delete[] indices1;
     delete[] indices2;
 
-    std::cout << "Loading Schur complement" << std::endl;
+    std::cout << "Computing Schur complement" << std::endl;
 
-    CHECK_ZERO(EpetraExt::MatrixMarketFileToCrsMatrix("SC.mtx", map2, colMap2, SC_ptr));
-    Teuchos::RCP<Epetra_CrsMatrix> SC = Teuchos::rcp(SC_ptr);
+    Teuchos::RCP<SchurOperator> Schur = Teuchos::rcp(new SchurOperator(A, M));
+    Schur->Compute();
 
     Epetra_Import import1(map1, map);
     Epetra_Import import2(map2, map);
@@ -160,8 +138,6 @@ int main(int argc, char *argv[])
         new Epetra_CrsMatrix(Copy, map2, map2, MaxNumEntriesPerRow));
     CHECK_ZERO(A22->Import(*A, import2, Insert));
     CHECK_ZERO(A22->FillComplete(map2, map2));
-    Teuchos::RCP<Epetra_CrsMatrix> Schur = Teuchos::rcp(
-        new Epetra_CrsMatrix(*SC));
     Teuchos::RCP<Epetra_CrsMatrix> B22 = Teuchos::rcp(
         new Epetra_CrsMatrix(Copy, map2, map2, MaxNumEntriesPerRow));
     CHECK_ZERO(B22->Import(*B, import2, Insert));
@@ -173,10 +149,13 @@ int main(int argc, char *argv[])
     Teuchos::RCP<Epetra_Operator> B22_operator = B22;
 
     Lyapunov::Solver<Epetra_OperatorWrapper, Epetra_MultiVectorWrapper,
-                     Epetra_SerialDenseMatrixWrapper> solver(Schur_operator, B22_operator, B22_operator);
+                     Epetra_SerialDenseMatrixWrapper> solver(
+                         Schur_operator, B22_operator, B22_operator);
 
-    Teuchos::RCP<Epetra_MultiVector> V = Teuchos::rcp(new Epetra_MultiVector(map2, 1000));
-    Teuchos::RCP<Epetra_SerialDenseMatrix> T = Teuchos::rcp(new Epetra_SerialDenseMatrix(1000, 1000));
+    Teuchos::RCP<Epetra_MultiVector> V = Teuchos::rcp(
+        new Epetra_MultiVector(map2, 1000));
+    Teuchos::RCP<Epetra_SerialDenseMatrix> T = Teuchos::rcp(
+        new Epetra_SerialDenseMatrix(1000, 1000));
 
     Epetra_MultiVectorWrapper VW(V);
     Epetra_SerialDenseMatrixWrapper TW(T);

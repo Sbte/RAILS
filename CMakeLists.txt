@@ -74,6 +74,7 @@ if (${Trilinos_FOUND})
     src/Epetra_MultiVectorWrapper.cpp
     src/Epetra_OperatorWrapper.cpp
     src/Epetra_SerialDenseMatrixWrapper.cpp
+    src/SchurOperator.cpp
     )
 
   list(APPEND TEST_SOURCES
@@ -85,6 +86,7 @@ if (${Trilinos_FOUND})
     src/Epetra_MultiVectorWrapper.hpp
     src/Epetra_OperatorWrapper.hpp
     src/Epetra_SerialDenseMatrixWrapper.hpp
+    src/SchurOperator.hpp
     )
 
   include_directories(${Trilinos_INCLUDE_DIRS})

@@ -68,7 +68,7 @@ void save_profiles(std::string const &filename)
     }
     else
     {
-        std::cout << std::setw(20) << "Class"
+        std::cout << std::setw(32) << "Class"
                   << std::setw(20) << "Name"
                   << std::setw(20) << "Total time"
                   << std::setw(20) << "Time per call"
@@ -86,7 +86,7 @@ void save_profiles(std::string const &filename)
                 cls = name.substr(0, pos);
                 name.erase(0, pos + 2);
             }
-            std::cout << std::setw(20) << cls
+            std::cout << std::setw(32) << cls
                       << std::setw(20) << name
                       << std::setw(20) << it->time
                       << std::setw(20) << it->time / (double)it->calls
