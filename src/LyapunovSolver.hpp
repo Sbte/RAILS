@@ -79,12 +79,13 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
 
     MultiVector W = V;
 
-    MultiVector AV(V, restart_size_ + expand_size_);
-    DenseMatrix VAV(restart_size_ + expand_size_, restart_size_ + expand_size_);
+    int max_size = std::min(restart_size_, n) + expand_size_;
+    MultiVector AV(V, max_size);
+    DenseMatrix VAV(max_size, max_size);
     AV.resize(0);
 
-    MultiVector BV(V, restart_size_ + expand_size_);
-    DenseMatrix VBV(restart_size_ + expand_size_, restart_size_ + expand_size_);
+    MultiVector BV(V, max_size);
+    DenseMatrix VBV(max_size, max_size);
     BV.resize(0);
 
     double r0 = B_.norm();
