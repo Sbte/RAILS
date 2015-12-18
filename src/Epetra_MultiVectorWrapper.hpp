@@ -46,6 +46,7 @@ public:
     Epetra_MultiVectorWrapper &operator +=(Epetra_MultiVectorWrapper const &other);
 
     Epetra_MultiVectorWrapper operator +(Epetra_MultiVectorWrapper const &other) const;
+    Epetra_MultiVectorWrapper operator *(Epetra_SerialDenseMatrixWrapper const &other) const;
 
     Epetra_MultiVector &operator *();
 
@@ -72,8 +73,6 @@ public:
     Epetra_SerialDenseMatrixWrapper dot(Epetra_MultiVectorWrapper const &other) const;
 
     void random();
-
-    Epetra_MultiVectorWrapper apply(Epetra_SerialDenseMatrixWrapper const &other) const;
 };
 
 // Helper functions

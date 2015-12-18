@@ -21,6 +21,8 @@ public:
     Epetra_SerialDenseMatrix &operator *();
     Epetra_SerialDenseMatrix const &operator *() const;
 
+    Epetra_SerialDenseMatrixWrapper operator *(Epetra_SerialDenseMatrixWrapper const &other) const;
+
     operator double*() const;
 
     double &operator ()(int m, int n = 0);
@@ -38,8 +40,6 @@ public:
     int N() const;
 
     void eigs(Epetra_SerialDenseMatrixWrapper &v, Epetra_SerialDenseMatrixWrapper &d) const;
-
-    Epetra_SerialDenseMatrixWrapper apply(Epetra_SerialDenseMatrixWrapper const &other) const;
 };
 
 #endif

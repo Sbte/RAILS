@@ -90,7 +90,7 @@ TEST(ScalarWrapper, Apply)
 {
     ScalarWrapper a(8);
     ScalarWrapper b(3);
-    ScalarWrapper c = a.apply(b);
+    ScalarWrapper c = a * b;
 
     EXPECT_DOUBLE_EQ(8, a);
     EXPECT_DOUBLE_EQ(3, b);
@@ -118,7 +118,7 @@ TEST(ScalarWrapper, View)
     EXPECT_DOUBLE_EQ(2, b);
 
     ScalarWrapper c(3);
-    a.view(0) = c.apply(a.view(0));
+    a.view(0) = c * a.view(0);
 
     EXPECT_DOUBLE_EQ(6, a);
     EXPECT_DOUBLE_EQ(6, b);

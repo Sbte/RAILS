@@ -53,8 +53,27 @@ Epetra_SerialDenseMatrix &Epetra_SerialDenseMatrixWrapper::operator *()
 
 Epetra_SerialDenseMatrix const &Epetra_SerialDenseMatrixWrapper::operator *() const
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "*");
+    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "* 2");
     return *ptr_;
+}
+
+Epetra_SerialDenseMatrixWrapper Epetra_SerialDenseMatrixWrapper::operator *(
+    Epetra_SerialDenseMatrixWrapper const &other) const
+{
+    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "* SDM");
+    Epetra_SerialDenseMatrixWrapper out(Teuchos::rcp(new Epetra_SerialDenseMatrix(*other)));
+    out.resize(M(), other.N());
+
+    if (N() != other.M())
+    {
+        std::cerr << "Incomplatible matrices of sizes "
+                  << M() << "x" << N() << " and "
+                  << other.M() << "x" << other.N() << std::endl;
+        return out;
+    }
+
+    ptr_->Apply(*other, *out);
+    return out;
 }
 
 Epetra_SerialDenseMatrixWrapper::operator double*() const
@@ -139,23 +158,4 @@ void Epetra_SerialDenseMatrixWrapper::eigs(Epetra_SerialDenseMatrixWrapper &v,
 
     if (info)
         std::cerr << "Eigenvalues info = " << info << std::endl;
-}
-
-Epetra_SerialDenseMatrixWrapper Epetra_SerialDenseMatrixWrapper::apply(
-    Epetra_SerialDenseMatrixWrapper const &other) const
-{
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "apply");
-    Epetra_SerialDenseMatrixWrapper out(Teuchos::rcp(new Epetra_SerialDenseMatrix(*other)));
-    out.resize(M(), other.N());
-
-    if (N() != other.M())
-    {
-        std::cerr << "Incomplatible matrices of sizes "
-                  << M() << "x" << N() << " and "
-                  << other.M() << "x" << other.N() << std::endl;
-        return out;
-    }
-
-    ptr_->Apply(*other, *out);
-    return out;
 }

@@ -247,7 +247,7 @@ int SchurOperator::Apply(const Epetra_MultiVector& X, Epetra_MultiVector& Y) con
         Teuchos::rcp_const_cast<Epetra_MultiVector>(Teuchos::rcp(&X2, false)));
 
     // X22 * X = V * (T * (V' * X));
-    Epetra_MultiVectorWrapper X22 = VW.apply(TW.apply(VW.dot(X2W)));
+    Epetra_MultiVectorWrapper X22 = VW * (TW * VW.dot(X2W));
 
     // X12 * X = - A11 \ (A12 * (X22 * X));
     Epetra_MultiVectorWrapper X12(Teuchos::rcp(&tmp1, false), X.NumVectors());
@@ -267,7 +267,7 @@ int SchurOperator::Apply(const Epetra_MultiVector& X, Epetra_MultiVector& Y) con
     CHECK_ZERO(A12_->SetUseTranspose(true));
     CHECK_ZERO(A12_->Apply(tmp2, *X21));
     CHECK_ZERO(A12_->SetUseTranspose(false));
-    X21 = VW.apply(TW.apply(VW.dot(X21)));
+    X21 = VW * (TW * VW.dot(X21));
     X21.scale(-1.0);
 
     // X11 * X = - A11 \ (A12 * (X21 * X));

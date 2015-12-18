@@ -62,7 +62,7 @@ public:
     RestartOperator(MultiVector &_V, DenseMatrix &_T): V(_V), T(_T) {}
     int operator ()(MultiVector &X, MultiVector &Y)
         {
-            Y.view(0, Y.N()-1) = V.apply(T.apply(V.dot(X)));
+            Y.view(0, Y.N()-1) = V * (T * V.dot(X));
             return 0;
         }
 };
@@ -96,12 +96,12 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
 
         // First compute AW
         START_TIMER("Apply A");
-        MultiVector AW = A_.apply(W);
+        MultiVector AW = A_ * W;
         END_TIMER("Apply A");
 
         START_TIMER("Apply B");
         // TODO: Should be transpose
-        MultiVector BW = B_.apply(W);
+        MultiVector BW = B_ * W;
         END_TIMER("Apply B");
 
         START_TIMER("Compute VAV");
@@ -257,20 +257,20 @@ int Solver<Matrix, MultiVector, DenseMatrix>::lanczos(MultiVector const &AV, Mul
         Q.resize(iter + 2);
 
         START_TIMER("Lanczos", "B apply");
-        Q.view(iter+1) = B_.apply(Q.view(iter));
-        Q.view(iter+1) = B_.apply(Q.view(iter+1));
+        Q.view(iter+1) = B_ * Q.view(iter);
+        Q.view(iter+1) = B_ * Q.view(iter+1);
         END_TIMER("Lanczos", "B apply");
 
         START_TIMER("Lanczos", "First part");
         DenseMatrix Z = V.dot(Q.view(iter));
-        Z = T.apply(Z);
-        Q.view(iter+1) += AV.apply(Z);
+        Z = T * Z;
+        Q.view(iter+1) += AV * Z;
         END_TIMER("Lanczos", "First part");
 
         START_TIMER("Lanczos", "Second part");
         Z = AV.dot(Q.view(iter));
-        Z = T.apply(Z);
-        Q.view(iter+1) += V.apply(Z);
+        Z = T * Z;
+        Q.view(iter+1) += V * Z;
         END_TIMER("Lanczos", "Second part");
         
         START_TIMER("Lanczos", "alpha");
@@ -311,7 +311,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::lanczos(MultiVector const &AV, Mul
     DenseMatrix v;
     H.eigs(v, eigenvalues);
 
-    eigenvectors = Q.apply(v);
+    eigenvectors = Q * v;
     END_TIMER("Lanczos", "eigv");
 
     return 0;

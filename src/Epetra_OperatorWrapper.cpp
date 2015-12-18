@@ -52,6 +52,16 @@ Epetra_Operator const &Epetra_OperatorWrapper::operator *() const
     FUNCTION_TIMER("Epetra_OperatorWrapper", "* 2");
     return *ptr_;
 }
+
+Epetra_MultiVectorWrapper Epetra_OperatorWrapper::operator *(
+    Epetra_MultiVectorWrapper const &other) const
+{
+    FUNCTION_TIMER("Epetra_OperatorWrapper", "* MV");
+    Epetra_MultiVectorWrapper out(Teuchos::rcp(new Epetra_MultiVector(*other)));
+    ptr_->Apply(*other, *out);
+    return out;
+}
+
 double Epetra_OperatorWrapper::norm(int n)
 {
     FUNCTION_TIMER("Epetra_OperatorWrapper", "norm");
@@ -60,15 +70,6 @@ double Epetra_OperatorWrapper::norm(int n)
     if (!mat.is_null())
         return mat->NormFrobenius();
     return ptr_->NormInf();
-}
-
-Epetra_MultiVectorWrapper Epetra_OperatorWrapper::apply(
-    Epetra_MultiVectorWrapper const &other) const
-{
-    FUNCTION_TIMER("Epetra_OperatorWrapper", "apply");
-    Epetra_MultiVectorWrapper out(Teuchos::rcp(new Epetra_MultiVector(*other)));
-    ptr_->Apply(*other, *out);
-    return out;
 }
 
 int Epetra_OperatorWrapper::eigs(Epetra_MultiVectorWrapper &V,

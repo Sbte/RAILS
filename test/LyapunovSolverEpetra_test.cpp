@@ -141,7 +141,7 @@ TEST(LyapunovSolverEpetraTest, Lanczos)
     Teuchos::RCP<Epetra_MultiVector> X = Teuchos::rcp(new Epetra_MultiVector(*V));
     Teuchos::RCP<Epetra_MultiVector> tmp = Teuchos::rcp(new Epetra_MultiVector(*VW));
 
-    Epetra_MultiVectorWrapper AV = AW.apply(VW);
+    Epetra_MultiVectorWrapper AV = AW * VW;
 
     int num_eigenvalues = 2;
     Epetra_SerialDenseMatrixWrapper H(num_eigenvalues + 1, num_eigenvalues + 1);

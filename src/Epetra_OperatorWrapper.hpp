@@ -33,11 +33,11 @@ public:
     Epetra_Operator &operator *();
     Epetra_Operator const &operator *() const;
 
+    Epetra_MultiVectorWrapper operator *(Epetra_MultiVectorWrapper const &other) const;
+
     int set_parameters(Teuchos::ParameterList &params);
 
     double norm(int n = 0);
-
-    Epetra_MultiVectorWrapper apply(Epetra_MultiVectorWrapper const &other) const;
     int eigs(Epetra_MultiVectorWrapper &V,
              Epetra_SerialDenseMatrixWrapper &D,
              int num) const;

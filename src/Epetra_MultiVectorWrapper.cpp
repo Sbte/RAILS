@@ -97,24 +97,56 @@ Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator /=(double other)
     return *this;
 }
 
-Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator -=(Epetra_MultiVectorWrapper const &other)
+Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator -=(
+    Epetra_MultiVectorWrapper const &other)
 {
     FUNCTION_TIMER("Epetra_MultiVectorWrapper", "-=");
     ptr_->Update(-1.0, *other, 1.0);
     return *this;
 }
-Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator +=(Epetra_MultiVectorWrapper const &other)
+Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator +=(
+    Epetra_MultiVectorWrapper const &other)
 {
     FUNCTION_TIMER("Epetra_MultiVectorWrapper", "+=");
     ptr_->Update(1.0, *other, 1.0);
     return *this;
 }
 
-Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::operator +(Epetra_MultiVectorWrapper const &other) const
+Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::operator +(
+    Epetra_MultiVectorWrapper const &other) const
 {
     FUNCTION_TIMER("Epetra_MultiVectorWrapper", "+");
     Epetra_MultiVectorWrapper e(*this);
     e += other;
+    return e;
+}
+
+Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::operator *(
+    Epetra_SerialDenseMatrixWrapper const &other) const
+{
+    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "* SDM");
+    Epetra_MultiVectorWrapper out(*this, other.N());
+
+    if (other.M() != ptr_->NumVectors())
+    {
+        std::cerr << "Incomplatible matrices of sizes "
+                  << ptr_->MyLength() << "x" << ptr_->NumVectors() << " and "
+                  << other.M() << "x" << other.N() << std::endl;
+        return out;
+    }
+
+    Teuchos::RCP<Epetra_MultiVector> mv = SerialDenseMatrixToMultiVector(
+        View, *other, ptr_->Comm());
+    (*out).Multiply('N', 'N', 1.0, *ptr_, *mv, 0.0);
+
+    return out;
+}
+
+Epetra_MultiVectorWrapper operator *(double d, Epetra_MultiVectorWrapper const &other)
+{
+    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "double *");
+    Epetra_MultiVectorWrapper e(other);
+    e *= d;
     return e;
 }
 
@@ -211,7 +243,7 @@ void Epetra_MultiVectorWrapper::orthogonalize()
         {
             Epetra_MultiVectorWrapper V = view(0, i-1);
             for (int k = 0; k < 2; k++)
-                v -= V.apply(V.dot(v));
+                v -= V * V.dot(v);
         }
         v /= v.norm();
     }
@@ -293,35 +325,6 @@ void Epetra_MultiVectorWrapper::random()
 {
     FUNCTION_TIMER("Epetra_MultiVectorWrapper", "random");
     ptr_->Random();
-}
-
-Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::apply(
-    Epetra_SerialDenseMatrixWrapper const &other) const
-{
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "apply 1");
-    Epetra_MultiVectorWrapper out(*this, other.N());
-
-    if (other.M() != ptr_->NumVectors())
-    {
-        std::cerr << "Incomplatible matrices of sizes "
-                  << ptr_->MyLength() << "x" << ptr_->NumVectors() << " and "
-                  << other.M() << "x" << other.N() << std::endl;
-        return out;
-    }
-
-    Teuchos::RCP<Epetra_MultiVector> mv = SerialDenseMatrixToMultiVector(
-        View, *other, ptr_->Comm());
-    (*out).Multiply('N', 'N', 1.0, *ptr_, *mv, 0.0);
-
-    return out;
-}
-
-Epetra_MultiVectorWrapper operator *(double d, Epetra_MultiVectorWrapper const &other)
-{
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "friend *");
-    Epetra_MultiVectorWrapper e(other);
-    e *= d;
-    return e;
 }
 
 Teuchos::RCP<Epetra_MultiVector> SerialDenseMatrixToMultiVector(
