@@ -98,27 +98,26 @@ endif()
 
 include_directories(${PROJECT_SOURCE_DIR})
 
+add_library(lyapunov ${SOURCES})
+target_link_libraries(lyapunov "slicot")
+
+if (${Trilinos_FOUND})
+  target_link_libraries(lyapunov ${Trilinos_LIBRARIES})
+  target_link_libraries(lyapunov ${Trilinos_TPL_LIBRARIES})
+
+  add_executable(main src/main.cpp)
+  target_link_libraries(main lyapunov)
+endif()
+
 enable_testing()
 find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS})
 
-if (${Trilinos_FOUND})
-  add_executable(main ${SOURCES} src/main.cpp)
-  target_link_libraries(main "slicot")
-  target_link_libraries(main ${Trilinos_LIBRARIES})
-  target_link_libraries(main ${Trilinos_TPL_LIBRARIES})
-endif()
-
 foreach(test_source ${TEST_SOURCES})
   get_filename_component(test_name ${test_source} NAME)
-  add_executable(${test_name} ${test_source} ${SOURCES})
+  add_executable(${test_name} ${test_source})
+  target_link_libraries(${test_name} lyapunov)
   target_link_libraries(${test_name} ${GTEST_BOTH_LIBRARIES})
-  target_link_libraries(${test_name} "slicot")
-
-  if (${Trilinos_FOUND})
-    target_link_libraries(${test_name} ${Trilinos_LIBRARIES})
-    target_link_libraries(${test_name} ${Trilinos_TPL_LIBRARIES})
-  endif()
 
   add_test(${test_name} ${test_name})
 endforeach()
