@@ -102,6 +102,8 @@ int SchurOperator::Compute()
     CHECK_ZERO(solver_->SetUseTranspose(false));
     CHECK_ZERO(solver_->SymbolicFactorization());
     CHECK_ZERO(solver_->NumericFactorization());
+
+    return 0;
 }
 
 int SchurOperator::Apply(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const
@@ -131,6 +133,8 @@ int SchurOperator::Apply(const Epetra_MultiVector& X, Epetra_MultiVector& Y) con
     END_TIMER("SchurOperator", "Apply A21");
 
     CHECK_ZERO(Y.Update(-1.0, tmp3, 1.0));
+
+    return 0;
 }
 
 const Epetra_Comm &SchurOperator:: Comm() const
