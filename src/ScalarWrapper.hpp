@@ -112,7 +112,6 @@ public:
         }
 
     double norm() {__scalar return *s_;}
-    double norm_frobenius() {__scalar return *s_;}
     double norm_inf() {__scalar return *s_;}
     void orthogonalize() {__scalar *s_ = 1;}
 

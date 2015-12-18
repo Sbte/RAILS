@@ -71,7 +71,9 @@ find_package(Trilinos)
 
 if (${Trilinos_FOUND})
   list(APPEND SOURCES
-    src/EpetraWrapper.cpp
+    src/Epetra_MultiVectorWrapper.cpp
+    src/Epetra_OperatorWrapper.cpp
+    src/Epetra_SerialDenseMatrixWrapper.cpp
     )
 
   list(APPEND TEST_SOURCES
@@ -80,7 +82,9 @@ if (${Trilinos_FOUND})
     )
 
   list(APPEND HEADERS
-    src/EpetraWrapper.hpp
+    src/Epetra_MultiVectorWrapper.hpp
+    src/Epetra_OperatorWrapper.hpp
+    src/Epetra_SerialDenseMatrixWrapper.hpp
     )
 
   include_directories(${Trilinos_INCLUDE_DIRS})
@@ -116,3 +120,4 @@ endif()
 add_test(LyapunovSolverTest tests)
 add_test(ScalarWrapperTest tests)
 add_test(SlicotWrapperTest tests)
+add_test(EpetraWrapperTest tests)

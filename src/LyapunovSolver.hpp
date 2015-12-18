@@ -40,7 +40,7 @@ template<class Matrix, class MultiVector, class DenseMatrix>
 int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix &T)
 {
     FUNCTION_TIMER("Solver");
-    int n = V.length();
+    int n = V.M();
     int expand_per_iteration = 3;
 
     V.resize(1);
@@ -57,7 +57,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
     DenseMatrix VBV(max_iter_ * expand_per_iteration + 1, max_iter_ * expand_per_iteration + 1);
     BV.resize(0);
 
-    double r0 = B_.norm_frobenius();
+    double r0 = B_.norm();
 
     for (int iter = 0; iter < max_iter_; iter++)
     {
@@ -77,9 +77,9 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
 
         // Now resize VAV. Resizing should not remove what was in VAV
         // previously
-        int num_vectors_V = V.num_vectors();
-        int num_vectors_AV = AV.num_vectors();
-        int s = num_vectors_AV + W.num_vectors();
+        int N_V = V.N();
+        int N_AV = AV.N();
+        int s = N_AV + W.N();
         VAV.resize(s, s);
         VBV.resize(s, s);
 
@@ -95,9 +95,9 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
             for (int i = 0; i < WAV_m; i++)
                 for (int j = 0; j < WAV_n; j++)
                 {
-                    VAV(i + num_vectors_AV, j) = WAV(i, j);
-                    VBV(i + num_vectors_AV, j) = WBV(i, j);
-                    VBV(j, i + num_vectors_AV) = WBV(i, j);
+                    VAV(i + N_AV, j) = WAV(i, j);
+                    VBV(i + N_AV, j) = WBV(i, j);
+                    VBV(j, i + N_AV) = WBV(i, j);
                 }
         }
 
@@ -107,7 +107,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
         int VAW_n = VAW.N();
         for (int i = 0; i < VAW_m; i++)
             for (int j = 0; j < VAW_n; j++)
-                VAV(i, j + num_vectors_AV) = VAW(i, j);
+                VAV(i, j + N_AV) = VAW(i, j);
 
         // Compute the bottom-right block of VBV
         DenseMatrix WBW = BW.dot(BW);
@@ -115,7 +115,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
         int WBW_n = WBW.N();
         for (int i = 0; i < WBW_m; i++)
             for (int j = 0; j < WBW_n; j++)
-                VBV(i + num_vectors_AV, j + num_vectors_AV) = WBW(i, j);
+                VBV(i + N_AV, j + N_AV) = WBW(i, j);
 
         // Now expand AV and BV
         AV.push_back(AW);
@@ -137,11 +137,11 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
                   << ". Estimate Lanczos, absolute: " << res
                   << ", relative: " << std::abs(res) / r0 / r0 << std::endl;
 
-        if (std::abs(res) / r0 / r0 < tol_ || iter + 1 >= max_iter_ || V.num_vectors() >= n)
+        if (std::abs(res) / r0 / r0 < tol_ || iter + 1 >= max_iter_ || V.N() >= n)
             break;
 
         int expand_vectors = std::min(std::min(expand_per_iteration,
-            eigenvalues.M()), n - V.num_vectors());
+            eigenvalues.M()), n - V.N());
 
         // Find the vectors belonging to the largest eigenvalues
         std::vector<int> indices;
@@ -151,7 +151,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
             V.push_back(eigenvectors.view(indices[i]));
         V.orthogonalize();
 
-        W = V.view(num_vectors_V, num_vectors_V+expand_vectors-1);
+        W = V.view(N_V, N_V+expand_vectors-1);
     }
 
     return 0;
@@ -259,7 +259,7 @@ static bool eigenvalue_sorter(std::pair<int, double> const &a, std::pair<int, do
 }
 
 template<class Matrix, class MultiVector, class DenseMatrix>
-int Solver<Matrix, MultiVector, DenseMatrix>::find_largest_eigenvalues(DenseMatrix const &eigenvalues, std::vector<int> &indices, int num_vectors)
+int Solver<Matrix, MultiVector, DenseMatrix>::find_largest_eigenvalues(DenseMatrix const &eigenvalues, std::vector<int> &indices, int N)
 {
     std::vector<std::pair<int, double> > index_to_value;
     for (int i = 0; i < eigenvalues.M(); i++)
@@ -267,7 +267,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::find_largest_eigenvalues(DenseMatr
     
     std::sort(index_to_value.begin(), index_to_value.end(), eigenvalue_sorter);
 
-    for (int i = 0; i < num_vectors; i++)
+    for (int i = 0; i < N; i++)
         indices.push_back(index_to_value[i].first);
 
     return 0;

@@ -9,6 +9,7 @@
 #include "Epetra_Vector.h"
 #include "Epetra_MultiVector.h"
 #include "Epetra_CrsMatrix.h"
+#include "Epetra_SerialDenseMatrix.h"
 
 #ifdef HAVE_MPI
 #include "Epetra_MpiComm.h"
@@ -20,7 +21,9 @@
 #include "EpetraExt_OperatorOut.h"
 #include "EpetraExt_MultiVectorOut.h"
 
-#include "EpetraWrapper.hpp"
+#include "Epetra_MultiVectorWrapper.hpp"
+#include "Epetra_SerialDenseMatrixWrapper.hpp"
+#include "Epetra_OperatorWrapper.hpp"
 #include "LyapunovSolver.hpp"
 
 #define TIMER_ON
@@ -166,14 +169,17 @@ int main(int argc, char *argv[])
     
     std::cout << "Creating solver" << std::endl;
 
-    Lyapunov::Solver<EpetraWrapper<Epetra_CrsMatrix>, EpetraWrapper<Epetra_MultiVector>,
-                     EpetraWrapper<Epetra_SerialDenseMatrix> > solver(Schur, B22, B22);
+    Teuchos::RCP<Epetra_Operator> Schur_operator = Schur;
+    Teuchos::RCP<Epetra_Operator> B22_operator = B22;
+
+    Lyapunov::Solver<Epetra_OperatorWrapper, Epetra_MultiVectorWrapper,
+                     Epetra_SerialDenseMatrixWrapper> solver(Schur_operator, B22_operator, B22_operator);
 
     Teuchos::RCP<Epetra_MultiVector> V = Teuchos::rcp(new Epetra_MultiVector(map2, 1000));
     Teuchos::RCP<Epetra_SerialDenseMatrix> T = Teuchos::rcp(new Epetra_SerialDenseMatrix(1000, 1000));
 
-    EpetraWrapper<Epetra_MultiVector> VW(V);
-    EpetraWrapper<Epetra_SerialDenseMatrix> TW(T);
+    Epetra_MultiVectorWrapper VW(V);
+    Epetra_SerialDenseMatrixWrapper TW(T);
 
     Teuchos::ParameterList params;
     params.set("Maximum iterations", 1000);
