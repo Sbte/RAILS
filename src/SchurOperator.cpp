@@ -140,12 +140,12 @@ const Epetra_Comm &SchurOperator:: Comm() const
 
 const Epetra_Map & SchurOperator::OperatorDomainMap() const
 {
-    return A11_->DomainMap();
+    return A22_->DomainMap();
 }
 
 const Epetra_Map & SchurOperator::OperatorRangeMap() const
 {
-    return A11_->RangeMap();
+    return A22_->RangeMap();
 }
 
 int SchurOperator::ApplyInverse(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const

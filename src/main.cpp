@@ -60,87 +60,18 @@ int main(int argc, char *argv[])
 
     Epetra_BlockMap const &map = A->Map();
 
-    Epetra_Vector diag_m(map);
-    M->ExtractDiagonalCopy(diag_m);
-
-    int *indices1 = new int[diag_m.MyLength()];
-    int *indices2 = new int[diag_m.MyLength()];
-
-    int num_indices1 = 0;
-    int num_indices2 = 0;
-
-    // Iterate over M looking for nonzero parts
-    for (int i = 0; i < diag_m.MyLength(); i++)
-    {
-        if (abs(diag_m[i]) < 1e-15)
-            indices1[num_indices1++] = map.GID(i);
-        else
-            indices2[num_indices2++] = map.GID(i);
-    }
-
-    Epetra_Map map1(-1, num_indices1, indices1, 0, *Comm);
-    Epetra_Map map2(-1, num_indices2, indices2, 0, *Comm);
-
-    delete[] indices1;
-    delete[] indices2;
-
-    Epetra_Map const &colMap = A->ColMap();
-
-    Epetra_Vector diag_m_col(colMap);
-    Epetra_Import colImport(colMap, map);
-    diag_m_col.Import(diag_m, colImport, Insert);
-
-    indices1 = new int[colMap.NumMyElements()];
-    indices2 = new int[colMap.NumMyElements()];
-
-    num_indices1 = 0;
-    num_indices2 = 0;
-
-    // Iterate over M looking for nonzero parts
-    for (int i = 0; i < colMap.NumMyElements(); i++)
-    {
-        if (abs(diag_m_col[i]) < 1e-15)
-            indices1[num_indices1++] = colMap.GID(i);
-        else
-            indices2[num_indices2++] = colMap.GID(i);
-    }
-
-    Epetra_Map colMap1(-1, num_indices1, indices1, 0, *Comm);
-    Epetra_Map colMap2(-1, num_indices2, indices2, 0, *Comm);
-
-    delete[] indices1;
-    delete[] indices2;
-
     std::cout << "Computing Schur complement" << std::endl;
 
     Teuchos::RCP<SchurOperator> Schur = Teuchos::rcp(new SchurOperator(A, M));
     Schur->Compute();
 
-    Epetra_Import import1(map1, map);
-    Epetra_Import import2(map2, map);
+    Epetra_Map const &map2 = Schur->OperatorRangeMap();
+    Epetra_Import import(map2, map);
 
-    std::cout << "Splitting matrices" << std::endl;
-
-    int MaxNumEntriesPerRow = A->MaxNumEntries();
-    Teuchos::RCP<Epetra_CrsMatrix> A11 = Teuchos::rcp(
-        new Epetra_CrsMatrix(Copy, map1, map1, MaxNumEntriesPerRow));
-    CHECK_ZERO(A11->Import(*A, import1, Insert));
-    CHECK_ZERO(A11->FillComplete(map1, map1));
-    Teuchos::RCP<Epetra_CrsMatrix> A12 = Teuchos::rcp(
-        new Epetra_CrsMatrix(Copy, map1, map2, MaxNumEntriesPerRow));
-    CHECK_ZERO(A12->Import(*A, import1, Insert));
-    CHECK_ZERO(A12->FillComplete(map2, map1));
-    Teuchos::RCP<Epetra_CrsMatrix> A21 = Teuchos::rcp(
-        new Epetra_CrsMatrix(Copy, map2, map1, MaxNumEntriesPerRow));
-    CHECK_ZERO(A21->Import(*A, import2, Insert));
-    CHECK_ZERO(A21->FillComplete(map1, map2));
-    Teuchos::RCP<Epetra_CrsMatrix> A22 = Teuchos::rcp(
-        new Epetra_CrsMatrix(Copy, map2, map2, MaxNumEntriesPerRow));
-    CHECK_ZERO(A22->Import(*A, import2, Insert));
-    CHECK_ZERO(A22->FillComplete(map2, map2));
+    int MaxNumEntriesPerRow = B->MaxNumEntries();
     Teuchos::RCP<Epetra_CrsMatrix> B22 = Teuchos::rcp(
         new Epetra_CrsMatrix(Copy, map2, map2, MaxNumEntriesPerRow));
-    CHECK_ZERO(B22->Import(*B, import2, Insert));
+    CHECK_ZERO(B22->Import(*B, import, Insert));
     CHECK_ZERO(B22->FillComplete(map2, map2));
     
     std::cout << "Creating solver" << std::endl;
