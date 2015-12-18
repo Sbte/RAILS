@@ -169,7 +169,6 @@ void Epetra_MultiVectorWrapper::resize(int m)
     }
     else
     {
-        // TODO: Needs a test
         // Copy to ptr_allocated_ and view only part of that
         ptr_->ExtractCopy(ptr_allocated_->Values(), ptr_allocated_->MyLength());
         ptr_ = Teuchos::rcp(new Epetra_MultiVector(View, *ptr_allocated_, 0, m));

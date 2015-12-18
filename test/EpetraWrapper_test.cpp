@@ -239,6 +239,28 @@ TEST_F(EpetraWrapperTest, Resize)
     EXPECT_EQ(1, N);
 }
 
+TEST_F(EpetraWrapperTest, Resize2)
+{
+    // This is to test that if we copy a vector using =, after this
+    // the memory that was allocated is still belonging to what is
+    // in the vector and not what was there previously
+
+    Teuchos::RCP<Epetra_MultiVector> a = Teuchos::rcp(new Epetra_MultiVector(*map, 10));
+    Epetra_MultiVectorWrapper aw(a);
+    aw.random();
+    aw.resize(0);
+
+    Teuchos::RCP<Epetra_MultiVector> b = Teuchos::rcp(new Epetra_MultiVector(*map, 5));
+    Epetra_MultiVectorWrapper bw(b);
+    bw.random();
+
+    aw = bw;
+    EXPECT_VECTOR_EQ(*bw, *aw);
+
+    aw.resize(bw.N());
+    EXPECT_VECTOR_EQ(*bw, *aw);
+}
+
 TEST_F(EpetraWrapperTest, View)
 {
     Teuchos::RCP<Epetra_MultiVector> a = Teuchos::rcp(new Epetra_MultiVector(*map, 1));
