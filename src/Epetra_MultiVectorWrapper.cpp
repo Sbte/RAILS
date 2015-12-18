@@ -328,3 +328,11 @@ Teuchos::RCP<Epetra_MultiVector> SerialDenseMatrixToMultiVector(
     return Teuchos::rcp(new Epetra_MultiVector(
                             CV, map, src.A(), src.M(), src.N()));;
 }
+
+Teuchos::RCP<Epetra_SerialDenseMatrix> MultiVectorToSerialDenseMatrix(
+    Epetra_DataAccess CV, Epetra_MultiVector const &src)
+{
+    return Teuchos::rcp(new Epetra_SerialDenseMatrix(
+                            CV, src.Values(), src.MyLength(),
+                            src.MyLength(), src.NumVectors()));;
+}

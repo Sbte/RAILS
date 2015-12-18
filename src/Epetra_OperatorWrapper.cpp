@@ -42,7 +42,7 @@ Epetra_Operator const &Epetra_OperatorWrapper::operator *() const
 }
 double Epetra_OperatorWrapper::norm(int n)
 {
-    FUNCTION_TIMER("EpetraWrapper", "norm");
+    FUNCTION_TIMER("Epetra_OperatorWrapper", "norm");
     Teuchos::RCP<Epetra_CrsMatrix> mat =
         Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(ptr_);
     if (!mat.is_null())
@@ -53,7 +53,7 @@ double Epetra_OperatorWrapper::norm(int n)
 Epetra_MultiVectorWrapper Epetra_OperatorWrapper::apply(
     Epetra_MultiVectorWrapper const &other) const
 {
-    FUNCTION_TIMER("EpetraWrapper", "apply 2");
+    FUNCTION_TIMER("Epetra_OperatorWrapper", "apply");
     Epetra_MultiVectorWrapper out(Teuchos::rcp(new Epetra_MultiVector(*other)));
     ptr_->Apply(*other, *out);
     return out;

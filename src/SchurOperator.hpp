@@ -10,6 +10,7 @@ class Epetra_CrsMatrix;
 class Epetra_LinearProblem;
 class Epetra_Map;
 class Epetra_MultiVector;
+class Epetra_SerialDenseMatrix;
 
 class SchurOperator: public Epetra_Operator
 {
@@ -24,6 +25,11 @@ class SchurOperator: public Epetra_Operator
     Teuchos::RCP<Epetra_CrsMatrix> A12_;
     Teuchos::RCP<Epetra_CrsMatrix> A22_;
 
+    Teuchos::RCP<const Epetra_MultiVector> V_;
+    Teuchos::RCP<const Epetra_SerialDenseMatrix> T_;
+
+    bool hasSolution_;
+
 public:
     SchurOperator(Teuchos::RCP<Epetra_CrsMatrix> const &A,
                   Teuchos::RCP<Epetra_CrsMatrix> const &M);
@@ -33,6 +39,8 @@ public:
     int Compute();
 
     int SetUseTranspose(bool UseTranspose);
+
+    int SetSolution(const Epetra_MultiVector& V, const Epetra_SerialDenseMatrix& T);
 
     int Apply(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const;
 

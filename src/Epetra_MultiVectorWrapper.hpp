@@ -80,6 +80,8 @@ public:
 Teuchos::RCP<Epetra_MultiVector> SerialDenseMatrixToMultiVector(
     Epetra_DataAccess CV, Epetra_SerialDenseMatrix const &src,
     Epetra_Comm const &comm);
+Teuchos::RCP<Epetra_SerialDenseMatrix> MultiVectorToSerialDenseMatrix(
+    Epetra_DataAccess CV, Epetra_MultiVector const &src);
 
 Epetra_MultiVectorWrapper operator *(double d, Epetra_MultiVectorWrapper const &other);
 

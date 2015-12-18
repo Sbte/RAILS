@@ -33,14 +33,14 @@ Epetra_SerialDenseMatrixWrapper::Epetra_SerialDenseMatrixWrapper(int m, int n)
     :
     Epetra_SerialDenseMatrixWrapper()
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "constructor 4");
+    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "constructor 3");
     ptr_ = Teuchos::rcp(new Epetra_SerialDenseMatrix(m, n));
 }
 
 Epetra_SerialDenseMatrixWrapper &Epetra_SerialDenseMatrixWrapper::operator =(
     Epetra_SerialDenseMatrixWrapper const &other)
 {
-    FUNCTION_TIMER("EpetraWrapper", "=");
+    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "=");
     ptr_ = other.ptr_;
     return *this;
 }
@@ -144,7 +144,7 @@ void Epetra_SerialDenseMatrixWrapper::eigs(Epetra_SerialDenseMatrixWrapper &v,
 Epetra_SerialDenseMatrixWrapper Epetra_SerialDenseMatrixWrapper::apply(
     Epetra_SerialDenseMatrixWrapper const &other) const
 {
-    FUNCTION_TIMER("EpetraWrapper", "apply 3");
+    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "apply");
     Epetra_SerialDenseMatrixWrapper out(Teuchos::rcp(new Epetra_SerialDenseMatrix(*other)));
     out.resize(M(), other.N());
 
