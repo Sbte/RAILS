@@ -4,11 +4,6 @@
 #include "Teuchos_ParameterList.hpp"
 #include "Teuchos_XMLParameterListHelpers.hpp"
 
-#include <AnasaziBasicEigenproblem.hpp>
-#include <AnasaziEpetraAdapter.hpp>
-#include <AnasaziBlockKrylovSchurSolMgr.hpp>
-#include <AnasaziBlockDavidsonSolMgr.hpp>
-
 #include "Epetra_Map.h"
 #include "Epetra_LocalMap.h"
 #include "Epetra_Import.h"
@@ -22,6 +17,8 @@
 #else
 #include "Epetra_SerialComm.h"
 #endif
+
+#include <AnasaziTypes.hpp>
 
 #include "EpetraExt_CrsMatrixIn.h"
 #include "EpetraExt_OperatorOut.h"
@@ -91,11 +88,12 @@ int main(int argc, char *argv[])
     std::cout << "Creating solver" << std::endl;
 
     Teuchos::RCP<Epetra_Operator> Schur_operator = Schur;
+    Epetra_OperatorWrapper Schur_wrapper = Schur_operator;
     Teuchos::RCP<Epetra_Operator> B22_operator = B22;
 
     Lyapunov::Solver<Epetra_OperatorWrapper, Epetra_MultiVectorWrapper,
                      Epetra_SerialDenseMatrixWrapper> solver(
-                         Schur_operator, B22_operator, B22_operator);
+                         Schur_wrapper, B22_operator, B22_operator);
 
     Epetra_MultiVectorWrapper V;
     Epetra_SerialDenseMatrixWrapper T;
@@ -131,52 +129,30 @@ int main(int argc, char *argv[])
     }
 
     Schur->SetSolution(*V, *T);
+    Schur_wrapper.set_parameters(*params);
 
     START_TIMER("Compute eigenvalues");
 
-    Teuchos::RCP<Epetra_MultiVector> x = Teuchos::rcp(new Epetra_Vector(map));
-    Teuchos::RCP<Epetra_MultiVector> out = Teuchos::rcp(new Epetra_Vector(map));
-    x->PutScalar(1.0);
+    Epetra_MultiVectorWrapper eigenvectors;
+    Epetra_SerialDenseMatrixWrapper eigenvalues(0,0);
 
     Teuchos::ParameterList &eig_params = params->sublist("Eigenvalue Solver");
-
-    Teuchos::RCP<Anasazi::BasicEigenproblem<
-      double, Epetra_MultiVector, Epetra_Operator> > eig_problem =
-      Teuchos::rcp(new Anasazi::BasicEigenproblem<
-        double, Epetra_MultiVector, Epetra_Operator>(Schur_operator, x));
-    eig_problem->setHermitian(true);
-    eig_problem->setNEV(eig_params.get("Number of Eigenvalues", 10));
-
-    CHECK_ZERO(!eig_problem->setProblem());
-
     eig_params.set("Verbosity", Anasazi::Errors +
                    // Anasazi::IterationDetails +
                    Anasazi::Warnings +
                    Anasazi::FinalSummary);
 
-    Anasazi::BlockKrylovSchurSolMgr<
-        double, Epetra_MultiVector, Epetra_Operator>
-        sol_manager(eig_problem, eig_params);
+    Schur_wrapper.eigs(eigenvectors, eigenvalues,
+                       eig_params.get("Number of Eigenvalues", 10));
 
-    Anasazi::ReturnType ret;
-    ret = sol_manager.solve();
-    if (ret != Anasazi::Converged)
-        std::cout << "Eigensolver did not converge" << std::endl;
-
-    const Anasazi::Eigensolution<double, Epetra_MultiVector> &eig_sol =
-        eig_problem->getSolution();
-
-    const std::vector<Anasazi::Value<double> > &evals = eig_sol.Evals;
-    int num_eigs = evals.size();
-
+    int num_eigs = eigenvalues.M();
     double sum = 0.0;
     for (int i = 0; i < num_eigs; i++)
-        sum += evals[i].realpart;
+        sum += eigenvalues(i);
     for (int i = 0; i < num_eigs; i++)
     {
-        std::cout << std::setw(20) << evals[i].realpart
-                  << std::setw(20) << evals[i].imagpart
-                  << std::setw(20) << evals[i].realpart / sum
+        std::cout << std::setw(20) << eigenvalues(i)
+                  << std::setw(20) << eigenvalues(i) / sum
                   << std::endl;
     }
 

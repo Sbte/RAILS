@@ -50,6 +50,12 @@ public:
             s_ = new double[size_];
         }
 
+    template <class Operator>
+    static ScalarWrapper from_operator(Operator &op)
+        {
+            return ScalarWrapper();
+        }
+
     virtual ~ScalarWrapper()
         {
             if (!is_view_)
@@ -142,7 +148,12 @@ public:
     ScalarWrapper dot(ScalarWrapper const &other) const {__scalar return *this * other;}
     int num_vectors() const {return size_;}
     ScalarWrapper apply(ScalarWrapper const &other) const {return *this * other;}
-    void eigs(ScalarWrapper &v, ScalarWrapper &d) const {__scalar  *v.s_ = 1; *d.s_ = *s_;}
+    void eigs(ScalarWrapper &v, ScalarWrapper &d, int num = 1) const
+        {
+            __scalar
+            *v.s_ = 1;
+            *d.s_ = *s_;
+        }
 
     void random() {__scalar *s_ = 0.2462561245;}
 };

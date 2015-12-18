@@ -54,7 +54,6 @@ Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator =(
     if (!is_view_)
     {
         ptr_ = other.ptr_;
-        capacity_ = other.capacity_;
         size_ = other.size_;
         orthogonalized_ = other.orthogonalized_;
         return *this;
@@ -73,7 +72,6 @@ Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator =(
     if (!is_view_)
     {
         ptr_ = other.ptr_;
-        capacity_ = other.capacity_;
         size_ = other.size_;
         orthogonalized_ = other.orthogonalized_;
         return *this;
@@ -164,9 +162,16 @@ void Epetra_MultiVectorWrapper::resize(int m)
     {
         ptr_ = Teuchos::null;
     }
-    else
+    else if (ptr_.is_null() || (ptr_allocated_->Values() == ptr_->Values()))
     {
         // Now only view a part of ptr_allocated_
+        ptr_ = Teuchos::rcp(new Epetra_MultiVector(View, *ptr_allocated_, 0, m));
+    }
+    else
+    {
+        // TODO: Needs a test
+        // Copy to ptr_allocated_ and view only part of that
+        ptr_->ExtractCopy(ptr_allocated_->Values(), ptr_allocated_->MyLength());
         ptr_ = Teuchos::rcp(new Epetra_MultiVector(View, *ptr_allocated_, 0, m));
     }
     size_ = m;

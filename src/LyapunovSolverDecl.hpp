@@ -14,7 +14,7 @@ public:
     virtual ~Solver() {};
     
     template<class ParameterList>
-    int set_parameters(ParameterList params);
+    int set_parameters(ParameterList &params);
 
     // Solve A*V*T*V' + V*T*V'*A' + B*B' = 0
     int solve(MultiVector &V, DenseMatrix &T);
@@ -38,8 +38,10 @@ protected:
 
     int max_iter_;
     double tol_;
-    int expand_per_iteration_;
+    int expand_size_;
     int lanczos_iterations_;
+    int restart_size_;
+    int reduced_size_;
 };
 
 }

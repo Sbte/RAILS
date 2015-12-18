@@ -127,14 +127,14 @@ TEST(LyapunovSolverEpetraTest, Lanczos)
 
     // Create the solver object FIXME: Use M here not B
     Lyapunov::Solver<Epetra_OperatorWrapper, Epetra_MultiVectorWrapper,
-                     Epetra_SerialDenseMatrixWrapper > solver(A_operator, B_operator, B_operator);
+                     Epetra_SerialDenseMatrixWrapper > solver(A_operator, B_operator, M_operator);
 
     Teuchos::RCP<Epetra_MultiVector> V = Teuchos::rcp(new Epetra_MultiVector(*map, 2));
     Teuchos::RCP<Epetra_SerialDenseMatrix> T = Teuchos::rcp(new Epetra_SerialDenseMatrix(2, 2));
 
     Epetra_MultiVectorWrapper VW(V);
     Epetra_SerialDenseMatrixWrapper TW(T);
-    Epetra_OperatorWrapper AW(A);
+    Epetra_OperatorWrapper AW(A_operator);
 
     solver.solve(VW, TW);
 

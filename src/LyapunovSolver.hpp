@@ -23,21 +23,25 @@ Solver<Matrix, MultiVector, DenseMatrix>::Solver(Matrix const &A,
     M_(M),
     max_iter_(1000),
     tol_(1e-3),
-    expand_per_iteration_(3),
-    lanczos_iterations_(10)
+    expand_size_(3),
+    lanczos_iterations_(10),
+    restart_size_(max_iter_ * expand_size_),
+    reduced_size_(300)
 {
 }
 
 template<class Matrix, class MultiVector, class DenseMatrix>
 template<class ParameterList>
-int Solver<Matrix, MultiVector, DenseMatrix>::set_parameters(ParameterList params)
+int Solver<Matrix, MultiVector, DenseMatrix>::set_parameters(ParameterList &params)
 {
     max_iter_ = params.get("Maximum iterations", max_iter_);
     tol_ = params.get("Tolerance", tol_);
-    expand_per_iteration_ = params.get("Expand Size", expand_per_iteration_);
+    expand_size_ = params.get("Expand Size", expand_size_);
     lanczos_iterations_ = params.get("Lanczos iterations", lanczos_iterations_);
+    restart_size_ = params.get("Restart Size", restart_size_);
+    reduced_size_ = params.get("Reduced Size", reduced_size_);
 
-    if (lanczos_iterations_ <= expand_per_iteration_)
+    if (lanczos_iterations_ <= expand_size_)
     {
         std::cerr << "Amount of Lanczos iterations is smaller than "
                   << "the amount of vectors that are used to expand "
@@ -49,24 +53,38 @@ int Solver<Matrix, MultiVector, DenseMatrix>::set_parameters(ParameterList param
 }
 
 template<class Matrix, class MultiVector, class DenseMatrix>
+class RestartOperator
+{
+public:
+    MultiVector V;
+    DenseMatrix T;
+
+    RestartOperator(MultiVector &_V, DenseMatrix &_T): V(_V), T(_T) {}
+    int operator ()(MultiVector &X, MultiVector &Y)
+        {
+            Y.view(0, Y.N()-1) = V.apply(T.apply(V.dot(X)));
+            return 0;
+        }
+};
+
+template<class Matrix, class MultiVector, class DenseMatrix>
 int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix &T)
 {
     FUNCTION_TIMER("Solver");
     int n = V.M();
-    int expand_per_iteration = 3;
 
     V.resize(1);
     V.random();
     V.orthogonalize();
 
-    MultiVector W(V);
+    MultiVector W = V;
 
-    MultiVector AV(V, max_iter_ * expand_per_iteration + 1);
-    DenseMatrix VAV(max_iter_ * expand_per_iteration + 1, max_iter_ * expand_per_iteration + 1);
+    MultiVector AV(V, restart_size_ + expand_size_);
+    DenseMatrix VAV(restart_size_ + expand_size_, restart_size_ + expand_size_);
     AV.resize(0);
 
-    MultiVector BV(V, max_iter_ * expand_per_iteration + 1);
-    DenseMatrix VBV(max_iter_ * expand_per_iteration + 1, max_iter_ * expand_per_iteration + 1);
+    MultiVector BV(V, restart_size_ + expand_size_);
+    DenseMatrix VBV(restart_size_ + expand_size_, restart_size_ + expand_size_);
     BV.resize(0);
 
     double r0 = B_.norm();
@@ -98,7 +116,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
         // Now compute W'*AV and put it in VAV
         // We also compute V'*B*B'*V here for maximum efficiency
         // AV only exists after the first iteration
-        if (iter > 0)
+        if (N_AV > 0)
         {
             DenseMatrix WAV = W.dot(AV);
             DenseMatrix WBV = BW.dot(BV);
@@ -137,7 +155,34 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
 
         dense_solve(VAV, VBV, T);
 
-        int num_eigenvalues = 10;
+        // Restart the method with reduced_size_ vectors
+        if (V.N() > restart_size_)
+        {
+            std::cout << "Reached the maximum space size of " << restart_size_
+                      << ". Trying to restart with " << reduced_size_
+                      << " vectors" << std::endl;
+
+            RestartOperator<Matrix, MultiVector, DenseMatrix> op(V, T);
+            Matrix mat = Matrix::from_operator(op);
+            DenseMatrix eigs(0, 0);
+            mat.eigs(V, eigs, reduced_size_);
+
+            std::cout << "Restarted with " << V.N()
+                      << " vectors" << std::endl;
+
+            V.orthogonalize();
+            W = V;
+
+            VAV.resize(0, 0);
+            AV.resize(0);
+
+            VBV.resize(0, 0);
+            BV.resize(0);
+
+            continue;
+        }
+
+        int num_eigenvalues = lanczos_iterations_;
         DenseMatrix H(num_eigenvalues + 1, num_eigenvalues + 1);
         DenseMatrix eigenvalues(num_eigenvalues + 1, 1);
         MultiVector eigenvectors;
@@ -150,9 +195,15 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
                   << ", relative: " << std::abs(res) / r0 / r0 << std::endl;
 
         if (std::abs(res) / r0 / r0 < tol_ || iter + 1 >= max_iter_ || V.N() >= n)
+        {
+            std::cout << "The Lyapunov solver converged in " << iter+1
+                      << " iteration with a final relative residual of "
+                      << res << ". The size of the space used for the "
+                      << "solution is " << V.N() << std::endl;
             break;
+        }
 
-        int expand_vectors = std::min(std::min(expand_per_iteration,
+        int expand_vectors = std::min(std::min(expand_size_,
             eigenvalues.M()), n - V.N());
 
         // Find the vectors belonging to the largest eigenvalues
