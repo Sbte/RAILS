@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
         new Epetra_CrsMatrix(Copy, map2, map2, MaxNumEntriesPerRow));
     CHECK_ZERO(B22->Import(*B, import, Insert));
     CHECK_ZERO(B22->FillComplete(map2, map2));
-    
+
     std::cout << "Creating solver" << std::endl;
 
     Teuchos::RCP<Epetra_Operator> Schur_operator = Schur;
@@ -90,35 +90,40 @@ int main(int argc, char *argv[])
                      Epetra_SerialDenseMatrixWrapper> solver(
                          Schur_operator, B22_operator, B22_operator);
 
-    // Teuchos::RCP<Epetra_MultiVector> V = Teuchos::rcp(
-    //     new Epetra_MultiVector(map2, 1000));
-    // Teuchos::RCP<Epetra_SerialDenseMatrix> T = Teuchos::rcp(
-    //     new Epetra_SerialDenseMatrix(1000, 1000));
+    Epetra_MultiVectorWrapper V;
+    Epetra_SerialDenseMatrixWrapper T;
 
-    // Epetra_MultiVectorWrapper VW(V);
-    // Epetra_SerialDenseMatrixWrapper TW(T);
+    bool only_eigenvalues = false;
+    if (!only_eigenvalues)
+    {
+        V = Teuchos::rcp(
+            new Epetra_MultiVector(map2, 1000));
+        T = Teuchos::rcp(
+            new Epetra_SerialDenseMatrix(1000, 1000));
 
-    // Teuchos::ParameterList params;
-    // params.set("Maximum iterations", 1000);
-    // solver.set_parameters(params);
+        Teuchos::ParameterList params;
+        params.set("Maximum iterations", 1000);
+        solver.set_parameters(params);
 
-    // std::cout << "Performing solve" << std::endl;
+        std::cout << "Performing solve" << std::endl;
 
-    // solver.solve(VW, TW);
-    // EpetraExt::MultiVectorToMatrixMarketFile(
-    //     "V.mtx", *VW);
-    // EpetraExt::MultiVectorToMatrixMarketFile(
-    //     "T.mtx", *SerialDenseMatrixToMultiVector(View, *TW, V->Comm()));
+        solver.solve(V, T);
+        EpetraExt::MultiVectorToMatrixMarketFile(
+            "V.mtx", *V);
+        EpetraExt::MultiVectorToMatrixMarketFile(
+            "T.mtx", *SerialDenseMatrixToMultiVector(View, *T, A->Comm()));
+    }
+    else
+    {
+        Epetra_MultiVector *V_ptr, *T_ptr;
+        EpetraExt::MatrixMarketFileToMultiVector("V.mtx", map2, V_ptr);
+        Epetra_LocalMap local_map(V_ptr->NumVectors(), 0, *Comm);
+        EpetraExt::MatrixMarketFileToMultiVector("T.mtx", local_map, T_ptr);
 
-    Epetra_MultiVector *V_ptr, *T_ptr;
-    EpetraExt::MatrixMarketFileToMultiVector("V.mtx", map2, V_ptr);
-    Epetra_LocalMap local_map(V_ptr->NumVectors(), 0, *Comm);
-    EpetraExt::MatrixMarketFileToMultiVector("T.mtx", local_map, T_ptr);
-
-    Teuchos::RCP<Epetra_MultiVector> V = Teuchos::rcp(V_ptr);
-    Teuchos::RCP<Epetra_SerialDenseMatrix> T =
-      MultiVectorToSerialDenseMatrix(Copy, *T_ptr);
-    delete T_ptr;
+        V = Teuchos::rcp(V_ptr);
+        T = MultiVectorToSerialDenseMatrix(Copy, *T_ptr);
+        delete T_ptr;
+    }
 
     Schur->SetSolution(*V, *T);
 
@@ -142,11 +147,12 @@ int main(int argc, char *argv[])
                    Anasazi::Warnings +
                    Anasazi::FinalSummary);
     eig_params.set("Convergence Tolerance", 1e-6);
+    eig_params.set("Step Size", 10);
 
     Anasazi::BlockKrylovSchurSolMgr<
         double, Epetra_MultiVector, Epetra_Operator>
         sol_manager(eig_problem, eig_params);
-    
+
     Anasazi::ReturnType ret;
     ret = sol_manager.solve();
     if (ret != Anasazi::Converged)
