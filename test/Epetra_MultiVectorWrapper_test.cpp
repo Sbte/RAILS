@@ -17,17 +17,17 @@
                 EXPECT_DOUBLE_EQ((a)[j][i], (b)[j][i]);                 \
     }
 
-class EpetraWrapperTest : public ::testing::Test
+class Epetra_MultiVectorWrapperTest : public ::testing::Test
 {
 protected:
     Teuchos::RCP<Epetra_Map> map;
     Teuchos::RCP<Epetra_Comm> comm;
 
-    EpetraWrapperTest()
+    Epetra_MultiVectorWrapperTest()
         {
         }
 
-    virtual ~EpetraWrapperTest()
+    virtual ~Epetra_MultiVectorWrapperTest()
         {
         }
 
@@ -42,7 +42,7 @@ protected:
         }
 };
 
-TEST_F(EpetraWrapperTest, VectorAssignment)
+TEST_F(Epetra_MultiVectorWrapperTest, VectorAssignment)
 {
     Teuchos::RCP<Epetra_MultiVector> a = Teuchos::rcp(new Epetra_MultiVector(*map, 1));
     a->Random();
@@ -58,7 +58,7 @@ TEST_F(EpetraWrapperTest, VectorAssignment)
     EXPECT_VECTOR_EQ(*b, *bw);
 }
 
-TEST_F(EpetraWrapperTest, VectorAdditionAssignment)
+TEST_F(Epetra_MultiVectorWrapperTest, VectorAdditionAssignment)
 {
     Teuchos::RCP<Epetra_MultiVector> a = Teuchos::rcp(new Epetra_MultiVector(*map, 1));
     a->Random();
@@ -74,7 +74,7 @@ TEST_F(EpetraWrapperTest, VectorAdditionAssignment)
     EXPECT_VECTOR_EQ(*b, *bw);
 }
 
-TEST_F(EpetraWrapperTest, SubtractionAssignment)
+TEST_F(Epetra_MultiVectorWrapperTest, SubtractionAssignment)
 {
     Teuchos::RCP<Epetra_MultiVector> a = Teuchos::rcp(new Epetra_MultiVector(*map, 1));
     a->Random();
@@ -90,7 +90,7 @@ TEST_F(EpetraWrapperTest, SubtractionAssignment)
     EXPECT_VECTOR_EQ(*b, *bw);
 }
 
-TEST_F(EpetraWrapperTest, MultiplicationAssignment)
+TEST_F(Epetra_MultiVectorWrapperTest, MultiplicationAssignment)
 {
     Teuchos::RCP<Epetra_MultiVector> a = Teuchos::rcp(new Epetra_MultiVector(*map, 1));
     a->Random();
@@ -105,7 +105,7 @@ TEST_F(EpetraWrapperTest, MultiplicationAssignment)
     EXPECT_VECTOR_EQ(*b, *aw);
 }
 
-TEST_F(EpetraWrapperTest, DivisionAssignment)
+TEST_F(Epetra_MultiVectorWrapperTest, DivisionAssignment)
 {
     Teuchos::RCP<Epetra_MultiVector> a = Teuchos::rcp(new Epetra_MultiVector(*map, 1));
     a->Random();
@@ -120,7 +120,7 @@ TEST_F(EpetraWrapperTest, DivisionAssignment)
     EXPECT_VECTOR_EQ(*b, *aw);
 }
 
-TEST_F(EpetraWrapperTest, Addition)
+TEST_F(Epetra_MultiVectorWrapperTest, Addition)
 {
     Teuchos::RCP<Epetra_MultiVector> a = Teuchos::rcp(new Epetra_MultiVector(*map, 1));
     a->Random();
@@ -138,7 +138,7 @@ TEST_F(EpetraWrapperTest, Addition)
     EXPECT_VECTOR_EQ(*c, *cw);
 }
 
-TEST_F(EpetraWrapperTest, Multiplication)
+TEST_F(Epetra_MultiVectorWrapperTest, Multiplication)
 {
     Teuchos::RCP<Epetra_MultiVector> a = Teuchos::rcp(new Epetra_MultiVector(*map, 1));
     a->Random();
@@ -152,7 +152,7 @@ TEST_F(EpetraWrapperTest, Multiplication)
     EXPECT_VECTOR_EQ(*c, *cw);
 }
 
-TEST_F(EpetraWrapperTest, Norm)
+TEST_F(Epetra_MultiVectorWrapperTest, Norm)
 {
     Teuchos::RCP<Epetra_MultiVector> a = Teuchos::rcp(new Epetra_MultiVector(*map, 2));
     a->Random();
@@ -171,7 +171,7 @@ TEST_F(EpetraWrapperTest, Norm)
     EXPECT_DOUBLE_EQ(1.0, aw.norm());
 }
 
-TEST_F(EpetraWrapperTest, Orthogonalize)
+TEST_F(Epetra_MultiVectorWrapperTest, Orthogonalize)
 {
     Teuchos::RCP<Epetra_MultiVector> a = Teuchos::rcp(new Epetra_MultiVector(*map, 2));
     a->ReplaceGlobalValue(0, 0, 2.3);
@@ -188,7 +188,7 @@ TEST_F(EpetraWrapperTest, Orthogonalize)
     EXPECT_VECTOR_EQ(*c, *aw);
 }
 
-TEST_F(EpetraWrapperTest, Orthogonalize2)
+TEST_F(Epetra_MultiVectorWrapperTest, Orthogonalize2)
 {
     Teuchos::RCP<Epetra_MultiVector> a = Teuchos::rcp(new Epetra_MultiVector(*map, 1));
     a->ReplaceGlobalValue(0, 0, 2.3);
@@ -212,7 +212,7 @@ TEST_F(EpetraWrapperTest, Orthogonalize2)
     EXPECT_VECTOR_EQ(*c, *aw);
 }
 
-TEST_F(EpetraWrapperTest, Resize)
+TEST_F(Epetra_MultiVectorWrapperTest, Resize)
 {
     Teuchos::RCP<Epetra_MultiVector> a = Teuchos::rcp(new Epetra_MultiVector(*map, 1));
     Epetra_MultiVectorWrapper aw(a);
@@ -239,7 +239,7 @@ TEST_F(EpetraWrapperTest, Resize)
     EXPECT_EQ(1, N);
 }
 
-TEST_F(EpetraWrapperTest, Resize2)
+TEST_F(Epetra_MultiVectorWrapperTest, Resize2)
 {
     // This is to test that if we copy a vector using =, after this
     // the memory that was allocated is still belonging to what is
@@ -261,7 +261,7 @@ TEST_F(EpetraWrapperTest, Resize2)
     EXPECT_VECTOR_EQ(*bw, *aw);
 }
 
-TEST_F(EpetraWrapperTest, View)
+TEST_F(Epetra_MultiVectorWrapperTest, View)
 {
     Teuchos::RCP<Epetra_MultiVector> a = Teuchos::rcp(new Epetra_MultiVector(*map, 1));
     a->Random();
@@ -278,7 +278,7 @@ TEST_F(EpetraWrapperTest, View)
     EXPECT_VECTOR_EQ(*b, *aw);
 }
 
-TEST_F(EpetraWrapperTest, View2)
+TEST_F(Epetra_MultiVectorWrapperTest, View2)
 {
     Teuchos::RCP<Epetra_MultiVector> a = Teuchos::rcp(new Epetra_MultiVector(*map, 1));
     a->Random();

@@ -78,7 +78,7 @@ if (${Trilinos_FOUND})
     )
 
   list(APPEND TEST_SOURCES
-    test/EpetraWrapper_test.cpp
+    test/Epetra_MultiVectorWrapper_test.cpp
     test/LyapunovSolverEpetra_test.cpp
     )
 
