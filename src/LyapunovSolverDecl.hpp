@@ -38,6 +38,8 @@ protected:
 
     int max_iter_;
     double tol_;
+    int expand_per_iteration_;
+    int lanczos_iterations_;
 };
 
 }

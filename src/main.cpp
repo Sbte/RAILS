@@ -2,6 +2,7 @@
 
 #include <Teuchos_RCP.hpp>
 #include "Teuchos_ParameterList.hpp"
+#include "Teuchos_XMLParameterListHelpers.hpp"
 
 #include <AnasaziBasicEigenproblem.hpp>
 #include <AnasaziEpetraAdapter.hpp>
@@ -51,7 +52,13 @@ int main(int argc, char *argv[])
 
     //Get process ID and total number of processes
     int MyPID = Comm->MyPID();
-//     int NumProc = Comm->NumProc();
+
+    Teuchos::RCP<Teuchos::ParameterList> params = Teuchos::rcp(
+        new Teuchos::ParameterList);
+    if (argc > 1)
+    {
+        Teuchos::updateParametersFromXmlFile(argv[1], params.ptr());
+    }
 
     Epetra_CrsMatrix *A_ptr, *B_ptr, *M_ptr, *SC_ptr;
 
@@ -101,9 +108,7 @@ int main(int argc, char *argv[])
         T = Teuchos::rcp(
             new Epetra_SerialDenseMatrix(1000, 1000));
 
-        Teuchos::ParameterList params;
-        params.set("Maximum iterations", 1000);
-        solver.set_parameters(params);
+        solver.set_parameters(params->sublist("Lyapunov Solver"));
 
         std::cout << "Performing solve" << std::endl;
 
@@ -133,21 +138,21 @@ int main(int argc, char *argv[])
     Teuchos::RCP<Epetra_MultiVector> out = Teuchos::rcp(new Epetra_Vector(map));
     x->PutScalar(1.0);
 
+    Teuchos::ParameterList &eig_params = params->sublist("Eigenvalue Solver");
+
     Teuchos::RCP<Anasazi::BasicEigenproblem<
       double, Epetra_MultiVector, Epetra_Operator> > eig_problem =
       Teuchos::rcp(new Anasazi::BasicEigenproblem<
         double, Epetra_MultiVector, Epetra_Operator>(Schur_operator, x));
     eig_problem->setHermitian(true);
-    eig_problem->setNEV(100);
+    eig_problem->setNEV(eig_params.get("Number of Eigenvalues", 10));
+
     CHECK_ZERO(!eig_problem->setProblem());
 
-    Teuchos::ParameterList eig_params;
     eig_params.set("Verbosity", Anasazi::Errors +
-                   Anasazi::IterationDetails +
+                   // Anasazi::IterationDetails +
                    Anasazi::Warnings +
                    Anasazi::FinalSummary);
-    eig_params.set("Convergence Tolerance", 1e-6);
-    eig_params.set("Step Size", 10);
 
     Anasazi::BlockKrylovSchurSolMgr<
         double, Epetra_MultiVector, Epetra_Operator>

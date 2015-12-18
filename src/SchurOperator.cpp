@@ -97,6 +97,9 @@ int SchurOperator::Compute()
     Epetra_Import import1(map1, map);
     Epetra_Import import2(map2, map);
 
+    // -1 on the diagonal of M so scale A until we use M
+    A_->Scale(-1.0);
+
     int MaxNumEntriesPerRow = A_->MaxNumEntries() + 2;
     A11_ = Teuchos::rcp(
         new Epetra_CrsMatrix(Copy, map1, colMap1, MaxNumEntriesPerRow));

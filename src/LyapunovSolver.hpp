@@ -22,7 +22,9 @@ Solver<Matrix, MultiVector, DenseMatrix>::Solver(Matrix const &A,
     B_(B),
     M_(M),
     max_iter_(1000),
-    tol_(1e-4)
+    tol_(1e-3),
+    expand_per_iteration_(3),
+    lanczos_iterations_(10)
 {
 }
 
@@ -32,6 +34,16 @@ int Solver<Matrix, MultiVector, DenseMatrix>::set_parameters(ParameterList param
 {
     max_iter_ = params.get("Maximum iterations", max_iter_);
     tol_ = params.get("Tolerance", tol_);
+    expand_per_iteration_ = params.get("Expand Size", expand_per_iteration_);
+    lanczos_iterations_ = params.get("Lanczos iterations", lanczos_iterations_);
+
+    if (lanczos_iterations_ <= expand_per_iteration_)
+    {
+        std::cerr << "Amount of Lanczos iterations is smaller than "
+                  << "the amount of vectors that are used to expand "
+                  << "the space in every iteration" << std::endl;
+        return 1;
+    }
 
     return 0;
 }
