@@ -86,9 +86,8 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
     DenseMatrix VAV(max_size, max_size);
     AV.resize(0);
 
-    MultiVector BV(V, max_size);
+    MultiVector BV;
     DenseMatrix VBV(max_size, max_size);
-    BV.resize(0);
 
     double r0 = B_.norm();
 
@@ -96,15 +95,21 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
     {
         // Perform VAV = V'*A*V by doing VAV = [[VAV; W'*AV], V'*AW]
 
-        // First compute AW
+        // First compute AW and BW
         START_TIMER("Apply A");
         MultiVector AW = A_ * W;
         END_TIMER("Apply A");
 
         START_TIMER("Apply B");
-        // TODO: Should be transpose
-        MultiVector BW = B_ * W;
+        MultiVector BW = B_.transpose() * W;
         END_TIMER("Apply B");
+
+        // Initialize BV which looks like B', not V
+        if (!iter)
+        {
+            BV = MultiVector(BW, max_size);
+            BV.resize(0);
+        }
 
         START_TIMER("Compute VAV");
 
@@ -259,8 +264,8 @@ int Solver<Matrix, MultiVector, DenseMatrix>::lanczos(MultiVector const &AV, Mul
         Q.resize(iter + 2);
 
         START_TIMER("Lanczos", "B apply");
-        Q.view(iter+1) = B_ * Q.view(iter);
-        Q.view(iter+1) = B_ * Q.view(iter+1);
+        MultiVector Y = B_.transpose() * Q.view(iter);
+        Q.view(iter+1) = B_ * Y;
         END_TIMER("Lanczos", "B apply");
 
         START_TIMER("Lanczos", "First part");

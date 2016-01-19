@@ -16,6 +16,8 @@ class Epetra_OperatorWrapper
 {
     Teuchos::RCP<Epetra_Operator> ptr_;
     Teuchos::RCP<Teuchos::ParameterList> params_;
+
+    bool transpose_;
 public:
     Epetra_OperatorWrapper();
     Epetra_OperatorWrapper(Teuchos::RCP<Epetra_Operator> ptr);
@@ -27,6 +29,8 @@ public:
             return Epetra_OperatorWrapper(
                 Teuchos::rcp(new OperatorFromApplyMethod<Operator>(op)));
         }
+
+    Epetra_OperatorWrapper transpose() const;
 
     virtual ~Epetra_OperatorWrapper() {}
 

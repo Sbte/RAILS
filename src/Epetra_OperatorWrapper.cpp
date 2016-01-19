@@ -15,7 +15,8 @@
 
 Epetra_OperatorWrapper::Epetra_OperatorWrapper()
     :
-    ptr_(Teuchos::null)
+    ptr_(Teuchos::null),
+    transpose_(false)
 {}
 
 Epetra_OperatorWrapper::Epetra_OperatorWrapper(Teuchos::RCP<Epetra_Operator> ptr)
@@ -24,6 +25,9 @@ Epetra_OperatorWrapper::Epetra_OperatorWrapper(Teuchos::RCP<Epetra_Operator> ptr
 {
     FUNCTION_TIMER("Epetra_OperatorWrapper", "constructor 1");
     ptr_ = ptr;
+
+    if (!ptr.is_null())
+        transpose_ = ptr->UseTranspose();
 }
 
 Epetra_OperatorWrapper::Epetra_OperatorWrapper(Epetra_OperatorWrapper const &other)
@@ -32,8 +36,15 @@ Epetra_OperatorWrapper::Epetra_OperatorWrapper(Epetra_OperatorWrapper const &oth
 {
     FUNCTION_TIMER("Epetra_OperatorWrapper", "constructor 2");
     ptr_ = other.ptr_;
+    transpose_ = other.transpose_;
 }
 
+Epetra_OperatorWrapper Epetra_OperatorWrapper::transpose() const
+{
+    Epetra_OperatorWrapper tmp(*this);
+    tmp.transpose_ = !tmp.transpose_;
+    return tmp;
+}
 
 int Epetra_OperatorWrapper::set_parameters(Teuchos::ParameterList &params)
 {
@@ -57,8 +68,17 @@ Epetra_MultiVectorWrapper Epetra_OperatorWrapper::operator *(
     Epetra_MultiVectorWrapper const &other) const
 {
     FUNCTION_TIMER("Epetra_OperatorWrapper", "* MV");
-    Epetra_MultiVectorWrapper out(Teuchos::rcp(new Epetra_MultiVector(*other)));
+
+    bool use_transpose = ptr_->UseTranspose();
+    ptr_->SetUseTranspose(transpose_);
+
+    // Epetra_MultiVectorWrapper out(Teuchos::rcp(new Epetra_MultiVector(*other)));
+    Epetra_MultiVectorWrapper out(
+        Teuchos::rcp(new Epetra_MultiVector(
+                         ptr_->OperatorRangeMap(), other.N())));
     ptr_->Apply(*other, *out);
+
+    ptr_->SetUseTranspose(use_transpose);
     return out;
 }
 

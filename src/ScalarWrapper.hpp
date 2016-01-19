@@ -121,6 +121,11 @@ public:
     double norm_inf() {__scalar return *s_;}
     void orthogonalize() {__scalar *s_ = 1;}
 
+    ScalarWrapper transpose()
+        {
+            return *this;
+        }
+
     ScalarWrapper view(int m, int n = 0)
         {
             ScalarWrapper s;

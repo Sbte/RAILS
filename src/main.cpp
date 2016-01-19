@@ -82,9 +82,9 @@ int main(int argc, char *argv[])
 
     int MaxNumEntriesPerRow = B->MaxNumEntries();
     Teuchos::RCP<Epetra_CrsMatrix> B22 = Teuchos::rcp(
-        new Epetra_CrsMatrix(Copy, map2, map2, MaxNumEntriesPerRow));
+        new Epetra_CrsMatrix(Copy, map2, B->ColMap(), MaxNumEntriesPerRow));
     CHECK_ZERO(B22->Import(*B, import, Insert));
-    CHECK_ZERO(B22->FillComplete(map2, map2));
+    CHECK_ZERO(B22->FillComplete(B->DomainMap(), map2));
 
     std::cout << "Creating solver" << std::endl;
 

@@ -366,7 +366,9 @@ int SchurOperator::ApplyInverse(const Epetra_MultiVector& X, Epetra_MultiVector&
 
 int SchurOperator::SetUseTranspose(bool UseTranspose)
 {
-    std::cerr << "SetUseTransose not implemented" << std::endl;
+    if (UseTranspose)
+        std::cerr << "SetUseTranspose not implemented" << std::endl;
+
     return -1;
 }
 
