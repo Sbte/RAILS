@@ -74,7 +74,7 @@ double Epetra_OperatorWrapper::norm(int n)
 
 int Epetra_OperatorWrapper::eigs(Epetra_MultiVectorWrapper &V,
                                  Epetra_SerialDenseMatrixWrapper &D,
-                                 int num) const
+                                 int num, double tol) const
 {
     FUNCTION_TIMER("Epetra_OperatorWrapper", "eigs");
     Teuchos::RCP<Teuchos::ParameterList> params;
@@ -84,10 +84,11 @@ int Epetra_OperatorWrapper::eigs(Epetra_MultiVectorWrapper &V,
         params = params_;
 
     Teuchos::ParameterList &eig_params = params->sublist("Eigenvalue Solver");
-    if (!eig_params.isParameter("Convergence Tolerance"))
-        eig_params.set("Convergence Tolerance", 1e-6);
 
-    double tol = eig_params.get("Convergence Tolerance", 1e-6);
+    if (!eig_params.isParameter("Convergence Tolerance"))
+        eig_params.set("Convergence Tolerance", tol);
+
+    tol = eig_params.get("Convergence Tolerance", tol);
 
     //TODO: Maybe stop here if the eigenvalues become too small?
 

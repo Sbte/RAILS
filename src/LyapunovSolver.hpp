@@ -26,7 +26,8 @@ Solver<Matrix, MultiVector, DenseMatrix>::Solver(Matrix const &A,
     expand_size_(3),
     lanczos_iterations_(10),
     restart_size_(max_iter_ * expand_size_),
-    reduced_size_(300)
+    reduced_size_(300),
+    restart_tolerance_(tol_ * 1e-3)
 {
 }
 
@@ -40,6 +41,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::set_parameters(ParameterList &para
     lanczos_iterations_ = params.get("Lanczos iterations", lanczos_iterations_);
     restart_size_ = params.get("Restart Size", restart_size_);
     reduced_size_ = params.get("Reduced Size", reduced_size_);
+    restart_tolerance_ = params.get("Restart tolerance", tol_ * 1e-3);
 
     if (lanczos_iterations_ <= expand_size_)
     {
@@ -166,7 +168,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
             RestartOperator<Matrix, MultiVector, DenseMatrix> op(V, T);
             Matrix mat = Matrix::from_operator(op);
             DenseMatrix eigs(0, 0);
-            mat.eigs(V, eigs, reduced_size_);
+            mat.eigs(V, eigs, reduced_size_, restart_tolerance_);
 
             std::cout << "Restarted with " << V.N()
                       << " vectors" << std::endl;

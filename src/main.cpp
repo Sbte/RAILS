@@ -74,6 +74,7 @@ int main(int argc, char *argv[])
     std::cout << "Computing Schur complement" << std::endl;
 
     Teuchos::RCP<SchurOperator> Schur = Teuchos::rcp(new SchurOperator(A, M));
+    Schur->set_parameters(params->sublist("Schur Operator"));
     Schur->Compute();
 
     Epetra_Map const &map2 = Schur->OperatorRangeMap();

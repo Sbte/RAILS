@@ -26,6 +26,15 @@ SchurOperator::SchurOperator(Teuchos::RCP<Epetra_CrsMatrix> const &A,
     hasSolution_(false)
 {}
 
+int SchurOperator::set_parameters(Teuchos::ParameterList &params)
+{
+    nx_ = params.get("nx", 1);
+    ny_ = params.get("ny", 1);
+    nz_ = params.get("nz", 1);
+
+    return 0;
+}
+
 int SchurOperator::Compute()
 {
     FUNCTION_TIMER("SchurOperator", "Compute");
@@ -123,15 +132,12 @@ int SchurOperator::Compute()
     int idx2 = len+1;
 
     //TODO: Don't hardcode this! 
-    int nx = 4;
-    int ny = 128;
-    // int nz = 16;
     for (int i = 0; i < A11_->NumMyRows(); i++)
     {
         if (A11_->GRID(i) % 6 == 3)
         {
             int m = A11_->GRID(i) / 6;
-            if ((m % nx + (m / nx) % ny) % 2 == 0)
+            if ((m % nx_ + (m / nx_) % ny_) % 2 == 0)
             {
                 CHECK_ZERO(A11_->InsertGlobalValues(
                     A11_->GRID(i), 1, &val, &idx1));
@@ -154,7 +160,7 @@ int SchurOperator::Compute()
             if (i % 6 == 3)
             {
                 int m = i / 6;
-                if ((m % nx + (m / nx) % ny) % 2 == 0)
+                if ((m % nx_ + (m / nx_) % ny_) % 2 == 0)
                 {
                     indices1[i / 6 / 2] = i;
                     values1[i / 6 / 2] = 1.0;

@@ -2,6 +2,7 @@
 #define SCHUROPERATOR_H
 
 #include <Teuchos_RCP.hpp>
+#include <Teuchos_ParameterList.hpp>
 
 #include <Epetra_Operator.h>
 
@@ -30,11 +31,15 @@ class SchurOperator: public Epetra_Operator
 
     bool hasSolution_;
 
+    int nx_, ny_, nz_;
+
 public:
     SchurOperator(Teuchos::RCP<Epetra_CrsMatrix> const &A,
                   Teuchos::RCP<Epetra_CrsMatrix> const &M);
 
     virtual ~SchurOperator() {};
+
+    int set_parameters(Teuchos::ParameterList &params);
 
     int Compute();
 

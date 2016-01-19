@@ -147,7 +147,7 @@ public:
     int length() {return 1;} const
     ScalarWrapper dot(ScalarWrapper const &other) const {__scalar return *this * other;}
     int num_vectors() const {return size_;}
-    void eigs(ScalarWrapper &v, ScalarWrapper &d, int num = 1) const
+    void eigs(ScalarWrapper &v, ScalarWrapper &d, int num = 1, double tol = 1.0) const
         {
             __scalar
             *v.s_ = 1;

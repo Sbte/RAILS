@@ -42,6 +42,7 @@ protected:
     int lanczos_iterations_;
     int restart_size_;
     int reduced_size_;
+    double restart_tolerance_;
 };
 
 }

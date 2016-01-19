@@ -40,7 +40,7 @@ public:
     double norm(int n = 0);
     int eigs(Epetra_MultiVectorWrapper &V,
              Epetra_SerialDenseMatrixWrapper &D,
-             int num) const;
+             int num, double tol = 1e-6) const;
 };
 
 #include <Epetra_Operator.h>
