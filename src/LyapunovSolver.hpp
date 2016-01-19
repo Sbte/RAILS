@@ -197,12 +197,12 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
                   << ". Estimate Lanczos, absolute: " << res
                   << ", relative: " << std::abs(res) / r0 / r0 << std::endl;
 
-        if (std::abs(res) / r0 / r0 < tol_ || iter + 1 >= max_iter_ || V.N() >= n)
+        if (std::abs(res) < tol_ * r0 * r0 || iter + 1 >= max_iter_ || V.N() >= n)
         {
             std::cout << "The Lyapunov solver converged in " << iter+1
                       << " iteration with a final relative residual of "
-                      << res << ". The size of the space used for the "
-                      << "solution is " << V.N() << std::endl;
+                      << res / r0 / r0 << ". The size of the space used "
+                      << "for the solution is " << V.N() << std::endl;
             break;
         }
 
