@@ -1,7 +1,9 @@
 #ifndef LYAPUNOV_TIMER_H
 #define LYAPUNOV_TIMER_H
 
+#ifdef HAVE_MPI
 #include <mpi.h>
+#endif
 
 #include <ctime>
 #include <string>
@@ -17,11 +19,13 @@ public:
         
     double wallTime()
         {
+#ifdef HAVE_MPI
             int mpiInit;
             MPI_Initialized(&mpiInit);
             if (mpiInit)
                 return MPI_Wtime();
             else
+#endif
                 return (double) std::clock() / CLOCKS_PER_SEC;
         }
         

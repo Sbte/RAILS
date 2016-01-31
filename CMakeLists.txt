@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(Lyapunov CXX)
+project(Lyapunov C CXX)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   message(STATUS "Using GNU compiler flags")
@@ -46,14 +46,17 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
 endif()
 
 set(SOURCES
-  src/SlicotWrapper.cpp
-  src/Timer.cpp
+  src/SlicotWrapper
+  src/Timer
+  src/StlVector
+  src/StlWrapper
   )
 
 set(TEST_SOURCES
   test/ScalarWrapper_test
   test/SlicotWrapper_test
   test/LyapunovSolver_test
+  test/StlWrapper_test
   )
 
 # Manually add headers without source file
@@ -62,12 +65,14 @@ set(HEADERS ${HEADERS}
   src/LyapunovSolverDecl.hpp
   src/SlicotWrapper.hpp
   src/ScalarWrapper.hpp
+  src/StlVector.hpp
+  src/StlWrapper.hpp
   )
 
 if (DEFINED ENV{TRILINOS_HOME})
   set(Trilinos_DIR "$ENV{TRILINOS_HOME}/lib/cmake/Trilinos")
 endif()
-find_package(Trilinos)
+find_package(Trilinos QUIET)
 
 if (${Trilinos_FOUND})
   list(APPEND SOURCES
@@ -101,6 +106,9 @@ include_directories(${PROJECT_SOURCE_DIR})
 
 add_library(lyapunov ${SOURCES})
 target_link_libraries(lyapunov "slicot")
+target_link_libraries(lyapunov "blas")
+target_link_libraries(lyapunov "lapack")
+link_directories(${PROJECT_SOURCE_DIR}/lib)
 
 if (${Trilinos_FOUND})
   target_link_libraries(lyapunov ${Trilinos_LIBRARIES})
@@ -114,11 +122,13 @@ enable_testing()
 find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS})
 
+find_package(Threads REQUIRED)
 foreach(test_source ${TEST_SOURCES})
   get_filename_component(test_name ${test_source} NAME)
   add_executable(${test_name} ${test_source})
   target_link_libraries(${test_name} lyapunov)
   target_link_libraries(${test_name} ${GTEST_BOTH_LIBRARIES})
-
+  target_link_libraries(${test_name} ${CMAKE_THREAD_LIBS_INIT})
+  
   add_test(${test_name} ${test_name})
 endforeach()
