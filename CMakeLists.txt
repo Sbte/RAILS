@@ -56,6 +56,7 @@ set(TEST_SOURCES
   test/ScalarWrapper_test
   test/SlicotWrapper_test
   test/LyapunovSolver_test
+  test/GenericDenseMatrixWrapper_test
   test/GenericMultiVectorWrapper_test
   test/GenericOperatorWrapper_test
   )
