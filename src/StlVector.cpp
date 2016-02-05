@@ -1,6 +1,7 @@
 #include "StlVector.hpp"
 
 #include <cstring>
+#include <ostream>
 
 StlVector::StlVector(int m, int n)
     :
@@ -53,4 +54,15 @@ int StlVector::set(StlVector const &other)
 double *StlVector::get()
 {
     return ptr_;
+}
+
+std::ostream &operator<<(std::ostream &os, StlVector &vec)
+{
+    for (int i = 0; i < vec.m_; ++i)
+    {
+        for (int j = 0; j < vec.n_; ++j)
+            os << vec(i, j) << " ";
+        os << std::endl;
+    }
+    return os;
 }

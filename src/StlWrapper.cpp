@@ -202,7 +202,7 @@ double const &StlWrapper::operator ()(int m, int n) const
 int StlWrapper::scale(double factor)
 {
     FUNCTION_TIMER("StlWrapper", "scale");
-    BlasWrapper::DSCAL(m_ * n_, factor, ptr_->get());
+    BlasWrapper::DSCAL(m_max_ * n_, factor, ptr_->get());
     return 0;
 }
 
@@ -354,12 +354,18 @@ int StlWrapper::N() const
     return transpose_ ? m_ : n_;
 }
 
+int StlWrapper::LDA() const
+{
+    FUNCTION_TIMER("StlWrapper", "N");
+    return transpose_ ? n_max_ : m_max_;
+}
+
 StlWrapper StlWrapper::dot(StlWrapper const &other) const
 {
     FUNCTION_TIMER("StlWrapper", "dot");
     StlWrapper out(N(), other.N());
 
-    if (other.N() != N())
+    if (other.M() != M())
     {
         std::cerr << "Incomplatible matrices of sizes "
                   << M() << "x" << N() << " and "

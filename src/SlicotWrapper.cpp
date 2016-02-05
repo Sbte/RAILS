@@ -5,7 +5,8 @@
 namespace Lyapunov {
 
 void sb03md(char dico, char job, char fact, char trans, int n,
-            double *A, double *X, double *scale, int *info)
+            double *A, int lda, double *X, int ldx,
+            double *scale, int *info)
 {
     double *U = new double[n*n];
 
@@ -22,7 +23,7 @@ void sb03md(char dico, char job, char fact, char trans, int n,
     // Solve A'*X + X*A = scale*C
     // See http://www.icm.tu-bs.de/NICONET/doc/SB03MD.html
     sb03md_(&dico, &job, &fact, &trans,
-            &n, A, &n, U, &n, X, &n,
+            &n, A, &lda, U, &n, X, &ldx,
             scale, &sep, &ferr, ar, ai, NULL,
             work, &ldwork, info);
 

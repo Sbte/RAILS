@@ -131,6 +131,12 @@ int Epetra_SerialDenseMatrixWrapper::N() const
     return ptr_->N();
 }
 
+int Epetra_SerialDenseMatrixWrapper::LDA() const
+{
+    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "LDA");
+    return ptr_->LDA();
+}
+
 void Epetra_SerialDenseMatrixWrapper::eigs(Epetra_SerialDenseMatrixWrapper &v,
                                            Epetra_SerialDenseMatrixWrapper &d) const
 {

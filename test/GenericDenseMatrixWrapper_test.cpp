@@ -26,7 +26,7 @@ protected:
         A(2, 2),
         B(2, 2),
         C(2, 2),
-        D(2, 2)
+        D(10, 10)
         {}
 
     virtual ~GenericDenseMatrixWrapperTest() {}
@@ -59,6 +59,17 @@ TYPED_TEST(GenericDenseMatrixWrapperTest, Eigs)
 
     EXPECT_NEAR((5.0 - sqrt(25.0 + 20.0)) / 2.0, this->C(0,0), 1e-6);
     EXPECT_NEAR((5.0 + sqrt(25.0 + 20.0)) / 2.0, this->C(1,0), 1e-6);
+}
+
+TYPED_TEST(GenericDenseMatrixWrapperTest, Scale)
+{
+    this->A.scale(0.0);
+    this->D.scale(0.0);
+    this->D(1, 1) = 1.0;
+    this->D.resize(2, 2);
+    this->D.scale(0.0);
+
+    EXPECT_VECTOR_EQ(this->A, this->D);
 }
 
 #endif

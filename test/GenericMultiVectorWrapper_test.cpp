@@ -229,6 +229,32 @@ TYPED_TEST(GenericMultiVectorWrapperTest, Dot)
     EXPECT_DOUBLE_EQ(sum, c(0, 0));
 }
 
+TYPED_TEST(GenericMultiVectorWrapperTest, Dot2)
+{
+    // Dot with unequal sizes
+    this->a.resize(2);
+    this->a.random();
+    this->b.resize(3);
+    this->b.random();
+
+    auto c = this->a.dot(this->b);
+
+    EXPECT_EQ(2, c.M());
+    EXPECT_EQ(3, c.N());
+
+    for (int k = 0; k < this->b.N(); ++k)
+    {
+        for (int j = 0; j < this->a.N(); ++j)
+        {
+            double sum = 0.0;
+            for (int i = 0; i < this->a.M(); ++i)
+                sum += this->a(i, j) * this->b(i, k);
+
+            EXPECT_DOUBLE_EQ(sum, c(j, k));
+        }
+    }
+}
+
 TYPED_TEST(GenericMultiVectorWrapperTest, Orthogonalize)
 {
     this->resize(2);
@@ -270,6 +296,42 @@ TYPED_TEST(GenericMultiVectorWrapperTest, Orthogonalize2)
     this->a.orthogonalize();
 
     EXPECT_VECTOR_EQ(this->b, this->a);
+}
+
+TYPED_TEST(GenericMultiVectorWrapperTest, Orthogonalize3)
+{
+    // Test with some random vectors. They should still be
+    // orthogonal even if we don't know the solution
+    this->a.resize(3);
+    this->a.random();
+    this->a.orthogonalize();
+
+    for (int i = 0; i < this->a.N(); ++i)
+        for (int j = 0; j < this->a.N(); ++j)
+        {
+            auto out = this->a.view(i).dot(this->a.view(j));
+            if (i != j)
+                EXPECT_NEAR(0.0, out(0, 0), 1e-15);
+            else
+                EXPECT_NEAR(1.0, out(0, 0), 1e-15);
+        }
+
+    this->b.resize(3);
+    this->b.random();
+    this->a.push_back(this->b);
+    this->a.orthogonalize();
+
+    EXPECT_EQ(6, this->a.N());
+
+    for (int i = 0; i < this->a.N(); ++i)
+        for (int j = 0; j < this->a.N(); ++j)
+        {
+            auto out = this->a.view(i).dot(this->a.view(j));
+            if (i != j)
+                EXPECT_NEAR(0.0, out(0, 0), 1e-15);
+            else
+                EXPECT_NEAR(1.0, out(0, 0), 1e-15);
+        }
 }
 
 TYPED_TEST(GenericMultiVectorWrapperTest, Resize2)

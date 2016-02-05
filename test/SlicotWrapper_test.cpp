@@ -11,7 +11,7 @@ TEST(SlicotWrapperTest, Scalar)
     double scale = 1.0;
     int info = 0;
 
-    Lyapunov::sb03md('C', 'X', 'N', 'T', n, &A, &X, &scale, &info);
+    Lyapunov::sb03md('C', 'X', 'N', 'T', n, &A, n, &X, n, &scale, &info);
 
     EXPECT_EQ(-1, X);
     EXPECT_EQ(0, info);
@@ -27,7 +27,7 @@ TEST(SlicotWrapperTest, Small)
     double scale = 1.0;
     int info = 0;
 
-    Lyapunov::sb03md('C', 'X', 'N', 'T', n, A, X, &scale, &info);
+    Lyapunov::sb03md('C', 'X', 'N', 'T', n, A, n, X, n, &scale, &info);
 
     double X_exp[4] = {0.62, -0.5, -0.5, 0.6};
     for (int i = 0; i < 4; i++)

@@ -1,6 +1,8 @@
 #ifndef STLVECTOR_H
 #define STLVECTOR_H
 
+#include <iosfwd>
+
 class StlVector
 {
     double *ptr_;
@@ -22,5 +24,8 @@ public:
 
     int set(StlVector const &other);
     double *get();
+
+    friend std::ostream &operator<<(std::ostream &os, StlVector &vec);
 };
+
 #endif

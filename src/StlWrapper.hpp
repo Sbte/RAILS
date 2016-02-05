@@ -94,6 +94,7 @@ public:
 
     int M() const;
     int N() const;
+    int LDA() const;
 
     StlWrapper dot(StlWrapper const &other) const;
 

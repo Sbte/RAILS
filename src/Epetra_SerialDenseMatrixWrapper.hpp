@@ -38,6 +38,7 @@ public:
 
     int M() const;
     int N() const;
+    int LDA() const;
 
     void eigs(Epetra_SerialDenseMatrixWrapper &v, Epetra_SerialDenseMatrixWrapper &d) const;
 };

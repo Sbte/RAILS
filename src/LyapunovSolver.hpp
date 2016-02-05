@@ -74,13 +74,15 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
     FUNCTION_TIMER("Solver");
     int n = V.M();
 
+    int max_size = std::min(restart_size_, n) + expand_size_;
+    V.resize(max_size);
+
     V.resize(1);
     V.random();
     V.orthogonalize();
 
     MultiVector W = V;
 
-    int max_size = std::min(restart_size_, n) + expand_size_;
     MultiVector AV(V, max_size);
     DenseMatrix VAV(max_size, max_size);
     AV.resize(0);
@@ -201,10 +203,13 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
                   << ". Estimate Lanczos, absolute: " << res
                   << ", relative: " << std::abs(res) / r0 / r0 << std::endl;
 
-        if (std::abs(res) < tol_ * r0 * r0 || iter + 1 >= max_iter_ || V.N() >= n)
+        bool converged = std::abs(res) < tol_ * r0 * r0;
+        if (converged || iter + 1 >= max_iter_ || V.N() >= n)
         {
-            std::cout << "The Lyapunov solver converged in " << iter+1
-                      << " iteration with a final relative residual of "
+            std::cout << "The Lyapunov solver "
+                      << (converged ? "converged" : "did not converge")
+                      << " in " << iter+1
+                      << " iterations with a final relative residual of "
                       << res / r0 / r0 << ". The size of the space used "
                       << "for the solution is " << V.N() << std::endl;
             break;
@@ -236,9 +241,12 @@ int Solver<Matrix, MultiVector, DenseMatrix>::dense_solve(DenseMatrix const &A, 
     double scale = 1.0;
     int info = 0;
     int n = A.M();
-    sb03md('C', 'X', 'N', 'T', n, A_copy, X, &scale, &info);
+    sb03md('C', 'X', 'N', 'T', n, A_copy, A_copy.LDA(), X, X.LDA(), &scale, &info);
 
     X.scale(-1.0);
+
+    if (info)
+        std::cerr << "Error: sb03md returned info = " << info << std::endl;
 
     return info;
 }

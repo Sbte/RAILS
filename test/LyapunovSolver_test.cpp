@@ -69,7 +69,7 @@ TEST(LyapunovSolverTest, StlDenseSolver)
     B.random();
 
     StlWrapper C = B.copy();
-    C(n, 0) = 0.0;
+    C(n-1, 0) = 0.0;
     B -= C;
     B = B * B.transpose();
 
@@ -81,6 +81,65 @@ TEST(LyapunovSolverTest, StlDenseSolver)
 
     // Compute the residual
     StlWrapper R = A * X + X * A.transpose() + B;
+    StlWrapper R_exp(n, n);
+    R_exp.scale(0.0);
+
+    EXPECT_VECTOR_NEAR(R_exp, R);
+}
+
+TEST(LyapunovSolverTest, StlDenseSolverResize)
+{
+    int n = 20;
+    StlWrapper A(40, 40);
+    A.resize(n, n);
+    A.random();
+
+    StlWrapper B(n, 1);
+    B.random();
+
+    StlWrapper C = B.copy();
+    C(n-1, 0) = 0.0;
+    B -= C;
+    B = B * B.transpose();
+
+    StlWrapper X;
+
+    Lyapunov::Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
+
+    solver.dense_solve(A, B, X);
+
+    // Compute the residual
+    StlWrapper R = A * X + X * A.transpose() + B;
+    StlWrapper R_exp(n, n);
+    R_exp.scale(0.0);
+
+    EXPECT_VECTOR_NEAR(R_exp, R);
+}
+
+TEST(LyapunovSolverTest, StlSolver)
+{
+    int n = 20;
+    StlWrapper A(n, n);
+    A.random();
+
+    StlWrapper B(n, 1);
+    B.random();
+
+    StlWrapper C = B.copy();
+    C(n-1, 0) = 0.0;
+    B -= C;
+    B = B;
+
+    StlWrapper X(n,1);
+    StlWrapper T;
+
+    Lyapunov::Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
+
+    solver.solve(X, T);
+
+    // Compute the residual
+    StlWrapper R = A * X * T * X.transpose()
+      + X * T * X.transpose() * A.transpose() + B * B.transpose();
     StlWrapper R_exp(n, n);
     R_exp.scale(0.0);
 

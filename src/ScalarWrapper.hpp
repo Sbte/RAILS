@@ -149,6 +149,7 @@ public:
 
     int M() const {return 1;}
     int N() const {return size_;}
+    int LDA() const {return 1;}
     int length() {return 1;} const
     ScalarWrapper dot(ScalarWrapper const &other) const {__scalar return *this * other;}
     int num_vectors() const {return size_;}
