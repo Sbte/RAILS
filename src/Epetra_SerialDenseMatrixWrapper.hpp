@@ -36,7 +36,7 @@ public:
 
     void resize(int m, int n);
 
-    Epetra_SerialDenseMatrixWrapper copy(int m = 0, int n = 0) const;
+    Epetra_SerialDenseMatrixWrapper copy() const;
 
     int M() const;
     int N() const;

@@ -94,11 +94,6 @@ public:
     double &operator ()(int m, int n = 0) {return s_[m];}
     double const &operator ()(int m, int n = 0) const {return s_[m];}
 
-    void set(double factor)
-        {
-            *s_ = factor;
-        }
-
     void resize(int m, int n = 0)
         {
             if (capacity_ < m)
@@ -131,7 +126,7 @@ public:
                 s.size_ = n - m;
             return s;
         }
-    ScalarWrapper copy(int m = 0, int n = 0) const
+    ScalarWrapper copy() const
         {
             return *this;
         }
@@ -145,9 +140,7 @@ public:
     int M() const {return 1;}
     int N() const {return size_;}
     int LDA() const {return 1;}
-    int length() {return 1;} const
     ScalarWrapper dot(ScalarWrapper const &other) const {__scalar return *this * other;}
-    int num_vectors() const {return size_;}
     void eigs(ScalarWrapper &v, ScalarWrapper &d, int num = 1, double tol = 1.0) const
         {
             __scalar

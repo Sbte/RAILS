@@ -121,7 +121,7 @@ void Epetra_SerialDenseMatrixWrapper::resize(int m, int n)
     ptr_->Reshape(m, n);
 }
 
-Epetra_SerialDenseMatrixWrapper Epetra_SerialDenseMatrixWrapper::copy(int m, int n) const
+Epetra_SerialDenseMatrixWrapper Epetra_SerialDenseMatrixWrapper::copy() const
 {
     FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "copy");
     Epetra_SerialDenseMatrixWrapper out(*this);
