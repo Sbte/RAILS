@@ -243,7 +243,7 @@ double StlWrapper::norm() const
     // Frobenius norm
     double out = 0.0;
     for (int i = 0; i < m_; ++i)
-        for(int j = 0; j < n_; ++j)
+        for (int j = 0; j < n_; ++j)
         {
             double value = (*ptr_)(i, j);
             out += value * value;
@@ -258,7 +258,7 @@ double StlWrapper::norm_inf() const
     for (int i = 0; i < m_; ++i)
     {
         double row_sum = 0.0;
-        for(int j = 0; j < n_; ++j)
+        for (int j = 0; j < n_; ++j)
             row_sum += std::abs((*ptr_)(i, j));
         out = std::max(out, row_sum);
     }
@@ -375,7 +375,7 @@ void StlWrapper::random()
     std::default_random_engine generator(std::rand());
     std::uniform_real_distribution<double> distribution(-1,1);
     for (int i = 0; i < m_; ++i)
-        for(int j = 0; j < n_; ++j)
+        for (int j = 0; j < n_; ++j)
             (*ptr_)(i, j) = distribution(generator);
 }
 
@@ -385,4 +385,38 @@ StlWrapper StlWrapper::transpose()
     StlWrapper tmp(*this);
     tmp.transpose_ = !tmp.transpose_;
     return tmp;
+}
+
+int StlWrapper::eigs(StlWrapper &v, StlWrapper &d,
+                     int num, double tol) const
+{
+    FUNCTION_TIMER("StlWrapper", "eigs");
+    int m = M();
+
+    if (num < 1)
+        num = M();
+
+    v = copy();
+
+    // Put the diagonal in d
+    d.resize(m, 1);
+    for (int i = 0; i < m; i++)
+        d(i, 0) = v(i, i);
+
+    // Put the offdiagonal in e
+    StlWrapper e(m-1, 1);
+    for (int i = 0; i < m-1; i++)
+        e(i, 0) = v(i+1, i);
+
+    StlWrapper work(std::max(1,2*m-2), 1);
+
+    int info;
+    LapackWrapper::DSTEQR('I', m, d.ptr_->get(),
+                         e.ptr_->get(), v.ptr_->get(),
+                         m, work.ptr_->get(), &info);
+
+    if (info)
+        std::cerr << "Eigenvalues info = " << info << std::endl;
+
+    return info;
 }

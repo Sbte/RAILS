@@ -100,6 +100,10 @@ public:
     void random();
 
     StlWrapper transpose();
+
+    int eigs(StlWrapper &V, StlWrapper &D,
+             int num = -1, double tol = 1e-6) const;
+
 };
 
 StlWrapper operator *(double d, StlWrapper const &other);
