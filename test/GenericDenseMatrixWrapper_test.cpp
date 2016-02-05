@@ -58,7 +58,7 @@ TYPED_TEST(GenericDenseMatrixWrapperTest, Eigs)
 
 TYPED_TEST(GenericDenseMatrixWrapperTest, Eigs2)
 {
-    this->D.scale(0.0);
+    this->D *= 0.0;
     this->D(0, 5) = 10.0;
     this->D(5, 0) = 10.0;
     this->D.resize(4, 4);
@@ -78,11 +78,11 @@ TYPED_TEST(GenericDenseMatrixWrapperTest, Eigs2)
 
 TYPED_TEST(GenericDenseMatrixWrapperTest, Scale)
 {
-    this->A.scale(0.0);
-    this->D.scale(0.0);
+    this->A *= 0.0;
+    this->D *= 0.0;
     this->D(1, 1) = 1.0;
     this->D.resize(2, 2);
-    this->D.scale(0.0);
+    this->D *= 0.0;
 
     EXPECT_VECTOR_EQ(this->A, this->D);
 }
@@ -91,7 +91,7 @@ TYPED_TEST(GenericDenseMatrixWrapperTest, Resize)
 {
     int m = 80;
     int n = 100;
-    this->A.scale(0.0);
+    this->A *= 0.0;
     this->A(0,0) = 10.0;
     this->A.resize(m, n);
     EXPECT_EQ(m, this->A.M());

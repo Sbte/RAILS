@@ -193,13 +193,6 @@ double const &Epetra_MultiVectorWrapper::operator ()(int m, int n) const
     return (*ptr_)[n][m];
 }
 
-int Epetra_MultiVectorWrapper::scale(double factor)
-{
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "scale");
-    orthogonalized_ = 0;
-    return ptr_->Scale(factor);
-}
-
 void Epetra_MultiVectorWrapper::resize(int m)
 {
     FUNCTION_TIMER("Epetra_MultiVectorWrapper", "resize");

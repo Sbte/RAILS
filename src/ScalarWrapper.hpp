@@ -79,7 +79,7 @@ public:
             return *this;
         }
 
-    ScalarWrapper operator *=(ScalarWrapper const &other) {__scalar *s_ *= *other.s_; return *this;}
+  ScalarWrapper operator *=(ScalarWrapper const &other) {*s_ *= *other.s_; return *this;}
     ScalarWrapper operator /=(ScalarWrapper const &other) {__scalar *s_ /= *other.s_; return *this;}
     ScalarWrapper operator -=(ScalarWrapper const &other) {__scalar *s_ -= *other.s_; return *this;}
     ScalarWrapper operator +=(ScalarWrapper const &other) {__scalar *s_ += *other.s_; return *this;}
@@ -93,11 +93,6 @@ public:
 
     double &operator ()(int m, int n = 0) {return s_[m];}
     double const &operator ()(int m, int n = 0) const {return s_[m];}
-
-    void scale(double factor)
-        {
-            *s_ *= factor;
-        }
 
     void set(double factor)
         {

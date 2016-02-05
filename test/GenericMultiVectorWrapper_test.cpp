@@ -72,12 +72,12 @@ TYPED_TEST(GenericMultiVectorWrapperTest, Resize)
     EXPECT_EQ(1, N);
 }
 
-TYPED_TEST(GenericMultiVectorWrapperTest, Scale)
+TYPED_TEST(GenericMultiVectorWrapperTest, MultiplicationAssignment)
 {
     this->a.random();
 
     this->b = this->a.copy();
-    this->b.scale(2.5);
+    this->b *= 2.5;
 
     for (int i = 0; i < this->a.M(); ++i)
         for (int j = 0; j < this->a.N(); ++j)
@@ -93,7 +93,7 @@ TYPED_TEST(GenericMultiVectorWrapperTest, AdditionAssignment)
     this->b = this->a.copy();
     this->b += this->a;
 
-    this->a.scale(2.0);
+    this->a *= 2.0;
 
     EXPECT_VECTOR_EQ(this->a, this->b);
 }
@@ -105,19 +105,7 @@ TYPED_TEST(GenericMultiVectorWrapperTest, SubtractionAssignment)
     this->b = this->a.copy();
     this->b -= this->a;
 
-    this->a.scale(0.0);
-
-    EXPECT_VECTOR_EQ(this->a, this->b);
-}
-
-TYPED_TEST(GenericMultiVectorWrapperTest, MultiplicationAssignment)
-{
-    this->a.random();
-
-    this->b = this->a.copy();
-    this->b.scale(13.0);
-
-    this->a *= 13;
+    this->a *= 0.0;
 
     EXPECT_VECTOR_EQ(this->a, this->b);
 }
@@ -127,7 +115,7 @@ TYPED_TEST(GenericMultiVectorWrapperTest, DivisionAssignment)
     this->a.random();
 
     this->b = this->a.copy();
-    this->b.scale(1.0 / 13.0);
+    this->b *= 1.0 / 13.0;
 
     this->a /= 13;
 
@@ -139,7 +127,7 @@ TYPED_TEST(GenericMultiVectorWrapperTest, Addition)
     this->a.random();
 
     this->b = this->a.copy();
-    this->b.scale(2.0);
+    this->b *= 2.0;
 
     this->c = this->a.copy();
     for (int i = 0; i < this->a.M(); ++i)
@@ -156,7 +144,7 @@ TYPED_TEST(GenericMultiVectorWrapperTest, Multiplication)
     this->a.random();
 
     this->b = this->a.copy();
-    this->b.scale(13.0);
+    this->b *= 13.0;
 
     this->c = 13 * this->a;
 
@@ -253,13 +241,13 @@ TYPED_TEST(GenericMultiVectorWrapperTest, Orthogonalize)
 {
     this->resize(2);
 
-    this->a.scale(0.0);
+    this->a *= 0.0;
     this->a(0, 0) = 2.3;
     this->a(0, 1) = 5.3;
     this->a(1, 1) = 2.7;
     this->a.orthogonalize();
 
-    this->b.scale(0.0);
+    this->b *= 0.0;
     this->b(0, 0) = 1.0;
     this->b(1, 1) = 1.0;
 
@@ -268,21 +256,21 @@ TYPED_TEST(GenericMultiVectorWrapperTest, Orthogonalize)
 
 TYPED_TEST(GenericMultiVectorWrapperTest, Orthogonalize2)
 {
-    this->a.scale(0.0);
+    this->a *= 0.0;
     this->a(0, 0) = 2.3;
 
-    this->b.scale(0.0);
+    this->b *= 0.0;
     this->b(0, 0) = 1.0;
 
     this->a.orthogonalize();
     EXPECT_VECTOR_EQ(this->b, this->a);
 
     this->b.resize(2);
-    this->b.scale(0.0);
+    this->b *= 0.0;
     this->b(0, 0) = 1.0;
     this->b(1, 1) = 1.0;
 
-    this->c.scale(0.0);
+    this->c *= 0.0;
     this->c(0, 0) = 5.3;
     this->c(1, 0) = 2.7;
 
@@ -324,7 +312,7 @@ TYPED_TEST(GenericMultiVectorWrapperTest, Orthogonalize4)
     this->a.orthogonalize();
     EXPECT_ORTHOGONAL(this->a);
 
-    this->a.scale(2.0);
+    this->a *= 2.0;
     this->a.orthogonalize();
     EXPECT_ORTHOGONAL(this->a);
 

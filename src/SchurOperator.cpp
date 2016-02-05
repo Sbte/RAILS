@@ -263,7 +263,7 @@ int SchurOperator::Apply(const Epetra_MultiVector& X, Epetra_MultiVector& Y) con
     problem_->SetLHS(&(*X12));
     problem_->SetRHS(&tmp1);
     CHECK_ZERO(solver_->Solve());
-    X12.scale(-1.0);
+    X12 *= -1.0;
 
     // X21 * X = - X22 * (A12' * (A11' \ X));
     Epetra_MultiVectorWrapper X21(X22, X.NumVectors());
@@ -276,7 +276,7 @@ int SchurOperator::Apply(const Epetra_MultiVector& X, Epetra_MultiVector& Y) con
     CHECK_ZERO(A12_->Apply(tmp2, *X21));
     CHECK_ZERO(A12_->SetUseTranspose(false));
     X21 = VW * (TW * VW.dot(X21));
-    X21.scale(-1.0);
+    X21 *= -1.0;
 
     // X11 * X = - A11 \ (A12 * (X21 * X));
     Epetra_MultiVectorWrapper X11(X12, X.NumVectors());
@@ -284,7 +284,7 @@ int SchurOperator::Apply(const Epetra_MultiVector& X, Epetra_MultiVector& Y) con
     problem_->SetLHS(&(*X11));
     problem_->SetRHS(&tmp1);
     CHECK_ZERO(solver_->Solve());
-    X11.scale(-1.0);
+    X11 *= -1.0;
 
     Epetra_Import import1(Y.Map(), A11_->RangeMap());
     Epetra_Import import2(Y.Map(), A22_->RangeMap());

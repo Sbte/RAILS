@@ -327,7 +327,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::dense_solve(DenseMatrix const &A, 
     int n = A.M();
     sb03md('C', 'X', 'N', 'T', n, A_copy, A_copy.LDA(), X, X.LDA(), &scale, &info);
 
-    X.scale(-1.0);
+    X *= -1.0;
 
     if (info)
         std::cerr << "Error: sb03md returned info = " << info << std::endl;
@@ -345,7 +345,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::lanczos(MultiVector const &AV, Mul
     Q.random();
     Q.view(0) /= Q.norm();
 
-    H.scale(0.0);
+    H *= 0.0;
     END_TIMER("Lanczos", "Top");
 
     double alpha = 0.0;

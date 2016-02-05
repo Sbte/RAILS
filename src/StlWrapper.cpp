@@ -108,15 +108,15 @@ StlWrapper &StlWrapper::operator =(StlWrapper const &other)
 StlWrapper &StlWrapper::operator *=(double other)
 {
     FUNCTION_TIMER("StlWrapper", "*=");
-    scale(other);
+    BlasWrapper::DSCAL(m_max_ * n_, other, ptr_->get());
+    orthogonalized_ = 0;
     return *this;
 }
 
 StlWrapper &StlWrapper::operator /=(double other)
 {
     FUNCTION_TIMER("StlWrapper", "/=");
-    scale(1.0 / other);
-    return *this;
+    return *this *= 1.0 / other;
 }
 
 StlWrapper &StlWrapper::operator -=(StlWrapper const &other)
@@ -202,14 +202,6 @@ double const &StlWrapper::operator ()(int m, int n) const
 {
     FUNCTION_TIMER("StlWrapper", "() 2");
     return (*ptr_)(m, n);
-}
-
-int StlWrapper::scale(double factor)
-{
-    FUNCTION_TIMER("StlWrapper", "scale");
-    BlasWrapper::DSCAL(m_max_ * n_, factor, ptr_->get());
-    orthogonalized_ = 0;
-    return 0;
 }
 
 void StlWrapper::resize(int m)
@@ -354,7 +346,7 @@ StlWrapper StlWrapper::copy() const
         StlWrapper test_vec(m, 1);
         for (int i = 0; i < n; ++i)
         {
-            test_vec.scale(0.0);
+            test_vec *= 0.0;
             test_vec(i, 0) = 1.0;
             out.view(i) = (*op_) * test_vec;
         }

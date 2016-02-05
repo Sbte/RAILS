@@ -77,8 +77,6 @@ public:
     double &operator ()(int m, int n = 0);
     double const &operator ()(int m, int n = 0) const;
 
-    int scale(double factor);
-
     void resize(int m);
     void resize(int m, int n);
 

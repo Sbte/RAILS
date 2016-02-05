@@ -45,6 +45,13 @@ Epetra_SerialDenseMatrixWrapper &Epetra_SerialDenseMatrixWrapper::operator =(
     return *this;
 }
 
+Epetra_SerialDenseMatrixWrapper &Epetra_SerialDenseMatrixWrapper::operator *=(double other)
+{
+    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "*=");
+    ptr_->Scale(other);
+    return *this;
+}
+
 Epetra_SerialDenseMatrix &Epetra_SerialDenseMatrixWrapper::operator *()
 {
     FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "*");
@@ -98,12 +105,6 @@ double Epetra_SerialDenseMatrixWrapper::norm_inf() const
 {
     FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "norm_inf");
     return ptr_->NormInf();
-}
-
-int Epetra_SerialDenseMatrixWrapper::scale(double factor)
-{
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "scale");
-    return ptr_->Scale(factor);
 }
 
 void Epetra_SerialDenseMatrixWrapper::resize(int m, int n)

@@ -18,6 +18,8 @@ public:
 
     Epetra_SerialDenseMatrixWrapper &operator =(Epetra_SerialDenseMatrixWrapper const &other);
 
+    Epetra_SerialDenseMatrixWrapper &operator *=(double other);
+
     Epetra_SerialDenseMatrix &operator *();
     Epetra_SerialDenseMatrix const &operator *() const;
 
@@ -29,8 +31,6 @@ public:
     double const &operator ()(int m, int n = 0) const;
 
     double norm_inf() const;
-
-    int scale(double factor);
 
     void resize(int m, int n);
 

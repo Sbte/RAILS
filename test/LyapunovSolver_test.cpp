@@ -78,7 +78,7 @@ TEST(LyapunovSolverTest, StlDenseSolver)
     // Compute the residual
     StlWrapper R = A * X + X * A.transpose() + B;
     StlWrapper R_exp(n, n);
-    R_exp.scale(0.0);
+    R_exp *= 0.0;
 
     EXPECT_VECTOR_NEAR(R_exp, R);
 }
@@ -107,7 +107,7 @@ TEST(LyapunovSolverTest, StlDenseSolverResize)
     // Compute the residual
     StlWrapper R = A * X + X * A.transpose() + B;
     StlWrapper R_exp(n, n);
-    R_exp.scale(0.0);
+    R_exp *= 0.0;
 
     EXPECT_VECTOR_NEAR(R_exp, R);
 }
@@ -131,7 +131,7 @@ TEST(LyapunovSolverTest, StlSolver)
 
     StlWrapper R;
     StlWrapper R_exp(n, n);
-    R_exp.scale(0.0);
+    R_exp *= 0.0;
 
     Lyapunov::Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
 
@@ -220,7 +220,7 @@ TEST(LyapunovSolverTest, StlSolverRestart)
     StlWrapper R = A * X * T * X.transpose()
       + X * T * X.transpose() * A.transpose() + B * B.transpose();
     StlWrapper R_exp(n, n);
-    R_exp.scale(0.0);
+    R_exp *= 0.0;
 
     EXPECT_GT(n, X.N());
 
@@ -238,7 +238,7 @@ TEST(LyapunovSolverTest, StlSolverMinimize)
 
     StlWrapper R;
     StlWrapper R_exp(n, n);
-    R_exp.scale(0.0);
+    R_exp *= 0.0;
 
     Lyapunov::Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
 
@@ -280,7 +280,7 @@ TEST(LyapunovSolverTest, StlSolverRestartIterations)
 
     StlWrapper R;
     StlWrapper R_exp(n, n);
-    R_exp.scale(0.0);
+    R_exp *= 0.0;
 
     Lyapunov::Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
 
