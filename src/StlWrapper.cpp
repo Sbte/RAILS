@@ -330,7 +330,7 @@ StlWrapper StlWrapper::view(int m, int n) const
     return out;
 }
 
-StlWrapper StlWrapper::copy(int m, int n) const
+StlWrapper StlWrapper::copy() const
 {
     FUNCTION_TIMER("StlWrapper", "copy");
 
@@ -424,19 +424,17 @@ int StlWrapper::eigs(StlWrapper &v, StlWrapper &d,
                      int num, double tol) const
 {
     FUNCTION_TIMER("StlWrapper", "eigs");
-    int m = M();
+    v = copy();
 
-    if (op_)
-        m = op_->M();
+    int m = v.M();
 
     if (num < 1)
         num = m;
 
-    v = copy();
     d.resize(m, 1);
 
     int info;
-    LapackWrapper::DSYEV('V', 'L', m, v.ptr_->get(), v.LDA(),
+    LapackWrapper::DSYEV('V', 'U', m, v.ptr_->get(), v.LDA(),
                           d.ptr_->get(), &info);
 
     if (num != m)
