@@ -56,7 +56,7 @@ set(TEST_SOURCES
   test/ScalarWrapper_test
   test/SlicotWrapper_test
   test/LyapunovSolver_test
-  test/StlWrapper_test
+  test/GenericWrapper_test
   )
 
 # Manually add headers without source file
@@ -106,9 +106,6 @@ include_directories(${PROJECT_SOURCE_DIR})
 
 add_library(lyapunov ${SOURCES})
 target_link_libraries(lyapunov "slicot")
-target_link_libraries(lyapunov "blas")
-target_link_libraries(lyapunov "lapack")
-link_directories(${PROJECT_SOURCE_DIR}/lib)
 
 if (${Trilinos_FOUND})
   target_link_libraries(lyapunov ${Trilinos_LIBRARIES})

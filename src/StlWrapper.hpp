@@ -44,8 +44,12 @@ public:
     StlWrapper operator *(StlWrapper const &other) const;
 
     StlVector &operator *();
-
     StlVector const &operator *() const;
+
+    operator double*() const;
+
+    double &operator ()(int m, int n = 0);
+    double const &operator ()(int m, int n = 0) const;
 
     int scale(double factor);
 
@@ -70,5 +74,7 @@ public:
 
     void random();
 };
+
+StlWrapper operator *(double d, StlWrapper const &other);
 
 #endif

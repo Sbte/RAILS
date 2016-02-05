@@ -162,13 +162,12 @@ TEST_F(Epetra_MultiVectorWrapperTest, Norm)
     double nrm[2];
     a->Norm2(nrm);
 
-    EXPECT_DOUBLE_EQ(nrm[0], aw.norm());
-    EXPECT_DOUBLE_EQ(nrm[0], aw.norm(0));
-    EXPECT_DOUBLE_EQ(nrm[1], aw.norm(1));
+    EXPECT_DOUBLE_EQ(nrm[0], aw.view(0).norm());
+    EXPECT_DOUBLE_EQ(nrm[1], aw.view(1).norm());
 
-    aw.view(0) /= aw.norm(0);
+    aw.view(0) /= aw.view(0).norm();
 
-    EXPECT_DOUBLE_EQ(1.0, aw.norm());
+    EXPECT_DOUBLE_EQ(1.0, aw.view(0).norm());
 }
 
 TEST_F(Epetra_MultiVectorWrapperTest, Orthogonalize)

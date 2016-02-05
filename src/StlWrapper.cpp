@@ -176,6 +176,18 @@ StlVector const &StlWrapper::operator *() const
     return *ptr_;
 }
 
+double &StlWrapper::operator ()(int m, int n)
+{
+    FUNCTION_TIMER("StlWrapper", "()");
+    return (*ptr_)(m, n);
+}
+
+double const &StlWrapper::operator ()(int m, int n) const
+{
+    FUNCTION_TIMER("StlWrapper", "() 2");
+    return (*ptr_)(m, n);
+}
+
 int StlWrapper::scale(double factor)
 {
     FUNCTION_TIMER("StlWrapper", "scale");
@@ -265,9 +277,10 @@ void StlWrapper::orthogonalize()
 StlWrapper StlWrapper::view(int m, int n)
 {
     FUNCTION_TIMER("StlWrapper", "view");
-    StlWrapper out;
+    StlWrapper out = *this;
     int num = n ? n-m+1 : 1;
     out.ptr_ = std::make_shared<StlVector>(&(*ptr_)[m_max_ * m], m_max_, num);
+    out.n_ = num;
     out.is_view_ = true;
     return out;
 }
@@ -275,9 +288,10 @@ StlWrapper StlWrapper::view(int m, int n)
 StlWrapper StlWrapper::view(int m, int n) const
 {
     FUNCTION_TIMER("StlWrapper", "view");
-    StlWrapper out;
+    StlWrapper out = *this;
     int num = n ? n-m+1 : 1;
     out.ptr_ = std::make_shared<StlVector>(&(*ptr_)[m_max_ * m], m_max_, num);
+    out.n_ = num;
     out.is_view_ = true;
     return out;
 }
@@ -296,7 +310,7 @@ void StlWrapper::push_back(StlWrapper const &other, int m)
     if (m == -1)
         m = other.N();
     resize(m + n);
-    memcpy(&(*ptr_)(0, n+1), other.ptr_->get(),
+    memcpy(&(*ptr_)(0, n), other.ptr_->get(),
            sizeof(double) * m * m_);
 }
 

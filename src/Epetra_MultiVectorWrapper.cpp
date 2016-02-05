@@ -3,6 +3,7 @@
 
 #include <Epetra_SerialDenseMatrix.h>
 #include <Epetra_MultiVector.h>
+#include <Epetra_SerialComm.h>
 #include <Epetra_LocalMap.h>
 
 #define TIMER_ON
@@ -45,6 +46,20 @@ Epetra_MultiVectorWrapper::Epetra_MultiVectorWrapper(Epetra_MultiVectorWrapper c
     capacity_ = n;
     if (!other.ptr_.is_null())
         ptr_ = Teuchos::rcp(new Epetra_MultiVector(other.ptr_->Map(), n));
+}
+
+Epetra_MultiVectorWrapper::Epetra_MultiVectorWrapper(int m, int n)
+    :
+    Epetra_MultiVectorWrapper()
+{
+    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "constructor 3");
+    size_ = n;
+    capacity_ = n;
+
+    // Should only be used for local testing
+    Epetra_SerialComm comm;
+    Epetra_Map map(10, 0, comm);
+    ptr_ = Teuchos::rcp(new Epetra_MultiVector(map, n));
 }
 
 Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator =(
@@ -162,6 +177,18 @@ Epetra_MultiVector const &Epetra_MultiVectorWrapper::operator *() const
     return *ptr_;
 }
 
+double &Epetra_MultiVectorWrapper::operator ()(int m, int n)
+{
+    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "()");
+    return (*ptr_)[n][m];
+}
+
+double const &Epetra_MultiVectorWrapper::operator ()(int m, int n) const
+{
+    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "() 2");
+    return (*ptr_)[n][m];
+}
+
 int Epetra_MultiVectorWrapper::scale(double factor)
 {
     FUNCTION_TIMER("Epetra_MultiVectorWrapper", "scale");
@@ -208,28 +235,27 @@ void Epetra_MultiVectorWrapper::resize(int m)
     size_ = m;
 }
 
-double Epetra_MultiVectorWrapper::norm(int n) const
+double Epetra_MultiVectorWrapper::norm() const
 {
     FUNCTION_TIMER("Epetra_MultiVectorWrapper", "norm");
-    if (N() == 1)
-    {
-        double out;
-        ptr_->Norm2(&out);
-        return out;
-    }
-    return view(n).norm(n);
+    double *nrm = new double[N()];
+    ptr_->Norm2(nrm);
+
+    double out = 0.0;
+    for (int i = 0; i < N(); ++i)
+      out += nrm[i] * nrm[i];
+
+    delete[] nrm;
+
+    return sqrt(out);
 }
 
-double Epetra_MultiVectorWrapper::norm_inf(int n) const
+double Epetra_MultiVectorWrapper::norm_inf() const
 {
     FUNCTION_TIMER("Epetra_MultiVectorWrapper", "norm_inf");
-    if (N() == 1)
-    {
-        double out;
-        ptr_->NormInf(&out);
-        return out;
-    }
-    return view(n).norm_inf(n);
+    double out;
+    ptr_->NormInf(&out);
+    return out;
 }
 
 void Epetra_MultiVectorWrapper::orthogonalize()

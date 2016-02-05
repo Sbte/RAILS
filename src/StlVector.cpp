@@ -41,7 +41,7 @@ double &StlVector::operator [](int i)
 
 double &StlVector::operator ()(int i, int j)
 {
-    return ptr_[i];
+    return ptr_[i + j * m_];
 }
 
 int StlVector::set(StlVector const &other)
