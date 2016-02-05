@@ -298,6 +298,21 @@ TYPED_TEST(GenericMultiVectorWrapperTest, Resize2)
     EXPECT_VECTOR_EQ(this->b, this->a);
 }
 
+TYPED_TEST(GenericMultiVectorWrapperTest, Resize3)
+{
+    // This is to test that data is still there
+    // after a resize with the right capacity
+
+    this->a.resize(1);
+    this->a.random();
+    this->b = this->a.copy();
+
+    this->a.resize(10);
+    this->c = this->a.view(0);
+
+    EXPECT_VECTOR_EQ(this->b, this->c);
+}
+
 TYPED_TEST(GenericMultiVectorWrapperTest, View)
 {
     this->a.random();
@@ -326,6 +341,48 @@ TYPED_TEST(GenericMultiVectorWrapperTest, View2)
     this->b.view() = this->c;
     EXPECT_VECTOR_EQ(this->a, this->c);
     EXPECT_VECTOR_EQ(this->b, this->c);
+}
+
+TYPED_TEST(GenericMultiVectorWrapperTest, Copy)
+{
+    this->a.random();
+
+    this->b = this->a;
+    this->b.random();
+    EXPECT_VECTOR_EQ(this->b, this->a);
+
+    this->b = this->a.copy();
+    EXPECT_VECTOR_EQ(this->b, this->a);
+
+    this->b.random();
+    EXPECT_NE(this->a(0, 0), this->b(0, 0));
+
+    TypeParam other = this->a.copy();
+    EXPECT_VECTOR_EQ(this->a, other);
+
+    other.random();
+    EXPECT_NE(this->a(0, 0), other(0, 0));
+}
+
+TYPED_TEST(GenericMultiVectorWrapperTest, PushBack)
+{
+    this->a.random();
+
+    this->b = this->a.copy();
+    EXPECT_VECTOR_EQ(this->b, this->a);
+
+    this->a.resize(3);
+    this->a.random();
+    this->b = this->a.view(0).copy();
+    this->b.push_back(this->a.view(1));
+    this->b.push_back(this->a.view(2));
+    EXPECT_VECTOR_EQ(this->b, this->a);
+
+    this->a.resize(3);
+    this->a.random();
+    this->b = this->a.view(0).copy();
+    this->b.push_back(this->a.view(1,2));
+    EXPECT_VECTOR_EQ(this->b, this->a);
 }
 
 #endif

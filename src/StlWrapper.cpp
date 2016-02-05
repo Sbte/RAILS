@@ -71,6 +71,7 @@ StlWrapper &StlWrapper::operator =(StlWrapper &other)
         m_max_ = other.m_max_;
         n_max_ = other.n_max_;
         orthogonalized_ = other.orthogonalized_;
+        op_ = other.op_;
         return *this;
     }
 
@@ -91,6 +92,7 @@ StlWrapper &StlWrapper::operator =(StlWrapper const &other)
         m_max_ = other.m_max_;
         n_max_ = other.n_max_;
         orthogonalized_ = other.orthogonalized_;
+        op_ = other.op_;
         return *this;
     }
 
@@ -229,11 +231,14 @@ void StlWrapper::resize(int m, int n)
         m_ = m;
         n_ = n;
         n_max_ = n;
+        return;
     }
 
-    std::cerr << "Warning: data not copied during resize" <<std::endl;
+    std::cerr << "Warning: data not copied during resize from size "
+              << m_ << "x" << n_ << " to " << m << "x" << n
+              << " with capacity " << m_max_ << "x" << n_  << std::endl;
 
-    ptr_ = std::make_shared<StlVector>(m, n);
+    *this = StlWrapper(m, n);
 }
 
 double StlWrapper::norm() const
@@ -297,13 +302,14 @@ StlWrapper StlWrapper::view(int m, int n)
     }
     out.ptr_ = std::make_shared<StlVector>(&(*ptr_)[m_max_ * m], m_max_, num);
     out.n_ = num;
+    out.n_max_ = num;
     out.is_view_ = true;
     return out;
 }
 
 StlWrapper StlWrapper::view(int m, int n) const
 {
-    FUNCTION_TIMER("StlWrapper", "view");
+    FUNCTION_TIMER("StlWrapper", "view 2");
     StlWrapper out = *this;
     int num = 1;
     if (n > 0 && m >= 0)
@@ -315,6 +321,7 @@ StlWrapper StlWrapper::view(int m, int n) const
     }
     out.ptr_ = std::make_shared<StlVector>(&(*ptr_)[m_max_ * m], m_max_, num);
     out.n_ = num;
+    out.n_max_ = num;
     out.is_view_ = true;
     return out;
 }
@@ -326,15 +333,13 @@ StlWrapper StlWrapper::copy(int m, int n) const
     return out;
 }
 
-void StlWrapper::push_back(StlWrapper const &other, int m)
+void StlWrapper::push_back(StlWrapper const &other)
 {
     FUNCTION_TIMER("StlWrapper", "push_back");
     int n = N();
-    if (m == -1)
-        m = other.N();
-    resize(m + n);
-    memcpy(&(*ptr_)(0, n), other.ptr_->get(),
-           sizeof(double) * m * m_);
+    int other_n = other.N();
+    resize(other_n + n);
+    memcpy(&(*ptr_)(0, n), other.ptr_->get(), sizeof(double) * other_n * m_);
 }
 
 int StlWrapper::M() const

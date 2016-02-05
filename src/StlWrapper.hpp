@@ -90,7 +90,7 @@ public:
     StlWrapper view(int m = -1, int n = -1) const;
     StlWrapper copy(int m = 0, int n = 0) const;
 
-    void push_back(StlWrapper const &other, int m = -1);
+    void push_back(StlWrapper const &other);
 
     int M() const;
     int N() const;
