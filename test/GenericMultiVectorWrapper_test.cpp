@@ -126,7 +126,7 @@ TYPED_TEST(GenericMultiVectorWrapperTest, SubtractionAssignment)
     this->b = this->a.copy();
     this->b -= this->a;
 
-    this->a *= 0.0;
+    this->a = 0.0;
 
     EXPECT_VECTOR_EQ(this->a, this->b);
 }
@@ -262,13 +262,13 @@ TYPED_TEST(GenericMultiVectorWrapperTest, Orthogonalize)
 {
     this->resize(2);
 
-    this->a *= 0.0;
+    this->a = 0.0;
     this->a(0, 0) = 2.3;
     this->a(0, 1) = 5.3;
     this->a(1, 1) = 2.7;
     this->a.orthogonalize();
 
-    this->b *= 0.0;
+    this->b = 0.0;
     this->b(0, 0) = 1.0;
     this->b(1, 1) = 1.0;
 
@@ -277,21 +277,21 @@ TYPED_TEST(GenericMultiVectorWrapperTest, Orthogonalize)
 
 TYPED_TEST(GenericMultiVectorWrapperTest, Orthogonalize2)
 {
-    this->a *= 0.0;
+    this->a = 0.0;
     this->a(0, 0) = 2.3;
 
-    this->b *= 0.0;
+    this->b = 0.0;
     this->b(0, 0) = 1.0;
 
     this->a.orthogonalize();
     EXPECT_VECTOR_EQ(this->b, this->a);
 
     this->b.resize(2);
-    this->b *= 0.0;
+    this->b = 0.0;
     this->b(0, 0) = 1.0;
     this->b(1, 1) = 1.0;
 
-    this->c *= 0.0;
+    this->c = 0.0;
     this->c(0, 0) = 5.3;
     this->c(1, 0) = 2.7;
 
