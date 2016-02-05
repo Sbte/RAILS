@@ -176,6 +176,12 @@ TEST(LyapunovSolverTest, StlSolverRestart)
     StlWrapper A(n, n);
     A.random();
 
+    // Make A tridiagonal
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < n; ++j)
+            if (std::abs(i - j) > 1)
+                A(i, j) = 0.0;
+
     StlWrapper B(n, 1);
     B.random();
 
@@ -191,8 +197,8 @@ TEST(LyapunovSolverTest, StlSolverRestart)
 
     ParameterList params;
     params.set("Restart Size", 19);
-    params.set("Reduced Size", 14);
-    params.set("Expand Size", 1);
+    params.set("Reduced Size", 10);
+    params.set("Expand Size", 3);
     solver.set_parameters(params);
 
     solver.solve(X, T);
@@ -202,6 +208,8 @@ TEST(LyapunovSolverTest, StlSolverRestart)
       + X * T * X.transpose() * A.transpose() + B * B.transpose();
     StlWrapper R_exp(n, n);
     R_exp.scale(0.0);
+
+    EXPECT_GT(n, X.N());
 
     EXPECT_VECTOR_NEAR(R_exp, R);
 }
