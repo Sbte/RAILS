@@ -1,16 +1,10 @@
 #include "gtest/gtest.h"
 
+#include "TestHelpers.hpp"
+
 #include "src/StlWrapper.hpp"
 
 #include "Epetra_TestableWrappers.hpp"
-
-#define EXPECT_VECTOR_EQ(a, b) {                \
-    int m = (a).M();                            \
-    int n = (a).N();                            \
-    for (int i = 0; i < m; i++)                 \
-      for (int j = 0; j < n; j++)               \
-        EXPECT_DOUBLE_EQ((a)(i,j), (b)(i,j));   \
-    }
 
 template <class MultiVectorWrapper>
 class GenericMultiVectorWrapperTest: public testing::Test
@@ -306,32 +300,41 @@ TYPED_TEST(GenericMultiVectorWrapperTest, Orthogonalize3)
     this->a.random();
     this->a.orthogonalize();
 
-    for (int i = 0; i < this->a.N(); ++i)
-        for (int j = 0; j < this->a.N(); ++j)
-        {
-            auto out = this->a.view(i).dot(this->a.view(j));
-            if (i != j)
-                EXPECT_NEAR(0.0, out(0, 0), 1e-15);
-            else
-                EXPECT_NEAR(1.0, out(0, 0), 1e-15);
-        }
+    EXPECT_ORTHOGONAL(this->a);
 
     this->b.resize(3);
     this->b.random();
     this->a.push_back(this->b);
     this->a.orthogonalize();
 
-    EXPECT_EQ(6, this->a.N());
+    EXPECT_ORTHOGONAL(this->a);
 
-    for (int i = 0; i < this->a.N(); ++i)
-        for (int j = 0; j < this->a.N(); ++j)
-        {
-            auto out = this->a.view(i).dot(this->a.view(j));
-            if (i != j)
-                EXPECT_NEAR(0.0, out(0, 0), 1e-15);
-            else
-                EXPECT_NEAR(1.0, out(0, 0), 1e-15);
-        }
+    EXPECT_EQ(6, this->a.N());
+}
+
+TYPED_TEST(GenericMultiVectorWrapperTest, Orthogonalize4)
+{
+    // If we set the vector in some way, we have to reorthogonalize
+    this->a.resize(3);
+    this->a.random();
+    this->a.orthogonalize();
+    EXPECT_ORTHOGONAL(this->a);
+
+    this->a.random();
+    this->a.orthogonalize();
+    EXPECT_ORTHOGONAL(this->a);
+
+    this->a.scale(2.0);
+    this->a.orthogonalize();
+    EXPECT_ORTHOGONAL(this->a);
+
+    this->a *= 3.3;
+    this->a.orthogonalize();
+    EXPECT_ORTHOGONAL(this->a);
+
+    this->a /= 2.6;
+    this->a.orthogonalize();
+    EXPECT_ORTHOGONAL(this->a);
 }
 
 TYPED_TEST(GenericMultiVectorWrapperTest, Resize2)

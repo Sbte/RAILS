@@ -75,6 +75,10 @@ TEST(LyapunovSolverEpetraTest, Solver)
     Lyapunov::Solver<Epetra_OperatorWrapper, Epetra_MultiVectorWrapper,
                      Epetra_SerialDenseMatrixWrapper > solver(A_operator, B_operator, B_operator);
 
+    Teuchos::ParameterList params;
+    params.set("Minimize solution space", false);
+    solver.set_parameters(params);
+
     Teuchos::RCP<Epetra_MultiVector> V = Teuchos::rcp(new Epetra_MultiVector(*map, 2));
     Teuchos::RCP<Epetra_SerialDenseMatrix> T = Teuchos::rcp(new Epetra_SerialDenseMatrix(2, 2));
 
@@ -128,6 +132,10 @@ TEST(LyapunovSolverEpetraTest, BVector)
     // Create the solver object FIXME: Use M here not B
     Lyapunov::Solver<Epetra_OperatorWrapper, Epetra_MultiVectorWrapper,
                      Epetra_SerialDenseMatrixWrapper > solver(A_operator, B_operator, B_operator);
+
+    Teuchos::ParameterList params;
+    params.set("Minimize solution space", false);
+    solver.set_parameters(params);
 
     Teuchos::RCP<Epetra_MultiVector> V = Teuchos::rcp(new Epetra_MultiVector(*map, 2));
     Teuchos::RCP<Epetra_SerialDenseMatrix> T = Teuchos::rcp(new Epetra_SerialDenseMatrix(2, 2));
@@ -183,6 +191,10 @@ TEST(LyapunovSolverEpetraTest, Lanczos)
     Lyapunov::Solver<Epetra_OperatorWrapper, Epetra_MultiVectorWrapper,
                      Epetra_SerialDenseMatrixWrapper > solver(A_operator, B_operator, M_operator);
 
+    Teuchos::ParameterList params;
+    params.set("Minimize solution space", false);
+    solver.set_parameters(params);
+
     Teuchos::RCP<Epetra_MultiVector> V = Teuchos::rcp(new Epetra_MultiVector(*map, 2));
     Teuchos::RCP<Epetra_SerialDenseMatrix> T = Teuchos::rcp(new Epetra_SerialDenseMatrix(2, 2));
 
@@ -203,6 +215,6 @@ TEST(LyapunovSolverEpetraTest, Lanczos)
     Epetra_MultiVectorWrapper eigenvectors;
 
     solver.lanczos(AV, VW, TW, H, eigenvectors, eigenvalues, num_eigenvalues);
-    
+
     EXPECT_NEAR(0.0, eigenvalues(0), 1e-14);
 }

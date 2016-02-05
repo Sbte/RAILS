@@ -1,21 +1,14 @@
 #include <limits.h>
 #include "gtest/gtest.h"
 
+#include "TestHelpers.hpp"
+
 #include "src/LyapunovSolver.hpp"
 #include "src/ScalarWrapper.hpp"
 #include "src/StlWrapper.hpp"
 
 #include <map>
 #include <string>
-
-#define EXPECT_VECTOR_NEAR(a, b)                                        \
-    {                                                                   \
-     int m = (a).M();                                                   \
-     int n = (a).N();                                                   \
-     for (int i = 0; i < m; i++)                                        \
-         for (int j = 0; j < n; j++)                                    \
-             EXPECT_NEAR((a)(i,j), (b)(i,j), 1e-3);                     \
-    }
 
 TEST(LyapunovSolverTest, ScalarEigenvalueSolver)
 {
@@ -136,15 +129,26 @@ TEST(LyapunovSolverTest, StlSolver)
     StlWrapper X(n,1);
     StlWrapper T;
 
+    StlWrapper R;
+    StlWrapper R_exp(n, n);
+    R_exp.scale(0.0);
+
     Lyapunov::Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
 
     solver.solve(X, T);
 
     // Compute the residual
-    StlWrapper R = A * X * T * X.transpose()
+    R = A * X * T * X.transpose()
       + X * T * X.transpose() * A.transpose() + B * B.transpose();
-    StlWrapper R_exp(n, n);
-    R_exp.scale(0.0);
+
+    EXPECT_VECTOR_NEAR(R_exp, R);
+
+    // Solve twice
+    solver.solve(X, T);
+
+    // Compute the residual
+    R = A * X * T * X.transpose()
+      + X * T * X.transpose() * A.transpose() + B * B.transpose();
 
     EXPECT_VECTOR_NEAR(R_exp, R);
 }
@@ -170,10 +174,9 @@ public:
         }
 };
 
-TEST(LyapunovSolverTest, StlSolverRestart)
+void get_tridiagonal_problem(int n, StlWrapper &A, StlWrapper &B)
 {
-    int n = 20;
-    StlWrapper A(n, n);
+    A = StlWrapper(n, n);
     A.random();
 
     // Make A tridiagonal
@@ -181,14 +184,23 @@ TEST(LyapunovSolverTest, StlSolverRestart)
         for (int j = 0; j < n; ++j)
             if (std::abs(i - j) > 1)
                 A(i, j) = 0.0;
+            else if (i == j)
+                A(i, j) *= 3.0;
 
-    StlWrapper B(n, 1);
+    B = StlWrapper(n, 1);
     B.random();
 
     StlWrapper C = B.copy();
     C(n-1, 0) = 0.0;
     B -= C;
     B = B;
+}
+
+TEST(LyapunovSolverTest, StlSolverRestart)
+{
+    int n = 20;
+    StlWrapper A, B;
+    get_tridiagonal_problem(n, A, B);
 
     StlWrapper X(n,1);
     StlWrapper T;
@@ -197,8 +209,9 @@ TEST(LyapunovSolverTest, StlSolverRestart)
 
     ParameterList params;
     params.set("Restart Size", 19);
-    params.set("Reduced Size", 10);
-    params.set("Expand Size", 3);
+    params.set("Reduced Size", 15);
+    params.set("Expand Size", 1);
+    params.set("Minimize solution space", false);
     solver.set_parameters(params);
 
     solver.solve(X, T);
@@ -208,6 +221,48 @@ TEST(LyapunovSolverTest, StlSolverRestart)
       + X * T * X.transpose() * A.transpose() + B * B.transpose();
     StlWrapper R_exp(n, n);
     R_exp.scale(0.0);
+
+    EXPECT_GT(n, X.N());
+
+    EXPECT_VECTOR_NEAR(R_exp, R);
+}
+
+TEST(LyapunovSolverTest, StlSolverMinimize)
+{
+    int n = 20;
+    StlWrapper A, B;
+    get_tridiagonal_problem(n, A, B);
+
+    StlWrapper X(n,1);
+    StlWrapper T;
+
+    StlWrapper R;
+    StlWrapper R_exp(n, n);
+    R_exp.scale(0.0);
+
+    Lyapunov::Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
+
+    ParameterList params;
+    params.set("Minimize solution space", false);
+    solver.set_parameters(params);
+
+    solver.solve(X, T);
+
+    // Compute the residual
+    R = A * X * T * X.transpose()
+      + X * T * X.transpose() * A.transpose() + B * B.transpose();
+
+    EXPECT_EQ(n, X.N());
+
+    EXPECT_VECTOR_NEAR(R_exp, R);
+    params.set("Minimize solution space", true);
+    solver.set_parameters(params);
+
+    solver.solve(X, T);
+
+    // Compute the residual
+    R = A * X * T * X.transpose()
+      + X * T * X.transpose() * A.transpose() + B * B.transpose();
 
     EXPECT_GT(n, X.N());
 

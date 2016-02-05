@@ -108,14 +108,14 @@ StlWrapper &StlWrapper::operator =(StlWrapper const &other)
 StlWrapper &StlWrapper::operator *=(double other)
 {
     FUNCTION_TIMER("StlWrapper", "*=");
-    BlasWrapper::DSCAL(m_ * n_, other, ptr_->get());
+    scale(other);
     return *this;
 }
 
 StlWrapper &StlWrapper::operator /=(double other)
 {
     FUNCTION_TIMER("StlWrapper", "/=");
-    BlasWrapper::DSCAL(m_ * n_, 1.0 / other, ptr_->get());
+    scale(1.0 / other);
     return *this;
 }
 
@@ -123,12 +123,14 @@ StlWrapper &StlWrapper::operator -=(StlWrapper const &other)
 {
     FUNCTION_TIMER("StlWrapper", "-=");
     BlasWrapper::DAXPY(m_ * n_, -1.0, other.ptr_->get(), ptr_->get());
+    orthogonalized_ = 0;
     return *this;
 }
 StlWrapper &StlWrapper::operator +=(StlWrapper const &other)
 {
     FUNCTION_TIMER("StlWrapper", "+=");
     BlasWrapper::DAXPY(m_ * n_, 1.0, other.ptr_->get(), ptr_->get());
+    orthogonalized_ = 0;
     return *this;
 }
 
@@ -206,6 +208,7 @@ int StlWrapper::scale(double factor)
 {
     FUNCTION_TIMER("StlWrapper", "scale");
     BlasWrapper::DSCAL(m_max_ * n_, factor, ptr_->get());
+    orthogonalized_ = 0;
     return 0;
 }
 
@@ -410,6 +413,7 @@ void StlWrapper::random()
     for (int i = 0; i < m_; ++i)
         for (int j = 0; j < n_; ++j)
             (*ptr_)(i, j) = distribution(generator);
+    orthogonalized_ = 0;
 }
 
 StlWrapper StlWrapper::transpose()
@@ -437,18 +441,26 @@ int StlWrapper::eigs(StlWrapper &v, StlWrapper &d,
     LapackWrapper::DSYEV('V', 'U', m, v.ptr_->get(), v.LDA(),
                           d.ptr_->get(), &info);
 
-    if (num != m)
+    if (num != m || tol > 1e-14)
     {
         std::vector<int> indices;
         find_largest_eigenvalues(d, indices, num);
 
         StlWrapper tmpv(m, num);
         StlWrapper tmpd(num, 1);
+        int idx = 0;
         for (int i = 0; i < num; ++i)
         {
-            tmpv.view(i) = v.view(indices[i]);
-            tmpd(i, 0) = d(indices[i], 0);
+            if (std::abs(d(indices[i], 0)) > tol)
+            {
+                tmpv.view(idx) = v.view(indices[i]);
+                tmpd(idx, 0) = d(indices[i], 0);
+                idx++;
+            }
         }
+
+        tmpv.resize(idx);
+        tmpd.resize(idx, 1);
 
         v = tmpv;
         d = tmpd;

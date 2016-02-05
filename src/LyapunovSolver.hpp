@@ -24,7 +24,8 @@ Solver<Matrix, MultiVector, DenseMatrix>::Solver(Matrix const &A,
     lanczos_iterations_(10),
     restart_size_(max_iter_ * expand_size_),
     reduced_size_(300),
-    restart_tolerance_(tol_ * 1e-3)
+    restart_tolerance_(tol_ * 1e-3),
+    minimize_solution_space_(true)
 {
 }
 
@@ -39,6 +40,8 @@ int Solver<Matrix, MultiVector, DenseMatrix>::set_parameters(ParameterList &para
     restart_size_ = params.get("Restart Size", restart_size_);
     reduced_size_ = params.get("Reduced Size", reduced_size_);
     restart_tolerance_ = params.get("Restart tolerance", tol_ * 1e-3);
+    minimize_solution_space_ = params.get("Minimize solution space",
+                                          minimize_solution_space_);
 
     if (lanczos_iterations_ <= expand_size_)
     {
@@ -87,6 +90,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
     MultiVector BV;
     DenseMatrix VBV(max_size, max_size);
 
+    bool converged_previously = false;
     double r0 = B_.norm();
 
     for (int iter = 0; iter < max_iter_; iter++)
@@ -161,33 +165,6 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
 
         dense_solve(VAV, VBV, T);
 
-        // Restart the method with reduced_size_ vectors
-        if (V.N() > restart_size_)
-        {
-            std::cout << "Reached the maximum space size of " << restart_size_
-                      << ". Trying to restart with " << reduced_size_
-                      << " vectors" << std::endl;
-
-            RestartOperator<Matrix, MultiVector, DenseMatrix> op(V, T);
-            Matrix mat = Matrix::from_operator(op);
-            DenseMatrix eigs;
-            mat.eigs(V, eigs, reduced_size_, restart_tolerance_);
-
-            std::cout << "Restarted with " << V.N()
-                      << " vectors" << std::endl;
-
-            V.orthogonalize();
-            W = V;
-
-            VAV.resize(0, 0);
-            AV.resize(0);
-
-            VBV.resize(0, 0);
-            BV.resize(0);
-
-            continue;
-        }
-
         int num_eigenvalues = lanczos_iterations_;
         DenseMatrix H(num_eigenvalues + 1, num_eigenvalues + 1);
         DenseMatrix eigenvalues(num_eigenvalues, 1);
@@ -203,13 +180,52 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
         bool converged = std::abs(res) < tol_ * r0 * r0;
         if (converged || iter + 1 >= max_iter_ || V.N() >= n)
         {
-            std::cout << "The Lyapunov solver "
-                      << (converged ? "converged" : "did not converge")
-                      << " in " << iter+1
-                      << " iterations with a final relative residual of "
-                      << res / r0 / r0 << ". The size of the space used "
-                      << "for the solution is " << V.N() << std::endl;
-            break;
+            if (converged && minimize_solution_space_ && !converged_previously)
+            {
+                converged_previously = true;
+            }
+            else
+            {
+                std::cout << "The Lyapunov solver "
+                          << (converged ? "converged" : "did not converge")
+                          << " in " << iter+1
+                          << " iterations with a final relative residual of "
+                          << res / r0 / r0 << ". The size of the space used "
+                          << "for the solution is " << V.N() << std::endl;
+                break;
+            }
+        }
+
+        // Restart the method with reduced_size_ vectors
+        if (V.N() >= restart_size_ || converged)
+        {
+            int reduced_size = std::min(reduced_size_, V.N());
+            if (converged)
+                std::cout << "Method converged. Minimizing the solution "
+                          << "space size";
+            else
+                std::cout << "Reached the maximum space size of " << restart_size_;
+            std::cout << ". Trying to restart with " << reduced_size
+                      << " vectors" << std::endl;
+
+            RestartOperator<Matrix, MultiVector, DenseMatrix> op(V, T);
+            Matrix mat = Matrix::from_operator(op);
+            DenseMatrix eigs;
+            mat.eigs(V, eigs, reduced_size, restart_tolerance_);
+
+            std::cout << "Restarted with " << V.N()
+                      << " vectors" << std::endl;
+
+            V.orthogonalize();
+            W = V;
+
+            VAV.resize(0, 0);
+            AV.resize(0);
+
+            VBV.resize(0, 0);
+            BV.resize(0);
+
+            continue;
         }
 
         int expand_vectors = std::min(std::min(expand_size_,

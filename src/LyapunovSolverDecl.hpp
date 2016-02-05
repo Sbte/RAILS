@@ -38,6 +38,7 @@ protected:
     int restart_size_;
     int reduced_size_;
     double restart_tolerance_;
+    bool minimize_solution_space_;
 };
 
 }

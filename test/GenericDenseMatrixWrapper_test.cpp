@@ -1,17 +1,11 @@
 #include "gtest/gtest.h"
 
+#include "TestHelpers.hpp"
+
 #include "src/StlWrapper.hpp"
 #include "src/StlTools.hpp"
 
 #include "Epetra_TestableWrappers.hpp"
-
-#define EXPECT_VECTOR_EQ(a, b) {                \
-    int m = (a).M();                            \
-    int n = (a).N();                            \
-    for (int i = 0; i < m; i++)                 \
-      for (int j = 0; j < n; j++)               \
-        EXPECT_DOUBLE_EQ((a)(i,j), (b)(i,j));   \
-    }
 
 template <class DenseMatrixWrapper>
 class GenericDenseMatrixWrapperTest: public testing::Test

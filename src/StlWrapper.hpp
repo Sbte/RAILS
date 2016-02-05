@@ -104,7 +104,7 @@ public:
     StlWrapper transpose();
 
     int eigs(StlWrapper &V, StlWrapper &D,
-             int num = -1, double tol = 1e-6) const;
+             int num = -1, double tol = 1e-16) const;
 
 };
 

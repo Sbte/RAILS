@@ -1,16 +1,10 @@
 #include "gtest/gtest.h"
 
+#include "TestHelpers.hpp"
+
 #include "src/StlWrapper.hpp"
 
 #include "Epetra_TestableWrappers.hpp"
-
-#define EXPECT_VECTOR_EQ(a, b) {                        \
-        int m = (a).M();                                \
-        int n = (a).N();                                \
-        for (int i = 0; i < m; i++)                     \
-            for (int j = 0; j < n; j++)                 \
-                EXPECT_DOUBLE_EQ((a)(i,j), (b)(i,j));   \
-    }
 
 template <typename A, typename B, typename C>
 struct TypeDefinitions
@@ -182,6 +176,68 @@ TYPED_TEST(GenericOperatorWrapperTest, Eigs2)
 
     EXPECT_NEAR(10, this->D(0,0), 1e-6);
     EXPECT_NEAR(9, this->D(1,0), 1e-6);
+}
+
+TYPED_TEST(GenericOperatorWrapperTest, Eigs3)
+{
+    int n = 10;
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < n; ++j)
+        {
+            if (i == j)
+                this->E(i, i) = i + 1;
+            else
+                this->E(i, j) = 0.0;
+        }
+
+    // Check if orthogonaliozing works, which we do in the solver
+
+    TestOperator<typename TypeParam::OperatorWrapper,
+                 typename TypeParam::MultiVectorWrapper> op(this->E, this->V);
+    typename TypeParam::OperatorWrapper mat =
+        TypeParam::OperatorWrapper::from_operator(op);
+
+    mat.eigs(this->V, this->D, 2, 1e-6);
+
+    EXPECT_NEAR(10, this->D(0,0), 1e-6);
+    EXPECT_NEAR(9, this->D(1,0), 1e-6);
+
+    this->V.orthogonalize();
+    EXPECT_ORTHOGONAL(this->V);
+
+    mat.eigs(this->V, this->D, 2, 1e-6);
+
+    EXPECT_NEAR(10, this->D(0,0), 1e-6);
+    EXPECT_NEAR(9, this->D(1,0), 1e-6);
+
+    this->V.orthogonalize();
+    EXPECT_ORTHOGONAL(this->V);
+}
+
+TYPED_TEST(GenericOperatorWrapperTest, Eigs4)
+{
+    int n = 10;
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < n; ++j)
+        {
+            if (i == j)
+                this->E(i, i) = i + 1;
+            else
+                this->E(i, j) = 0.0;
+        }
+
+    // Tolerance check
+
+    TestOperator<typename TypeParam::OperatorWrapper,
+                 typename TypeParam::MultiVectorWrapper> op(this->E, this->V);
+    typename TypeParam::OperatorWrapper mat =
+        TypeParam::OperatorWrapper::from_operator(op);
+
+    mat.eigs(this->V, this->D, 2, 9.5);
+
+    EXPECT_NEAR(10, this->D(0,0), 1e-1);
+
+    EXPECT_EQ(1, this->D.M());
 }
 
 #endif

@@ -102,6 +102,7 @@ Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator *=(double other)
 {
     FUNCTION_TIMER("Epetra_MultiVectorWrapper", "*=");
     ptr_->Scale(other);
+    orthogonalized_ = 0;
     return *this;
 }
 
@@ -109,6 +110,7 @@ Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator /=(double other)
 {
     FUNCTION_TIMER("Epetra_MultiVectorWrapper", "/=");
     ptr_->Scale(1.0 / other);
+    orthogonalized_ = 0;
     return *this;
 }
 
@@ -117,6 +119,7 @@ Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator -=(
 {
     FUNCTION_TIMER("Epetra_MultiVectorWrapper", "-=");
     ptr_->Update(-1.0, *other, 1.0);
+    orthogonalized_ = 0;
     return *this;
 }
 Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator +=(
@@ -124,6 +127,7 @@ Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator +=(
 {
     FUNCTION_TIMER("Epetra_MultiVectorWrapper", "+=");
     ptr_->Update(1.0, *other, 1.0);
+    orthogonalized_ = 0;
     return *this;
 }
 
@@ -192,6 +196,7 @@ double const &Epetra_MultiVectorWrapper::operator ()(int m, int n) const
 int Epetra_MultiVectorWrapper::scale(double factor)
 {
     FUNCTION_TIMER("Epetra_MultiVectorWrapper", "scale");
+    orthogonalized_ = 0;
     return ptr_->Scale(factor);
 }
 
@@ -365,6 +370,7 @@ void Epetra_MultiVectorWrapper::random()
 {
     FUNCTION_TIMER("Epetra_MultiVectorWrapper", "random");
     ptr_->Random();
+    orthogonalized_ = 0;
 }
 
 Teuchos::RCP<Epetra_MultiVector> SerialDenseMatrixToMultiVector(
