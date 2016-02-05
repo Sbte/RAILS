@@ -87,4 +87,17 @@ TYPED_TEST(GenericDenseMatrixWrapperTest, Scale)
     EXPECT_VECTOR_EQ(this->A, this->D);
 }
 
+TYPED_TEST(GenericDenseMatrixWrapperTest, Resize)
+{
+    int m = 80;
+    int n = 100;
+    this->A.scale(0.0);
+    this->A(0,0) = 10.0;
+    this->A.resize(m, n);
+    EXPECT_EQ(m, this->A.M());
+    EXPECT_EQ(m, this->A.LDA());
+    EXPECT_EQ(n, this->A.N());
+    EXPECT_EQ(10.0, this->A(0,0));
+}
+
 #endif

@@ -37,6 +37,7 @@ protected:
     int lanczos_iterations_;
     int restart_size_;
     int reduced_size_;
+    int restart_iterations_;
     double restart_tolerance_;
     bool minimize_solution_space_;
 };

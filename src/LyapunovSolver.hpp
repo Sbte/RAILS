@@ -5,6 +5,9 @@
 #include "SlicotWrapper.hpp"
 #include "StlTools.hpp"
 
+#include <string>
+#include <locale>
+
 #define TIMER_ON
 #include "Timer.hpp"
 
@@ -22,25 +25,59 @@ Solver<Matrix, MultiVector, DenseMatrix>::Solver(Matrix const &A,
     tol_(1e-3),
     expand_size_(3),
     lanczos_iterations_(10),
-    restart_size_(max_iter_ * expand_size_),
-    reduced_size_(300),
+    restart_size_(-1),
+    reduced_size_(-1),
+    restart_iterations_(20),
     restart_tolerance_(tol_ * 1e-3),
     minimize_solution_space_(true)
 {
+}
+
+template<class ParameterList, class Type>
+Type get_parameter(ParameterList &params, std::string const &name, Type def)
+{
+    Type ret = params.get(name, def);
+
+    std::locale loc;
+    std::string str;
+
+    // UPPER CASE
+    str = name;
+    for(std::string::iterator it = str.begin(); it != str.end(); ++it)
+        *it = std::toupper(*it, loc);
+    ret = params.get(str, ret);
+
+    // lower case
+    str = name;
+    for(std::string::iterator it = str.begin(); it != str.end(); ++it)
+        *it = std::tolower(*it, loc);
+    ret = params.get(str, ret);
+
+    // Title Case
+    str = name;
+    if(str.length() > 0)
+        str[0] = std::toupper(str[0]);
+    for(std::string::iterator it = str.begin() + 1; it != str.end(); ++it)
+        if (!isalpha(*(it - 1)) && islower(*it))
+            *it = std::toupper(*it, loc);
+    ret = params.get(str, ret);
+
+    return ret;
 }
 
 template<class Matrix, class MultiVector, class DenseMatrix>
 template<class ParameterList>
 int Solver<Matrix, MultiVector, DenseMatrix>::set_parameters(ParameterList &params)
 {
-    max_iter_ = params.get("Maximum iterations", max_iter_);
-    tol_ = params.get("Tolerance", tol_);
-    expand_size_ = params.get("Expand Size", expand_size_);
-    lanczos_iterations_ = params.get("Lanczos iterations", lanczos_iterations_);
-    restart_size_ = params.get("Restart Size", restart_size_);
-    reduced_size_ = params.get("Reduced Size", reduced_size_);
-    restart_tolerance_ = params.get("Restart tolerance", tol_ * 1e-3);
-    minimize_solution_space_ = params.get("Minimize solution space",
+    max_iter_ = get_parameter(params, "Maximum iterations", max_iter_);
+    tol_ = get_parameter(params, "Tolerance", tol_);
+    expand_size_ = get_parameter(params, "Expand size", expand_size_);
+    lanczos_iterations_ = get_parameter(params, "Lanczos iterations", lanczos_iterations_);
+    restart_size_ = get_parameter(params, "Restart size", restart_size_);
+    reduced_size_ = get_parameter(params, "Reduced size", reduced_size_);
+    restart_iterations_ = get_parameter(params, "Restart iterations", restart_iterations_);
+    restart_tolerance_ = get_parameter(params, "Restart tolerance", tol_ * 1e-3);
+    minimize_solution_space_ = get_parameter(params, "Minimize solution space",
                                           minimize_solution_space_);
 
     if (lanczos_iterations_ <= expand_size_)
@@ -74,7 +111,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
     FUNCTION_TIMER("Solver");
     int n = V.M();
 
-    int max_size = std::min(restart_size_, n) + expand_size_;
+    int max_size = std::min(std::max(restart_size_, 1), n) + expand_size_;
     V.resize(max_size);
 
     V.resize(1);
@@ -91,6 +128,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
     DenseMatrix VBV(max_size, max_size);
 
     bool converged_previously = false;
+    int previous_restart = 0;
     double r0 = B_.norm();
 
     for (int iter = 0; iter < max_iter_; iter++)
@@ -197,14 +235,20 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
         }
 
         // Restart the method with reduced_size_ vectors
-        if (V.N() >= restart_size_ || converged)
+        if ((restart_size_ > 0 && V.N() >= restart_size_)
+            || (restart_iterations_ > 0 && iter - previous_restart >= restart_iterations_)
+            || converged)
         {
-            int reduced_size = std::min(reduced_size_, V.N());
+            int reduced_size = std::min(reduced_size_ > 0 ? reduced_size_ : V.N(), V.N());
             if (converged)
                 std::cout << "Method converged. Minimizing the solution "
                           << "space size";
-            else
+            else if (restart_size_ > 0)
                 std::cout << "Reached the maximum space size of " << restart_size_;
+            else if (restart_iterations_ > 0)
+                std::cout << restart_iterations_ << " iterations have passed";
+            else
+                std::cout << "No clue what happened";
             std::cout << ". Trying to restart with " << reduced_size
                       << " vectors" << std::endl;
 
@@ -224,6 +268,8 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
 
             VBV.resize(0, 0);
             BV.resize(0);
+
+            previous_restart = iter;
 
             continue;
         }

@@ -240,12 +240,19 @@ void StlWrapper::resize(int m, int n)
         return;
     }
 
+    StlWrapper out(m, n);
     if (m_max_ > 0)
-        std::cerr << "Warning: data not copied during resize from size "
+    {
+        std::cerr << "Warning: data copied during resize from size "
                   << m_ << "x" << n_ << " to " << m << "x" << n
-                  << " with capacity " << m_max_ << "x" << n_  << std::endl;
+                  << " with capacity " << m_max_ << "x" << n_
+                  << ", which is very inefficient." << std::endl;
 
-    *this = StlWrapper(m, n);
+        for (int i = 0; i < std::min(n_, n); ++i)
+            memcpy(&(*out.ptr_)(0, i), &(*ptr_)(0, i),
+                   sizeof(double) * m_);
+    }
+    *this = out;
 }
 
 double StlWrapper::norm() const
