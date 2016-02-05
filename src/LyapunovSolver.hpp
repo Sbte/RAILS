@@ -62,10 +62,9 @@ public:
     DenseMatrix T;
 
     RestartOperator(MultiVector &_V, DenseMatrix &_T): V(_V), T(_T) {}
-    int operator ()(MultiVector &X, MultiVector &Y)
+    MultiVector operator *(MultiVector const &other) const
         {
-            Y.view(0, Y.N()-1) = V * (T * V.dot(X));
-            return 0;
+            return V * (T * V.dot(other));
         }
 };
 

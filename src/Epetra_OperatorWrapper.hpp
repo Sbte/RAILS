@@ -4,9 +4,10 @@
 #include <Teuchos_RCP.hpp>
 #include <Teuchos_ParameterList.hpp>
 
+#include "Epetra_MultiVectorWrapper.hpp"
+
 class Epetra_Operator;
 class Epetra_BlockMap;
-class Epetra_MultiVectorWrapper;
 class Epetra_SerialDenseMatrixWrapper;
 
 template<class Operator>
@@ -40,6 +41,9 @@ public:
     Epetra_MultiVectorWrapper operator *(Epetra_MultiVectorWrapper const &other) const;
 
     int set_parameters(Teuchos::ParameterList &params);
+
+    int M() const;
+    int N() const;
 
     double norm(int n = 0);
     int eigs(Epetra_MultiVectorWrapper &V,
@@ -77,7 +81,8 @@ public:
                     Teuchos::rcp(&X, false)));
             Epetra_MultiVectorWrapper YW(
                 Teuchos::rcp(&Y, false));
-            return op_(XW, YW);
+            YW.view() = op_ * XW;
+            return 0;
         }
 
     int ApplyInverse(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const

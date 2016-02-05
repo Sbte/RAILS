@@ -280,7 +280,14 @@ Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::view(int m, int n)
 {
     FUNCTION_TIMER("Epetra_MultiVectorWrapper", "view");
     Epetra_MultiVectorWrapper out;
-    int num = n ? n-m+1 : 1;
+    int num = 1;
+    if (n > 0 && m >= 0)
+        num = n - m + 1;
+    else if (m < 0)
+    {
+        m = 0;
+        num = N();
+    }
     out.ptr_ = Teuchos::rcp(new Epetra_MultiVector(View, *ptr_, m, num));
     out.is_view_ = true;
     return out;
@@ -290,7 +297,14 @@ Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::view(int m, int n) const
 {
     FUNCTION_TIMER("Epetra_MultiVectorWrapper", "view");
     Epetra_MultiVectorWrapper out;
-    int num = n ? n-m+1 : 1;
+    int num = 1;
+    if (n > 0 && m >= 0)
+        num = n - m + 1;
+    else if (m < 0)
+    {
+        m = 0;
+        num = N();
+    }
     out.ptr_ = Teuchos::rcp(new Epetra_MultiVector(View, *ptr_, m, num));
     out.is_view_ = true;
     return out;

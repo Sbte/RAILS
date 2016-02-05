@@ -85,6 +85,28 @@ Epetra_MultiVectorWrapper Epetra_OperatorWrapper::operator *(
     return out;
 }
 
+int Epetra_OperatorWrapper::M() const
+{
+    bool use_transpose = ptr_->UseTranspose();
+    ptr_->SetUseTranspose(transpose_);
+
+    int out =  ptr_->OperatorRangeMap().NumGlobalPoints();
+
+    ptr_->SetUseTranspose(use_transpose);
+    return out;
+}
+
+int Epetra_OperatorWrapper::N() const
+{
+    bool use_transpose = ptr_->UseTranspose();
+    ptr_->SetUseTranspose(transpose_);
+
+    int out =  ptr_->OperatorDomainMap().NumGlobalPoints();
+
+    ptr_->SetUseTranspose(use_transpose);
+    return out;
+}
+
 double Epetra_OperatorWrapper::norm(int n)
 {
     FUNCTION_TIMER("Epetra_OperatorWrapper", "norm");
@@ -174,19 +196,20 @@ Epetra_OperatorWrapper::Epetra_OperatorWrapper(int m, int n)
     FUNCTION_TIMER("Epetra_OperatorWrapper", "constructor 3");
 
     Epetra_SerialComm comm;
-    Epetra_Map map(m, 0, comm);
+    Epetra_Map row_map(m, 0, comm);
+    Epetra_Map col_map(n, 0, comm);
     Teuchos::RCP<Epetra_CrsMatrix> mat =
-        Teuchos::rcp(new Epetra_CrsMatrix(Copy, map, n));
+        Teuchos::rcp(new Epetra_CrsMatrix(Copy, row_map, col_map, n));
 
     double *values = new double[n]();
     int *indices = new int[n]();
-    for (int i = 0; i < m; ++i)
+    for (int i = 0; i < n; ++i)
         indices[i] = i;
 
     for (int i = 0; i < m; ++i)
         mat->InsertGlobalValues(i, n, values, indices);
 
-    mat->FillComplete();
+    mat->FillComplete(col_map, row_map);
 
     delete[] values;
     delete[] indices;

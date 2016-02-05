@@ -310,4 +310,22 @@ TYPED_TEST(GenericMultiVectorWrapperTest, View)
     EXPECT_VECTOR_EQ(this->b, this->a);
 }
 
+TYPED_TEST(GenericMultiVectorWrapperTest, View2)
+{
+    this->a.random();
+
+    this->b = this->a;
+    EXPECT_VECTOR_EQ(this->b, this->a);
+
+    this->c.random();
+    this->b = this->c;
+    EXPECT_VECTOR_EQ(this->b, this->c);
+    EXPECT_NE(this->a(0, 0), this->b(0, 0));
+
+    this->b = this->a;
+    this->b.view() = this->c;
+    EXPECT_VECTOR_EQ(this->a, this->c);
+    EXPECT_VECTOR_EQ(this->b, this->c);
+}
+
 #endif

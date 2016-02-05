@@ -5,6 +5,16 @@
 
 #include <memory>
 
+template<class Operator>
+class StlWrapperFromApplyMethod;
+class StlWrapper;
+
+class StlOperator
+{
+public:
+    virtual StlWrapper operator *(StlWrapper const &other) const = 0;
+};
+
 class StlWrapper
 {
     std::shared_ptr<StlVector> ptr_;
@@ -25,12 +35,24 @@ class StlWrapper
 
     // Matrix is used as transpose or not in * methods
     bool transpose_;
+
+    // Operator that can be set from from_operator
+    std::shared_ptr<StlOperator> op_;
+
 public:
     StlWrapper();
     StlWrapper(std::shared_ptr<StlVector> ptr);
     StlWrapper(StlWrapper const &other);
     StlWrapper(StlWrapper const &other, int n);
     StlWrapper(int m, int n);
+
+    template<class Operator>
+    static StlWrapper from_operator(Operator &op)
+        {
+            StlWrapper out;
+            out.op_ = std::make_shared<StlWrapperFromApplyMethod<Operator> >(op);
+            return out;
+        }
 
     virtual ~StlWrapper() {}
 
@@ -64,8 +86,8 @@ public:
 
     void orthogonalize();
 
-    StlWrapper view(int m, int n = 0);
-    StlWrapper view(int m, int n = 0) const;
+    StlWrapper view(int m = -1, int n = -1);
+    StlWrapper view(int m = -1, int n = -1) const;
     StlWrapper copy(int m = 0, int n = 0) const;
 
     void push_back(StlWrapper const &other, int m = -1);
@@ -81,5 +103,22 @@ public:
 };
 
 StlWrapper operator *(double d, StlWrapper const &other);
+
+template<class Operator>
+class StlWrapperFromApplyMethod: public StlOperator
+{
+    Operator op_;
+
+public:
+    StlWrapperFromApplyMethod(Operator op)
+        :
+        op_(op)
+        {}
+
+    StlWrapper operator *(StlWrapper const &other) const
+        {
+            return op_ * other;
+        }
+};
 
 #endif

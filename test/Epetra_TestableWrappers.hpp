@@ -5,6 +5,10 @@
 #include "src/Epetra_MultiVectorWrapper.hpp"
 #include "src/Epetra_OperatorWrapper.hpp"
 
+#include "Epetra_SerialDenseMatrix.h"
+#include "Epetra_MultiVector.h"
+#include "Epetra_Operator.h"
+
 class TestableEpetra_MultiVectorWrapper: public Epetra_MultiVectorWrapper
 {
 public:

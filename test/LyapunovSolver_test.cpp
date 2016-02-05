@@ -3,6 +3,16 @@
 
 #include "src/LyapunovSolver.hpp"
 #include "src/ScalarWrapper.hpp"
+#include "src/StlWrapper.hpp"
+
+#define EXPECT_VECTOR_NEAR(a, b)                                        \
+    {                                                                   \
+     int m = (a).M();                                                   \
+     int n = (a).N();                                                   \
+     for (int i = 0; i < m; i++)                                        \
+         for (int j = 0; j < n; j++)                                    \
+             EXPECT_NEAR((a)(i,j), (b)(i,j), 1e-3);                     \
+    }
 
 TEST(LyapunovSolverTest, ScalarEigenvalueSolver)
 {
@@ -47,4 +57,32 @@ TEST(LyapunovSolverTest, ScalarSolver)
     solver.solve(X, T);
 
     EXPECT_EQ(-4, X * T * X);
+}
+
+TEST(LyapunovSolverTest, StlDenseSolver)
+{
+    int n = 20;
+    StlWrapper A(n, n);
+    A.random();
+
+    StlWrapper B(n, 1);
+    B.random();
+
+    StlWrapper C = B.copy();
+    C(n, 0) = 0.0;
+    B -= C;
+    B = B * B.transpose();
+
+    StlWrapper X;
+
+    Lyapunov::Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
+
+    solver.dense_solve(A, B, X);
+
+    // Compute the residual
+    StlWrapper R = A * X + X * A.transpose() + B;
+    StlWrapper R_exp(n, n);
+    R_exp.scale(0.0);
+
+    EXPECT_VECTOR_NEAR(R_exp, R);
 }

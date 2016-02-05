@@ -60,8 +60,8 @@ public:
 
     void orthogonalize();
 
-    Epetra_MultiVectorWrapper view(int m, int n = 0);
-    Epetra_MultiVectorWrapper view(int m, int n = 0) const;
+    Epetra_MultiVectorWrapper view(int m = -1, int n = -1);
+    Epetra_MultiVectorWrapper view(int m = -1, int n = -1) const;
     Epetra_MultiVectorWrapper copy(int m = 0, int n = 0) const;
 
     void push_back(Epetra_MultiVectorWrapper const &other, int m = -1);

@@ -21,7 +21,8 @@ StlWrapper::StlWrapper()
     n_max_(-1),
     orthogonalized_(0),
     is_view_(false),
-    transpose_(false)
+    transpose_(false),
+    op_(nullptr)
 {}
 
 StlWrapper::StlWrapper(StlWrapper const &other)
@@ -37,6 +38,7 @@ StlWrapper::StlWrapper(StlWrapper const &other)
     n_max_ = other.n_max_;
     orthogonalized_ = other.orthogonalized_;
     transpose_ = other.transpose_;
+    op_ = other.op_;
 }
 
 StlWrapper::StlWrapper(StlWrapper const &other, int n)
@@ -78,8 +80,7 @@ StlWrapper &StlWrapper::operator =(StlWrapper &other)
     return *this;
 }
 
-StlWrapper &StlWrapper::operator =(
-    StlWrapper const &other)
+StlWrapper &StlWrapper::operator =(StlWrapper const &other)
 {
     FUNCTION_TIMER("StlWrapper", "= 2");
     if (!is_view_)
@@ -113,23 +114,20 @@ StlWrapper &StlWrapper::operator /=(double other)
     return *this;
 }
 
-StlWrapper &StlWrapper::operator -=(
-    StlWrapper const &other)
+StlWrapper &StlWrapper::operator -=(StlWrapper const &other)
 {
     FUNCTION_TIMER("StlWrapper", "-=");
     BlasWrapper::DAXPY(m_ * n_, -1.0, other.ptr_->get(), ptr_->get());
     return *this;
 }
-StlWrapper &StlWrapper::operator +=(
-    StlWrapper const &other)
+StlWrapper &StlWrapper::operator +=(StlWrapper const &other)
 {
     FUNCTION_TIMER("StlWrapper", "+=");
     BlasWrapper::DAXPY(m_ * n_, 1.0, other.ptr_->get(), ptr_->get());
     return *this;
 }
 
-StlWrapper StlWrapper::operator +(
-    StlWrapper const &other) const
+StlWrapper StlWrapper::operator +(StlWrapper const &other) const
 {
     FUNCTION_TIMER("StlWrapper", "+");
     StlWrapper e(*this);
@@ -137,12 +135,14 @@ StlWrapper StlWrapper::operator +(
     return e;
 }
 
-StlWrapper StlWrapper::operator *(
-    StlWrapper const &other) const
+StlWrapper StlWrapper::operator *(StlWrapper const &other) const
 {
     FUNCTION_TIMER("StlWrapper", "* S");
-    StlWrapper out(*this, other.N());
 
+    if (op_)
+      return *op_ * other;
+
+    StlWrapper out(*this, other.N());
     if (other.M() != N())
     {
         std::cerr << "Incomplatible matrices of sizes "
@@ -177,6 +177,12 @@ StlVector const &StlWrapper::operator *() const
 {
     FUNCTION_TIMER("StlWrapper", "* 2");
     return *ptr_;
+}
+
+StlWrapper::operator double*() const
+{
+    FUNCTION_TIMER("StlWrapper", "double*");
+    return ptr_->get();
 }
 
 double &StlWrapper::operator ()(int m, int n)
@@ -281,7 +287,14 @@ StlWrapper StlWrapper::view(int m, int n)
 {
     FUNCTION_TIMER("StlWrapper", "view");
     StlWrapper out = *this;
-    int num = n ? n-m+1 : 1;
+    int num = 1;
+    if (n > 0 && m >= 0)
+        num = n - m + 1;
+    else if (m < 0)
+    {
+        m = 0;
+        num = N();
+    }
     out.ptr_ = std::make_shared<StlVector>(&(*ptr_)[m_max_ * m], m_max_, num);
     out.n_ = num;
     out.is_view_ = true;
@@ -292,7 +305,14 @@ StlWrapper StlWrapper::view(int m, int n) const
 {
     FUNCTION_TIMER("StlWrapper", "view");
     StlWrapper out = *this;
-    int num = n ? n-m+1 : 1;
+    int num = 1;
+    if (n > 0 && m >= 0)
+        num = n - m + 1;
+    else if (m < 0)
+    {
+        m = 0;
+        num = N();
+    }
     out.ptr_ = std::make_shared<StlVector>(&(*ptr_)[m_max_ * m], m_max_, num);
     out.n_ = num;
     out.is_view_ = true;
@@ -352,7 +372,7 @@ StlWrapper StlWrapper::dot(StlWrapper const &other) const
 void StlWrapper::random()
 {
     FUNCTION_TIMER("StlWrapper", "random");
-    std::default_random_engine generator;
+    std::default_random_engine generator(std::rand());
     std::uniform_real_distribution<double> distribution(-1,1);
     for (int i = 0; i < m_; ++i)
         for(int j = 0; j < n_; ++j)
