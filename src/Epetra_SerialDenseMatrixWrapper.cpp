@@ -45,6 +45,14 @@ Epetra_SerialDenseMatrixWrapper &Epetra_SerialDenseMatrixWrapper::operator =(
     return *this;
 }
 
+Epetra_SerialDenseMatrixWrapper &Epetra_SerialDenseMatrixWrapper::operator =(
+    double other)
+{
+    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "=");
+    std::fill_n(ptr_->A(), ptr_->LDA() * ptr_->N(), other);
+    return *this;
+}
+
 Epetra_SerialDenseMatrixWrapper &Epetra_SerialDenseMatrixWrapper::operator *=(double other)
 {
     FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "*=");

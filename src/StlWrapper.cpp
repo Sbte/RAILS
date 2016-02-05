@@ -105,6 +105,12 @@ StlWrapper &StlWrapper::operator =(StlWrapper const &other)
     return *this;
 }
 
+StlWrapper &StlWrapper::operator =(double other)
+{
+    std::fill_n(ptr_->get(), m_max_ * n_, other);
+    return *this;
+}
+
 StlWrapper &StlWrapper::operator *=(double other)
 {
     FUNCTION_TIMER("StlWrapper", "*=");

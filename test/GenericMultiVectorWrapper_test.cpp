@@ -72,6 +72,27 @@ TYPED_TEST(GenericMultiVectorWrapperTest, Resize)
     EXPECT_EQ(1, N);
 }
 
+TYPED_TEST(GenericMultiVectorWrapperTest, PutScalar)
+{
+    this->a = 2.0;
+
+    for (int i = 0; i < this->a.M(); ++i)
+        for (int j = 0; j < this->a.N(); ++j)
+           this->b(i, j) = 2.0;
+
+    EXPECT_VECTOR_EQ(this->b, this->a);
+}
+
+TYPED_TEST(GenericMultiVectorWrapperTest, Assignment)
+{
+    this->a.random();
+
+    this->b = this->a;
+    this->b = 2.0;
+
+    EXPECT_VECTOR_EQ(this->b, this->a);
+}
+
 TYPED_TEST(GenericMultiVectorWrapperTest, MultiplicationAssignment)
 {
     this->a.random();

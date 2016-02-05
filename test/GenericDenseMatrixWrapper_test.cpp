@@ -76,6 +76,17 @@ TYPED_TEST(GenericDenseMatrixWrapperTest, Eigs2)
     EXPECT_NEAR((5.0 - sqrt(25.0 + 20.0)) / 2.0, this->C(indices[1],0), 1e-6);
 }
 
+TYPED_TEST(GenericDenseMatrixWrapperTest, PutScalar)
+{
+    this->A = 2.0;
+
+    for (int i = 0; i < this->A.M(); ++i)
+        for (int j = 0; j < this->A.N(); ++j)
+           this->B(i, j) = 2.0;
+
+    EXPECT_VECTOR_EQ(this->B, this->A);
+}
+
 TYPED_TEST(GenericDenseMatrixWrapperTest, Scale)
 {
     this->A *= 0.0;

@@ -22,6 +22,21 @@ public:
         Epetra_MultiVectorWrapper(m, n)
         {}
 
+    Epetra_MultiVectorWrapper &operator =(TestableEpetra_MultiVectorWrapper &other)
+        {
+            return Epetra_MultiVectorWrapper::operator =(other);
+        }
+
+    Epetra_MultiVectorWrapper &operator =(TestableEpetra_MultiVectorWrapper const &other)
+        {
+            return Epetra_MultiVectorWrapper::operator =(other);
+        }
+
+    Epetra_MultiVectorWrapper &operator =(double other)
+        {
+            return Epetra_MultiVectorWrapper::operator =(other);
+        }
+
     double &operator ()(int m, int n = 0)
         {
             return Epetra_MultiVectorWrapper::operator()(m, n);

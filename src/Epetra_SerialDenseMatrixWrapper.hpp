@@ -18,6 +18,8 @@ public:
 
     Epetra_SerialDenseMatrixWrapper &operator =(Epetra_SerialDenseMatrixWrapper const &other);
 
+    Epetra_SerialDenseMatrixWrapper &operator =(double other);
+
     Epetra_SerialDenseMatrixWrapper &operator *=(double other);
 
     Epetra_SerialDenseMatrix &operator *();

@@ -39,6 +39,8 @@ public:
     Epetra_MultiVectorWrapper &operator =(Epetra_MultiVectorWrapper &other);
     Epetra_MultiVectorWrapper &operator =(Epetra_MultiVectorWrapper const &other);
 
+    Epetra_MultiVectorWrapper &operator =(double other);
+
     Epetra_MultiVectorWrapper &operator *=(double other);
     Epetra_MultiVectorWrapper &operator /=(double other);
 
@@ -50,8 +52,6 @@ public:
 
     Epetra_MultiVector &operator *();
     Epetra_MultiVector const &operator *() const;
-
-    int scale(double factor);
 
     void resize(int m);
 

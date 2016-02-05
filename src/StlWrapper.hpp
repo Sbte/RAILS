@@ -60,6 +60,8 @@ public:
     StlWrapper &operator =(StlWrapper &other);
     StlWrapper &operator =(StlWrapper const &other);
 
+    StlWrapper &operator =(double other);
+
     StlWrapper &operator *=(double other);
     StlWrapper &operator /=(double other);
 
