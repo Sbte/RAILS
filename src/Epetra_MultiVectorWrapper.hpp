@@ -33,7 +33,6 @@ public:
     Epetra_MultiVectorWrapper(Teuchos::RCP<Epetra_MultiVector> ptr);
     Epetra_MultiVectorWrapper(Epetra_MultiVectorWrapper const &other);
     Epetra_MultiVectorWrapper(Epetra_MultiVectorWrapper const &other, int n);
-    Epetra_MultiVectorWrapper(int m, int n);
 
     virtual ~Epetra_MultiVectorWrapper() {}
 
@@ -51,9 +50,6 @@ public:
 
     Epetra_MultiVector &operator *();
     Epetra_MultiVector const &operator *() const;
-
-    double &operator ()(int m, int n = 0);
-    double const &operator ()(int m, int n = 0) const;
 
     int scale(double factor);
 
@@ -76,6 +72,13 @@ public:
     Epetra_SerialDenseMatrixWrapper dot(Epetra_MultiVectorWrapper const &other) const;
 
     void random();
+
+// Test methods that do not have to be exposed
+protected:
+    Epetra_MultiVectorWrapper(int m, int n);
+
+    double &operator ()(int m, int n = 0);
+    double const &operator ()(int m, int n = 0) const;
 };
 
 // Helper functions

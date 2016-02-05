@@ -13,6 +13,31 @@
         EXPECT_DOUBLE_EQ((a)(i,j), (b)(i,j));   \
     }
 
+
+class TestableEpetra_MultiVectorWrapper: public Epetra_MultiVectorWrapper
+{
+public:
+    TestableEpetra_MultiVectorWrapper(Epetra_MultiVectorWrapper const &other)
+        :
+        Epetra_MultiVectorWrapper(other)
+        {}
+
+    TestableEpetra_MultiVectorWrapper(int m, int n)
+        :
+        Epetra_MultiVectorWrapper(m, n)
+        {}
+
+    double &operator ()(int m, int n = 0)
+        {
+            return Epetra_MultiVectorWrapper::operator()(m, n);
+        }
+
+    double const &operator ()(int m, int n = 0) const
+        {
+            return Epetra_MultiVectorWrapper::operator()(m, n);
+        }
+};
+    
 template <class MultiVectorWrapper>
 class GenericMultiVectorWrapperTest: public testing::Test
 {
@@ -29,7 +54,7 @@ protected:
         c(10, 10),
         d(10, 10)
         {}
-    
+
     virtual ~GenericMultiVectorWrapperTest() {}
 
     virtual void SetUp()
@@ -54,7 +79,7 @@ protected:
 
 using testing::Types;
 
-typedef Types<StlWrapper, Epetra_MultiVectorWrapper> Implementations;
+typedef Types<StlWrapper, TestableEpetra_MultiVectorWrapper> Implementations;
 
 TYPED_TEST_CASE(GenericMultiVectorWrapperTest, Implementations);
 
@@ -100,7 +125,9 @@ TYPED_TEST(GenericMultiVectorWrapperTest, AdditionAssignment)
     this->b = this->a.copy();
     this->b += this->a;
 
-    EXPECT_VECTOR_EQ(2.0 * this->a, this->b);
+    this->a.scale(2.0);
+
+    EXPECT_VECTOR_EQ(this->a, this->b);
 }
 
 TYPED_TEST(GenericMultiVectorWrapperTest, SubtractionAssignment)
@@ -110,7 +137,9 @@ TYPED_TEST(GenericMultiVectorWrapperTest, SubtractionAssignment)
     this->b = this->a.copy();
     this->b -= this->a;
 
-    EXPECT_VECTOR_EQ(0.0 * this->a, this->b);
+    this->a.scale(0.0);
+
+    EXPECT_VECTOR_EQ(this->a, this->b);
 }
 
 TYPED_TEST(GenericMultiVectorWrapperTest, MultiplicationAssignment)

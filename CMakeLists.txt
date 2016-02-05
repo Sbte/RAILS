@@ -56,7 +56,7 @@ set(TEST_SOURCES
   test/ScalarWrapper_test
   test/SlicotWrapper_test
   test/LyapunovSolver_test
-  test/GenericWrapper_test
+  test/GenericMultiVectorWrapper_test
   )
 
 # Manually add headers without source file
