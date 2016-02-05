@@ -433,23 +433,11 @@ int StlWrapper::eigs(StlWrapper &v, StlWrapper &d,
         num = m;
 
     v = copy();
-
-    // Put the diagonal in d
     d.resize(m, 1);
-    for (int i = 0; i < m; i++)
-        d(i, 0) = v(i, i);
-
-    // Put the offdiagonal in e
-    StlWrapper e(m-1, 1);
-    for (int i = 0; i < m-1; i++)
-        e(i, 0) = v(i+1, i);
-
-    StlWrapper work(std::max(1,2*m-2), 1);
 
     int info;
-    LapackWrapper::DSTEQR('I', m, d.ptr_->get(),
-                          e.ptr_->get(), v.ptr_->get(),
-                          v.LDA(), work.ptr_->get(), &info);
+    LapackWrapper::DSYEV('V', 'L', m, v.ptr_->get(), v.LDA(),
+                          d.ptr_->get(), &info);
 
     if (num != m)
     {

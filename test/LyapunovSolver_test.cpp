@@ -190,7 +190,7 @@ TEST(LyapunovSolverTest, StlSolverRestart)
     Lyapunov::Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
 
     ParameterList params;
-    params.set("Restart Size", 20);
+    params.set("Restart Size", 19);
     params.set("Reduced Size", 14);
     params.set("Expand Size", 1);
     solver.set_parameters(params);

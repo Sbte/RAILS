@@ -258,6 +258,8 @@ int Solver<Matrix, MultiVector, DenseMatrix>::lanczos(MultiVector const &AV, Mul
     Q.resize(1);
     Q.random();
     Q.view(0) /= Q.norm();
+
+    H.scale(0.0);
     END_TIMER("Lanczos", "Top");
 
     double alpha = 0.0;
