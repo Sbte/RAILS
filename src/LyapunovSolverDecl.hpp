@@ -26,11 +26,6 @@ public:
     int lanczos(MultiVector const &AV, MultiVector const &V, DenseMatrix const &T,
                 DenseMatrix &H, MultiVector &eigenvectors, DenseMatrix &eigenvalues,
                 int max_iter);
-
-    // Find the indices belonging to the larges eigenvalues
-    int find_largest_eigenvalues(DenseMatrix const &eigenvalues,
-                                 std::vector<int> &indices,
-                                 int num_vectors);
 protected:
     Matrix A_;
     Matrix B_;

@@ -1,12 +1,9 @@
 #ifndef LYAPUNOVSOLVER_H
 #define LYAPUNOVSOLVER_H
 
-#include <utility>
-#include <vector>
-#include <algorithm>
-
 #include "LyapunovSolverDecl.hpp"
 #include "SlicotWrapper.hpp"
+#include "StlTools.hpp"
 
 #define TIMER_ON
 #include "Timer.hpp"
@@ -173,7 +170,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
 
             RestartOperator<Matrix, MultiVector, DenseMatrix> op(V, T);
             Matrix mat = Matrix::from_operator(op);
-            DenseMatrix eigs(0, 0);
+            DenseMatrix eigs;
             mat.eigs(V, eigs, reduced_size_, restart_tolerance_);
 
             std::cout << "Restarted with " << V.N()
@@ -193,7 +190,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
 
         int num_eigenvalues = lanczos_iterations_;
         DenseMatrix H(num_eigenvalues + 1, num_eigenvalues + 1);
-        DenseMatrix eigenvalues(num_eigenvalues + 1, 1);
+        DenseMatrix eigenvalues(num_eigenvalues, 1);
         MultiVector eigenvectors;
         lanczos(AV, V, T, H, eigenvectors, eigenvalues, num_eigenvalues);
 
@@ -225,6 +222,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
         for (int i = 0; i < expand_vectors; i++)
             V.push_back(eigenvectors.view(indices[i]));
         V.orthogonalize();
+
 
         W = V.view(N_V, N_V+expand_vectors-1);
     }
@@ -322,31 +320,11 @@ int Solver<Matrix, MultiVector, DenseMatrix>::lanczos(MultiVector const &AV, Mul
     H.resize(iter, iter);
     Q.resize(iter);
 
-    DenseMatrix v;
+    DenseMatrix v(iter, iter);
     H.eigs(v, eigenvalues);
 
     eigenvectors = Q * v;
     END_TIMER("Lanczos", "eigv");
-
-    return 0;
-}
-
-static bool eigenvalue_sorter(std::pair<int, double> const &a, std::pair<int, double> const &b)
-{
-    return std::abs(a.second) > std::abs(b.second);
-}
-
-template<class Matrix, class MultiVector, class DenseMatrix>
-int Solver<Matrix, MultiVector, DenseMatrix>::find_largest_eigenvalues(DenseMatrix const &eigenvalues, std::vector<int> &indices, int N)
-{
-    std::vector<std::pair<int, double> > index_to_value;
-    for (int i = 0; i < eigenvalues.M(); i++)
-        index_to_value.push_back(std::pair<int, double>(i, eigenvalues(i)));
-    
-    std::sort(index_to_value.begin(), index_to_value.end(), eigenvalue_sorter);
-
-    for (int i = 0; i < N; i++)
-        indices.push_back(index_to_value[i].first);
 
     return 0;
 }

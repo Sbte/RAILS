@@ -1,5 +1,6 @@
 #include "StlWrapper.hpp"
 
+#include "StlTools.hpp"
 #include "BlasWrapper.hpp"
 #include "LapackWrapper.hpp"
 
@@ -71,6 +72,7 @@ StlWrapper &StlWrapper::operator =(StlWrapper &other)
         m_max_ = other.m_max_;
         n_max_ = other.n_max_;
         orthogonalized_ = other.orthogonalized_;
+        transpose_ = other.transpose_;
         op_ = other.op_;
         return *this;
     }
@@ -92,6 +94,7 @@ StlWrapper &StlWrapper::operator =(StlWrapper const &other)
         m_max_ = other.m_max_;
         n_max_ = other.n_max_;
         orthogonalized_ = other.orthogonalized_;
+        transpose_ = other.transpose_;
         op_ = other.op_;
         return *this;
     }
@@ -234,9 +237,10 @@ void StlWrapper::resize(int m, int n)
         return;
     }
 
-    std::cerr << "Warning: data not copied during resize from size "
-              << m_ << "x" << n_ << " to " << m << "x" << n
-              << " with capacity " << m_max_ << "x" << n_  << std::endl;
+    if (m_max_ > 0)
+        std::cerr << "Warning: data not copied during resize from size "
+                  << m_ << "x" << n_ << " to " << m << "x" << n
+                  << " with capacity " << m_max_ << "x" << n_  << std::endl;
 
     *this = StlWrapper(m, n);
 }
@@ -329,6 +333,24 @@ StlWrapper StlWrapper::view(int m, int n) const
 StlWrapper StlWrapper::copy(int m, int n) const
 {
     FUNCTION_TIMER("StlWrapper", "copy");
+
+    if (op_)
+    {
+        // Copy an operator into a matrix
+        int m = op_->M();
+        int n = op_->M();
+
+        StlWrapper out(m, n);
+        StlWrapper test_vec(m, 1);
+        for (int i = 0; i < n; ++i)
+        {
+            test_vec.scale(0.0);
+            test_vec(i, 0) = 1.0;
+            out.view(i) = (*op_) * test_vec;
+        }
+        return out;
+    }
+
     StlWrapper out(*this);
     return out;
 }
@@ -404,8 +426,11 @@ int StlWrapper::eigs(StlWrapper &v, StlWrapper &d,
     FUNCTION_TIMER("StlWrapper", "eigs");
     int m = M();
 
+    if (op_)
+        m = op_->M();
+
     if (num < 1)
-        num = M();
+        num = m;
 
     v = copy();
 
@@ -423,8 +448,25 @@ int StlWrapper::eigs(StlWrapper &v, StlWrapper &d,
 
     int info;
     LapackWrapper::DSTEQR('I', m, d.ptr_->get(),
-                         e.ptr_->get(), v.ptr_->get(),
-                         m, work.ptr_->get(), &info);
+                          e.ptr_->get(), v.ptr_->get(),
+                          v.LDA(), work.ptr_->get(), &info);
+
+    if (num != m)
+    {
+        std::vector<int> indices;
+        find_largest_eigenvalues(d, indices, num);
+
+        StlWrapper tmpv(m, num);
+        StlWrapper tmpd(num, 1);
+        for (int i = 0; i < num; ++i)
+        {
+            tmpv.view(i) = v.view(indices[i]);
+            tmpd(i, 0) = d(indices[i], 0);
+        }
+
+        v = tmpv;
+        d = tmpd;
+    }
 
     if (info)
         std::cerr << "Eigenvalues info = " << info << std::endl;

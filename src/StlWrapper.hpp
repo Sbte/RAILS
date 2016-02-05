@@ -13,6 +13,7 @@ class StlOperator
 {
 public:
     virtual StlWrapper operator *(StlWrapper const &other) const = 0;
+    virtual int M() const = 0;
 };
 
 class StlWrapper
@@ -123,6 +124,11 @@ public:
     StlWrapper operator *(StlWrapper const &other) const
         {
             return op_ * other;
+        }
+
+    int M() const
+        {
+            return op_.V.M();
         }
 };
 

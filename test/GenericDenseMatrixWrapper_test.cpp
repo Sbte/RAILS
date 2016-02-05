@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 
 #include "src/StlWrapper.hpp"
+#include "src/StlTools.hpp"
 
 #include "Epetra_TestableWrappers.hpp"
 
@@ -59,6 +60,26 @@ TYPED_TEST(GenericDenseMatrixWrapperTest, Eigs)
 
     EXPECT_NEAR((5.0 - sqrt(25.0 + 20.0)) / 2.0, this->C(0,0), 1e-6);
     EXPECT_NEAR((5.0 + sqrt(25.0 + 20.0)) / 2.0, this->C(1,0), 1e-6);
+}
+
+TYPED_TEST(GenericDenseMatrixWrapperTest, Eigs2)
+{
+    this->D.scale(0.0);
+    this->D(0, 5) = 10.0;
+    this->D(5, 0) = 10.0;
+    this->D.resize(4, 4);
+    this->D(0,0) = 1;
+    this->D(0,1) = 3;
+    this->D(1,0) = 3;
+    this->D(1,1) = 4;
+
+    this->D.eigs(this->B, this->C);
+
+    std::vector<int> indices;
+    find_largest_eigenvalues(this->C, indices, 4);
+
+    EXPECT_NEAR((5.0 + sqrt(25.0 + 20.0)) / 2.0, this->C(indices[0],0), 1e-6);
+    EXPECT_NEAR((5.0 - sqrt(25.0 + 20.0)) / 2.0, this->C(indices[1],0), 1e-6);
 }
 
 TYPED_TEST(GenericDenseMatrixWrapperTest, Scale)

@@ -5,6 +5,9 @@
 #include "src/ScalarWrapper.hpp"
 #include "src/StlWrapper.hpp"
 
+#include <map>
+#include <string>
+
 #define EXPECT_VECTOR_NEAR(a, b)                                        \
     {                                                                   \
      int m = (a).M();                                                   \
@@ -134,6 +137,63 @@ TEST(LyapunovSolverTest, StlSolver)
     StlWrapper T;
 
     Lyapunov::Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
+
+    solver.solve(X, T);
+
+    // Compute the residual
+    StlWrapper R = A * X * T * X.transpose()
+      + X * T * X.transpose() * A.transpose() + B * B.transpose();
+    StlWrapper R_exp(n, n);
+    R_exp.scale(0.0);
+
+    EXPECT_VECTOR_NEAR(R_exp, R);
+}
+
+class ParameterList
+{
+    std::map<std::string, double> params_;
+
+public:
+    template<typename T>
+    T get(std::string const &name, T def)
+        {
+            auto it = params_.find(name);
+            if (it == params_.end())
+                return def;
+            return it->second;
+        }
+
+    template<typename T>
+    void set(std::string const &name, T val)
+        {
+            params_[name] = val;
+        }
+};
+
+TEST(LyapunovSolverTest, StlSolverRestart)
+{
+    int n = 20;
+    StlWrapper A(n, n);
+    A.random();
+
+    StlWrapper B(n, 1);
+    B.random();
+
+    StlWrapper C = B.copy();
+    C(n-1, 0) = 0.0;
+    B -= C;
+    B = B;
+
+    StlWrapper X(n,1);
+    StlWrapper T;
+
+    Lyapunov::Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
+
+    ParameterList params;
+    params.set("Restart Size", 20);
+    params.set("Reduced Size", 14);
+    params.set("Expand Size", 1);
+    solver.set_parameters(params);
 
     solver.solve(X, T);
 
