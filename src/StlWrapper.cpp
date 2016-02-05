@@ -245,7 +245,7 @@ void StlWrapper::resize(int m, int n)
     {
         std::cerr << "Warning: data copied during resize from size "
                   << m_ << "x" << n_ << " to " << m << "x" << n
-                  << " with capacity " << m_max_ << "x" << n_
+                  << " with capacity " << m_max_ << "x" << n_max_
                   << ", which is very inefficient." << std::endl;
 
         for (int i = 0; i < std::min(n_, n); ++i)

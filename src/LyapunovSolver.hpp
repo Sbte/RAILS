@@ -78,7 +78,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::set_parameters(ParameterList &para
     restart_iterations_ = get_parameter(params, "Restart iterations", restart_iterations_);
     restart_tolerance_ = get_parameter(params, "Restart tolerance", tol_ * 1e-3);
     minimize_solution_space_ = get_parameter(params, "Minimize solution space",
-                                          minimize_solution_space_);
+                                             minimize_solution_space_);
 
     if (lanczos_iterations_ <= expand_size_)
     {
@@ -111,7 +111,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
     FUNCTION_TIMER("Solver");
     int n = V.M();
 
-    int max_size = std::min(std::max(restart_size_, 1), n) + expand_size_;
+    int max_size = std::min(restart_size_ > 0 ? restart_size_ : 100, n);
     V.resize(max_size);
 
     V.resize(1);
@@ -152,7 +152,6 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
         }
 
         START_TIMER("Compute VAV");
-
         // Now resize VAV. Resizing should not remove what was in VAV
         // previously
         int N_V = V.N();
@@ -274,8 +273,33 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
             continue;
         }
 
-        int expand_vectors = std::min(std::min(expand_size_,
-            eigenvalues.M()), n - V.N());
+        int expand_vectors = std::min(std::min(expand_size_, eigenvalues.M()),
+                                      (restart_size_ > 0 ? restart_size_ : n) - V.N());
+
+        // Allocate extra memory if needed. We do this only once per 100
+        // vectors because it might be very expensive
+        if (V.N() + expand_vectors > max_size)
+        {
+            START_TIMER("Resize spaces");
+            max_size += 100;
+            int previous_size = V.N();
+
+            V.resize(max_size);
+            V.resize(previous_size);
+
+            AV.resize(max_size);
+            AV.resize(previous_size);
+
+            VAV.resize(max_size, max_size);
+            VAV.resize(previous_size, previous_size);
+
+            BV.resize(max_size);
+            BV.resize(previous_size);
+
+            VBV.resize(max_size, max_size);
+            VBV.resize(previous_size, previous_size);
+            END_TIMER("Resize spaces");
+        }
 
         // Find the vectors belonging to the largest eigenvalues
         std::vector<int> indices;
@@ -348,7 +372,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::lanczos(MultiVector const &AV, Mul
         Z = T * Z;
         Q.view(iter+1) += V * Z;
         END_TIMER("Lanczos", "Second part");
-        
+
         START_TIMER("Lanczos", "alpha");
         alpha = Q.view(iter+1).dot(Q.view(iter))(0, 0);
         H(iter, iter) = alpha;
