@@ -20,7 +20,8 @@ StlWrapper::StlWrapper()
     m_max_(-1),
     n_max_(-1),
     orthogonalized_(0),
-    is_view_(false)
+    is_view_(false),
+    transpose_(false)
 {}
 
 StlWrapper::StlWrapper(StlWrapper const &other)
@@ -35,6 +36,7 @@ StlWrapper::StlWrapper(StlWrapper const &other)
     m_max_ = other.m_max_;
     n_max_ = other.n_max_;
     orthogonalized_ = other.orthogonalized_;
+    transpose_ = other.transpose_;
 }
 
 StlWrapper::StlWrapper(StlWrapper const &other, int n)
@@ -149,7 +151,8 @@ StlWrapper StlWrapper::operator *(
         return out;
     }
 
-    BlasWrapper::DGEMM('N', 'N', M(), other.N(), other.M(), 1.0,
+    BlasWrapper::DGEMM(transpose_ ? 'T' : 'N', other.transpose_ ? 'T' : 'N',
+                       M(), other.N(), other.M(), 1.0,
                        ptr_->get(), m_max_, other.ptr_->get(), other.m_max_,
                        0.0, out.ptr_->get(), out.m_max_);
 
@@ -317,13 +320,13 @@ void StlWrapper::push_back(StlWrapper const &other, int m)
 int StlWrapper::M() const
 {
     FUNCTION_TIMER("StlWrapper", "M");
-    return m_;
+    return transpose_ ? n_ : m_;
 }
 
 int StlWrapper::N() const
 {
     FUNCTION_TIMER("StlWrapper", "N");
-    return n_;
+    return transpose_ ? m_ : n_;
 }
 
 StlWrapper StlWrapper::dot(StlWrapper const &other) const
@@ -354,4 +357,12 @@ void StlWrapper::random()
     for (int i = 0; i < m_; ++i)
         for(int j = 0; j < n_; ++j)
             (*ptr_)(i, j) = distribution(generator);
+}
+
+StlWrapper StlWrapper::transpose()
+{
+    FUNCTION_TIMER("StlWrapper", "transpose");
+    StlWrapper tmp(*this);
+    tmp.transpose_ = !tmp.transpose_;
+    return tmp;
 }

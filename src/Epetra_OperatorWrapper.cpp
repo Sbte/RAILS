@@ -6,6 +6,9 @@
 #include <Epetra_Operator.h>
 #include <Epetra_CrsMatrix.h>
 
+#include <Epetra_SerialComm.h>
+#include <Epetra_Map.h>
+
 #include <AnasaziBasicEigenproblem.hpp>
 #include <AnasaziEpetraAdapter.hpp>
 #include <AnasaziBlockKrylovSchurSolMgr.hpp>
@@ -162,4 +165,63 @@ int Epetra_OperatorWrapper::eigs(Epetra_MultiVectorWrapper &V,
     V.resize(num_eigs);
 
     return 0;
+}
+
+Epetra_OperatorWrapper::Epetra_OperatorWrapper(int m, int n)
+    :
+    Epetra_OperatorWrapper()
+{
+    FUNCTION_TIMER("Epetra_OperatorWrapper", "constructor 3");
+
+    Epetra_SerialComm comm;
+    Epetra_Map map(m, 0, comm);
+    Teuchos::RCP<Epetra_CrsMatrix> mat =
+        Teuchos::rcp(new Epetra_CrsMatrix(Copy, map, n));
+
+    double *values = new double[n]();
+    int *indices = new int[n]();
+    for (int i = 0; i < m; ++i)
+        indices[i] = i;
+
+    for (int i = 0; i < m; ++i)
+        mat->InsertGlobalValues(i, n, values, indices);
+
+    mat->FillComplete();
+
+    delete[] values;
+    delete[] indices;
+
+    ptr_ = mat;
+}
+
+double &Epetra_OperatorWrapper::operator ()(int m, int n)
+{
+    FUNCTION_TIMER("Epetra_OperatorWrapper", "()");
+
+    double *values;
+    int num_entries;
+
+    Teuchos::RCP<Epetra_CrsMatrix> mat =
+        Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(ptr_);
+    if (mat.is_null())
+        std::cerr << "Matrix is not a CrsMatrix" << std::endl;
+    
+    mat->ExtractMyRowView(m, num_entries, values);
+    return values[n];
+}
+
+double const &Epetra_OperatorWrapper::operator ()(int m, int n) const
+{
+    FUNCTION_TIMER("Epetra_OperatorWrapper", "() 2");
+
+    double *values;
+    int num_entries;
+
+    Teuchos::RCP<Epetra_CrsMatrix> mat =
+        Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(ptr_);
+    if (mat.is_null())
+        std::cerr << "Matrix is not a CrsMatrix" << std::endl;
+    
+    mat->ExtractMyRowView(m, num_entries, values);
+    return values[n];
 }

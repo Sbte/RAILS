@@ -45,6 +45,13 @@ public:
     int eigs(Epetra_MultiVectorWrapper &V,
              Epetra_SerialDenseMatrixWrapper &D,
              int num, double tol = 1e-6) const;
+
+// Test methods that do not have to be exposed
+protected:
+    Epetra_OperatorWrapper(int m, int n);
+
+    double &operator ()(int m, int n = 0);
+    double const &operator ()(int m, int n = 0) const;
 };
 
 #include <Epetra_Operator.h>

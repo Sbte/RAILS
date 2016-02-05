@@ -22,6 +22,9 @@ class StlWrapper
 
     // Vector is a view
     bool is_view_;
+
+    // Matrix is used as transpose or not in * methods
+    bool transpose_;
 public:
     StlWrapper();
     StlWrapper(std::shared_ptr<StlVector> ptr);
@@ -73,6 +76,8 @@ public:
     StlWrapper dot(StlWrapper const &other) const;
 
     void random();
+
+    StlWrapper transpose();
 };
 
 StlWrapper operator *(double d, StlWrapper const &other);

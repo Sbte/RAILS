@@ -2,8 +2,7 @@
 
 #include "src/StlWrapper.hpp"
 
-#include "src/Epetra_SerialDenseMatrixWrapper.hpp"
-#include "src/Epetra_MultiVectorWrapper.hpp"
+#include "Epetra_TestableWrappers.hpp"
 
 #define EXPECT_VECTOR_EQ(a, b) {                \
     int m = (a).M();                            \
@@ -13,31 +12,6 @@
         EXPECT_DOUBLE_EQ((a)(i,j), (b)(i,j));   \
     }
 
-
-class TestableEpetra_MultiVectorWrapper: public Epetra_MultiVectorWrapper
-{
-public:
-    TestableEpetra_MultiVectorWrapper(Epetra_MultiVectorWrapper const &other)
-        :
-        Epetra_MultiVectorWrapper(other)
-        {}
-
-    TestableEpetra_MultiVectorWrapper(int m, int n)
-        :
-        Epetra_MultiVectorWrapper(m, n)
-        {}
-
-    double &operator ()(int m, int n = 0)
-        {
-            return Epetra_MultiVectorWrapper::operator()(m, n);
-        }
-
-    double const &operator ()(int m, int n = 0) const
-        {
-            return Epetra_MultiVectorWrapper::operator()(m, n);
-        }
-};
-    
 template <class MultiVectorWrapper>
 class GenericMultiVectorWrapperTest: public testing::Test
 {
@@ -46,7 +20,7 @@ protected:
     MultiVectorWrapper b;
     MultiVectorWrapper c;
     MultiVectorWrapper d;
-    
+
     GenericMultiVectorWrapperTest()
         :
         a(10, 10),

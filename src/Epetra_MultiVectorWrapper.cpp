@@ -58,7 +58,7 @@ Epetra_MultiVectorWrapper::Epetra_MultiVectorWrapper(int m, int n)
 
     // Should only be used for local testing
     Epetra_SerialComm comm;
-    Epetra_Map map(10, 0, comm);
+    Epetra_Map map(m, 0, comm);
     ptr_ = Teuchos::rcp(new Epetra_MultiVector(map, n));
 }
 
