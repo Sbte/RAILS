@@ -124,7 +124,12 @@ int Epetra_OperatorWrapper::eigs(Epetra_MultiVectorWrapper &V,
     FUNCTION_TIMER("Epetra_OperatorWrapper", "eigs");
     Teuchos::RCP<Teuchos::ParameterList> params;
     if (params_.is_null())
+    {
         params = Teuchos::rcp(new Teuchos::ParameterList);
+        // Set relative tolerance to false so we only compute
+        // the largest (relevant) eigenvalues accurately
+        params->set("Relative Convergence Tolerance", false);
+    }
     else
         params = params_;
 
