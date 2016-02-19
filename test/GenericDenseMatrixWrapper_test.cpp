@@ -118,4 +118,15 @@ TYPED_TEST(GenericDenseMatrixWrapperTest, Resize2)
     A.resize(10, 10);
 }
 
+TYPED_TEST(GenericDenseMatrixWrapperTest, NormInf)
+{
+    this->A(0,0) = 1;
+    this->A(0,1) = 3;
+    this->A(1,0) = -3;
+    this->A(1,1) = 4;
+
+    double nrm = this->A.norm_inf();
+    EXPECT_DOUBLE_EQ(7.0, nrm);
+}
+
 #endif

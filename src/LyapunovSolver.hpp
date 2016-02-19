@@ -292,7 +292,6 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
             V.push_back(eigenvectors.view(indices[i]));
         V.orthogonalize();
 
-
         W = V.view(N_V, N_V+expand_vectors-1);
     }
 

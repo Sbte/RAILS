@@ -274,7 +274,7 @@ double StlWrapper::norm_inf() const
             row_sum += std::abs((*ptr_)(i, j));
         out = std::max(out, row_sum);
     }
-    return sqrt(out);
+    return out;
 }
 
 void StlWrapper::orthogonalize()
