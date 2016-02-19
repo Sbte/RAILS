@@ -22,7 +22,7 @@ TEST(LyapunovSolverTest, ScalarEigenvalueSolver)
 
     Lyapunov::Solver<ScalarWrapper, ScalarWrapper, ScalarWrapper> solver(A, B, 0);
 
-    solver.lanczos(A, V, T, H, eigenvectors, eigenvalues, 2);
+    solver.resid_lanczos(A, V, T, H, eigenvectors, eigenvalues, 2);
 
     EXPECT_EQ(32, H);
     EXPECT_EQ(32, eigenvalues);

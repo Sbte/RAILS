@@ -214,7 +214,7 @@ TEST(LyapunovSolverEpetraTest, Lanczos)
     Epetra_SerialDenseMatrixWrapper eigenvalues(num_eigenvalues + 1, 1);
     Epetra_MultiVectorWrapper eigenvectors;
 
-    solver.lanczos(AV, VW, TW, H, eigenvectors, eigenvalues, num_eigenvalues);
+    solver.resid_lanczos(AV, VW, TW, H, eigenvectors, eigenvalues, num_eigenvalues);
 
     EXPECT_NEAR(0.0, eigenvalues(0), 1e-14);
 }

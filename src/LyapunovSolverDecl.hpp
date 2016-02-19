@@ -23,9 +23,13 @@ public:
     int dense_solve(DenseMatrix const &A, DenseMatrix const &B, DenseMatrix &X);
 
     // Get the eigenvectors of the residual R = AV*T*V' + V*T*AV' + B*B'
-    int lanczos(MultiVector const &AV, MultiVector const &V, DenseMatrix const &T,
-                DenseMatrix &H, MultiVector &eigenvectors, DenseMatrix &eigenvalues,
-                int max_iter);
+    int resid_lanczos(MultiVector const &AV, MultiVector const &V, DenseMatrix const &T,
+                      DenseMatrix &H, MultiVector &eigenvectors, DenseMatrix &eigenvalues,
+                      int max_iter);
+
+    // Get the eigenvectors of the solution V*T*V'
+    int restart_lanczos(MultiVector const &V, DenseMatrix const &T,
+                        MultiVector &eigenvectors, int num, double tol);
 protected:
     Matrix A_;
     Matrix B_;

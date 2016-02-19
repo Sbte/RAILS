@@ -206,7 +206,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
         DenseMatrix H(num_eigenvalues + 1, num_eigenvalues + 1);
         DenseMatrix eigenvalues(num_eigenvalues, 1);
         MultiVector eigenvectors;
-        lanczos(AV, V, T, H, eigenvectors, eigenvalues, num_eigenvalues);
+        resid_lanczos(AV, V, T, H, eigenvectors, eigenvalues, num_eigenvalues);
 
         double res = eigenvalues.norm_inf();
 
@@ -238,7 +238,6 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
             || (restart_iterations_ > 0 && iter - previous_restart >= restart_iterations_)
             || converged)
         {
-            int reduced_size = std::min(reduced_size_ > 0 ? reduced_size_ : V.N(), V.N());
             if (converged)
                 std::cout << "Method converged. Minimizing the solution "
                           << "space size";
@@ -248,13 +247,11 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
                 std::cout << restart_iterations_ << " iterations have passed";
             else
                 std::cout << "No clue what happened";
-            std::cout << ". Trying to restart with " << reduced_size
+            std::cout << ". Trying to restart with "
+                      << (reduced_size_ > 0 ? reduced_size_ : V.N())
                       << " vectors" << std::endl;
 
-            RestartOperator<Matrix, MultiVector, DenseMatrix> op(V, T);
-            Matrix mat = Matrix::from_operator(op);
-            DenseMatrix eigs;
-            mat.eigs(V, eigs, reduced_size, restart_tolerance_);
+            restart_lanczos(V, T, V, std::min(reduced_size_, V.N()), restart_tolerance_);
 
             std::cout << "Restarted with " << V.N()
                       << " vectors" << std::endl;
@@ -336,17 +333,17 @@ int Solver<Matrix, MultiVector, DenseMatrix>::dense_solve(DenseMatrix const &A, 
 }
 
 template<class Matrix, class MultiVector, class DenseMatrix>
-int Solver<Matrix, MultiVector, DenseMatrix>::lanczos(MultiVector const &AV, MultiVector const &V, DenseMatrix const &T, DenseMatrix &H, MultiVector &eigenvectors, DenseMatrix &eigenvalues, int max_iter)
+int Solver<Matrix, MultiVector, DenseMatrix>::resid_lanczos(MultiVector const &AV, MultiVector const &V, DenseMatrix const &T, DenseMatrix &H, MultiVector &eigenvectors, DenseMatrix &eigenvalues, int max_iter)
 {
-    FUNCTION_TIMER("Lyapunov", "lanczos");
-    START_TIMER("Lanczos", "Top");
+    FUNCTION_TIMER("Lyapunov", "resid_lanczos");
+    START_TIMER("Residual Lanczos", "Top");
     MultiVector Q(V, max_iter+1);
     Q.resize(1);
     Q.random();
     Q.view(0) /= Q.norm();
 
     H = 0.0;
-    END_TIMER("Lanczos", "Top");
+    END_TIMER("Residual Lanczos", "Top");
 
     double alpha = 0.0;
     double beta = 0.0;
@@ -356,37 +353,37 @@ int Solver<Matrix, MultiVector, DenseMatrix>::lanczos(MultiVector const &AV, Mul
     {
         Q.resize(iter + 2);
 
-        START_TIMER("Lanczos", "B apply");
+        START_TIMER("Residual Lanczos", "B apply");
         MultiVector Y = B_.transpose() * Q.view(iter);
         Q.view(iter+1) = B_ * Y;
-        END_TIMER("Lanczos", "B apply");
+        END_TIMER("Residual Lanczos", "B apply");
 
-        START_TIMER("Lanczos", "First part");
+        START_TIMER("Residual Lanczos", "First part");
         DenseMatrix Z = V.dot(Q.view(iter));
         Z = T * Z;
         Q.view(iter+1) += AV * Z;
-        END_TIMER("Lanczos", "First part");
+        END_TIMER("Residual Lanczos", "First part");
 
-        START_TIMER("Lanczos", "Second part");
+        START_TIMER("Residual Lanczos", "Second part");
         Z = AV.dot(Q.view(iter));
         Z = T * Z;
         Q.view(iter+1) += V * Z;
-        END_TIMER("Lanczos", "Second part");
+        END_TIMER("Residual Lanczos", "Second part");
 
-        START_TIMER("Lanczos", "alpha");
+        START_TIMER("Residual Lanczos", "alpha");
         alpha = Q.view(iter+1).dot(Q.view(iter))(0, 0);
         H(iter, iter) = alpha;
-        END_TIMER("Lanczos", "alpha");
+        END_TIMER("Residual Lanczos", "alpha");
 
-        START_TIMER("Lanczos", "update");
+        START_TIMER("Residual Lanczos", "update");
         Q.view(iter+1) -= alpha * Q.view(iter);
         if (iter > 0)
             Q.view(iter+1) -= beta * Q.view(iter-1);
-        END_TIMER("Lanczos", "update");
+        END_TIMER("Residual Lanczos", "update");
 
-        START_TIMER("Lanczos", "beta");
+        START_TIMER("Residual Lanczos", "beta");
         beta = Q.view(iter+1).norm();
-        END_TIMER("Lanczos", "beta");
+        END_TIMER("Residual Lanczos", "beta");
         if (beta < 1e-14)
         {
             // Beta is zero, but the offdiagonal elements of H
@@ -404,7 +401,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::lanczos(MultiVector const &AV, Mul
         iter++;
     }
 
-    START_TIMER("Lanczos", "eigv");
+    START_TIMER("Residual Lanczos", "eigv");
     H.resize(iter, iter);
     Q.resize(iter);
 
@@ -412,7 +409,111 @@ int Solver<Matrix, MultiVector, DenseMatrix>::lanczos(MultiVector const &AV, Mul
     H.eigs(v, eigenvalues);
 
     eigenvectors = Q * v;
-    END_TIMER("Lanczos", "eigv");
+    END_TIMER("Residual Lanczos", "eigv");
+
+    return 0;
+}
+
+template<class Matrix, class MultiVector, class DenseMatrix>
+int Solver<Matrix, MultiVector, DenseMatrix>::restart_lanczos(MultiVector const &V, DenseMatrix const &T, MultiVector &eigenvectors, int num, double tol)
+{
+    FUNCTION_TIMER("Lyapunov", "restart_lanczos");
+
+    // TODO: Use less temp vectors
+
+    int max_iter = V.N();
+    MultiVector Q(V, max_iter+1);
+    Q.resize(1);
+    Q.random();
+    Q.view(0) /= Q.norm();
+
+    DenseMatrix v(max_iter, max_iter);
+    DenseMatrix H(max_iter, max_iter);
+    DenseMatrix eigenvalues(max_iter, 1);
+    MultiVector X;
+
+    double alpha = 0.0;
+    double beta = 0.0;
+
+    H = 0.0;
+    H.resize(1, 1);
+
+    int iter = 0;
+    for (int i = 0; i < max_iter; i++)
+    {
+        Q.resize(iter + 2);
+
+        DenseMatrix Y = V.dot(Q.view(iter));
+        Y = T * Y;
+        Q.view(iter+1) = V * Y;
+
+        alpha = Q.view(iter+1).dot(Q.view(iter))(0, 0);
+        H(iter, iter) = alpha;
+
+        Q.view(iter+1) -= alpha * Q.view(iter);
+        if (iter > 0)
+            Q.view(iter+1) -= beta * Q.view(iter-1);
+
+        beta = Q.view(iter+1).norm();
+
+        iter++;
+
+        v.resize(iter, iter);
+        H.eigs(v, eigenvalues);
+        X = Q.view(0, i) * v;
+
+        int num_converged = 0;
+        int num_large = 0;
+        for (int j = 0; j < iter; j++)
+        {
+            double resid = std::abs(beta * v(j, i)) /
+                X.view(j).norm();
+
+            if (resid < tol)
+                num_converged++;
+
+            if (std::abs(eigenvalues(j, 0)) > tol)
+                num_large++;
+        }
+
+        if (num > 0 && num_converged >= num)
+            break;
+
+        if (num <= 0 && num_converged == iter && num_large < iter)
+            break;
+
+        if (beta < 1e-14 || iter == max_iter)
+            break;
+
+        H.resize(iter+1, iter+1);
+        H(iter, iter-1) = beta;
+        H(iter-1, iter) = beta;
+
+        Q.view(iter) /= beta;
+        Q.orthogonalize();
+    }
+
+    Q.resize(iter);
+
+    std::cout << "Lanczos needed " << iter << " iterations to converge." << std::endl;
+
+    num = (num > 0 ? num : iter);
+
+    std::vector<int> indices;
+    find_largest_eigenvalues(eigenvalues, indices, num);
+
+    int idx = 0;
+    eigenvectors = 0.0;
+    for (int i = 0; i < num; ++i)
+    {
+        if (std::abs(eigenvalues(indices[i], 0)) > tol)
+        {
+            eigenvectors.view(idx) = X.view(indices[i]);
+            idx++;
+        }
+    }
+
+    eigenvectors.resize(idx);
 
     return 0;
 }
