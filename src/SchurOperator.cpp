@@ -23,7 +23,8 @@ SchurOperator::SchurOperator(Teuchos::RCP<Epetra_CrsMatrix> const &A,
     M_(M),
     problem_(Teuchos::rcp(new Epetra_LinearProblem)),
     solver_(new Amesos_Klu(*problem_)),
-    hasSolution_(false)
+    hasSolution_(false),
+    mvps_(0)
 {}
 
 int SchurOperator::set_parameters(Teuchos::ParameterList &params)
@@ -207,6 +208,7 @@ int SchurOperator::Apply(const Epetra_MultiVector& X, Epetra_MultiVector& Y) con
 
     if (!hasSolution_)
     {
+        mvps_ += X.NumVectors();
         START_TIMER("SchurOperator", "Apply A22");
         CHECK_ZERO(A22_->Apply(X, Y));
         END_TIMER("SchurOperator", "Apply A22");
@@ -392,4 +394,9 @@ bool SchurOperator::UseTranspose() const
 bool SchurOperator::HasNormInf() const
 {
     return false;
+}
+
+int SchurOperator::GetMVPs() const
+{
+    return mvps_;
 }

@@ -111,7 +111,14 @@ int main(int argc, char *argv[])
 
         std::cout << "Performing solve" << std::endl;
 
+        std::cout << "Amount of matrix-vector products before the solve: "
+                  << Schur->GetMVPs() << std::endl;
+
         solver.solve(V, T);
+
+        std::cout << "Amount of matrix-vector products after the solve: "
+                  << Schur->GetMVPs() << std::endl;
+
         EpetraExt::MultiVectorToMatrixMarketFile(
             "V.mtx", *V);
         EpetraExt::MultiVectorToMatrixMarketFile(

@@ -33,6 +33,8 @@ class SchurOperator: public Epetra_Operator
 
     int nx_, ny_, nz_;
 
+    mutable int mvps_;
+
 public:
     SchurOperator(Teuchos::RCP<Epetra_CrsMatrix> const &A,
                   Teuchos::RCP<Epetra_CrsMatrix> const &M);
@@ -66,6 +68,8 @@ public:
     const Epetra_Map & OperatorDomainMap() const;
 
     const Epetra_Map & OperatorRangeMap() const;
+
+    int GetMVPs() const;
 };
 
 #endif
