@@ -118,7 +118,10 @@ double Epetra_SerialDenseMatrixWrapper::norm_inf() const
 void Epetra_SerialDenseMatrixWrapper::resize(int m, int n)
 {
     FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "resize");
-    ptr_->Reshape(m, n);
+    if (ptr_.is_null())
+        ptr_ = Teuchos::rcp(new Epetra_SerialDenseMatrix(m, n));
+    else
+        ptr_->Reshape(m, n);
 }
 
 Epetra_SerialDenseMatrixWrapper Epetra_SerialDenseMatrixWrapper::copy() const

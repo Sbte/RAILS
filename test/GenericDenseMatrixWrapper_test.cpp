@@ -111,4 +111,11 @@ TYPED_TEST(GenericDenseMatrixWrapperTest, Resize)
     EXPECT_EQ(10.0, this->A(0,0));
 }
 
+TYPED_TEST(GenericDenseMatrixWrapperTest, Resize2)
+{
+    // Check that we can make an empty wrapper
+    TypeParam A;
+    A.resize(10, 10);
+}
+
 #endif
