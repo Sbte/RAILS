@@ -27,9 +27,8 @@ public:
                       DenseMatrix &H, MultiVector &eigenvectors, DenseMatrix &eigenvalues,
                       int max_iter);
 
-    // Get the eigenvectors of the solution V*T*V'
-    int restart_lanczos(MultiVector const &V, DenseMatrix const &T,
-                        MultiVector &eigenvectors, int num, double tol);
+    // Get the restart vectors based on th eigenvalues of V*T*V'
+    int compute_restart_vectors(MultiVector &V, DenseMatrix const &T, int num, double tol);
 protected:
     Matrix A_;
     Matrix B_;

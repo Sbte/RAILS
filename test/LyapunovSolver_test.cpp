@@ -286,6 +286,7 @@ TEST(LyapunovSolverTest, StlSolverRestartIterations)
 
     ParameterList params;
     params.set("Restart iterations", 12);
+    params.set("Restart tolerance", 1e-7);
     params.set("Minimize solution space", false);
     params.set("Expand size", 1);
     solver.set_parameters(params);

@@ -3,6 +3,7 @@
 
 #include "LyapunovSolverDecl.hpp"
 #include "SlicotWrapper.hpp"
+#include "LapackWrapper.hpp"
 #include "StlTools.hpp"
 
 #include <string>
@@ -251,10 +252,9 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
                       << (reduced_size_ > 0 ? reduced_size_ : V.N())
                       << " vectors" << std::endl;
 
-            restart_lanczos(V, T, V, std::min(reduced_size_, V.N()), restart_tolerance_);
+            compute_restart_vectors(V, T, std::min(reduced_size_, V.N()), restart_tolerance_);
 
-            std::cout << "Restarted with " << V.N()
-                      << " vectors" << std::endl;
+            std::cout << "Restarted with " << V.N() << " vectors" << std::endl;
 
             V.orthogonalize();
             W = V;
@@ -415,105 +415,37 @@ int Solver<Matrix, MultiVector, DenseMatrix>::resid_lanczos(MultiVector const &A
 }
 
 template<class Matrix, class MultiVector, class DenseMatrix>
-int Solver<Matrix, MultiVector, DenseMatrix>::restart_lanczos(MultiVector const &V, DenseMatrix const &T, MultiVector &eigenvectors, int num, double tol)
+int Solver<Matrix, MultiVector, DenseMatrix>::compute_restart_vectors(MultiVector &V, DenseMatrix const &T, int num, double tol)
 {
-    FUNCTION_TIMER("Lyapunov", "restart_lanczos");
+    FUNCTION_TIMER("Lyapunov", "compute_restart_vectors");
 
-    // TODO: Use less temp vectors
+    // Compute the eigenvalues and eigenvectors of T
+    int info;
+    DenseMatrix eigenvectors = T.copy();
+    DenseMatrix eigenvalues(T.N(), 1);
+    LapackWrapper::DSYEV('V', 'U', eigenvectors.N(), eigenvectors,
+                         eigenvectors.LDA(), eigenvalues, &info);
 
-    int max_iter = V.N();
-    MultiVector Q(V, max_iter+1);
-    Q.resize(1);
-    Q.random();
-    Q.view(0) /= Q.norm();
+    // Compute the eigenvectors of V*T*V'
+    MultiVector X = V * eigenvectors;
 
-    DenseMatrix v(max_iter, max_iter);
-    DenseMatrix H(max_iter, max_iter);
-    DenseMatrix eigenvalues(max_iter, 1);
-    MultiVector X;
-
-    double alpha = 0.0;
-    double beta = 0.0;
-
-    H = 0.0;
-    H.resize(1, 1);
-
-    int iter = 0;
-    for (int i = 0; i < max_iter; i++)
-    {
-        Q.resize(iter + 2);
-
-        DenseMatrix Y = V.dot(Q.view(iter));
-        Y = T * Y;
-        Q.view(iter+1) = V * Y;
-
-        alpha = Q.view(iter+1).dot(Q.view(iter))(0, 0);
-        H(iter, iter) = alpha;
-
-        Q.view(iter+1) -= alpha * Q.view(iter);
-        if (iter > 0)
-            Q.view(iter+1) -= beta * Q.view(iter-1);
-
-        beta = Q.view(iter+1).norm();
-
-        iter++;
-
-        v.resize(iter, iter);
-        H.eigs(v, eigenvalues);
-        X = Q.view(0, i) * v;
-
-        int num_converged = 0;
-        int num_large = 0;
-        for (int j = 0; j < iter; j++)
-        {
-            double resid = std::abs(beta * v(j, i)) /
-                X.view(j).norm();
-
-            if (resid < tol)
-                num_converged++;
-
-            if (std::abs(eigenvalues(j, 0)) > tol)
-                num_large++;
-        }
-
-        if (num > 0 && num_converged >= num)
-            break;
-
-        if (num <= 0 && num_converged == iter && num_large < iter)
-            break;
-
-        if (beta < 1e-14 || iter == max_iter)
-            break;
-
-        H.resize(iter+1, iter+1);
-        H(iter, iter-1) = beta;
-        H(iter-1, iter) = beta;
-
-        Q.view(iter) /= beta;
-        Q.orthogonalize();
-    }
-
-    Q.resize(iter);
-
-    std::cout << "Lanczos needed " << iter << " iterations to converge." << std::endl;
-
-    num = (num > 0 ? num : iter);
+    num = (num > 0 ? num : V.N());
 
     std::vector<int> indices;
     find_largest_eigenvalues(eigenvalues, indices, num);
 
     int idx = 0;
-    eigenvectors = 0.0;
+    V = 0.0;
     for (int i = 0; i < num; ++i)
     {
         if (std::abs(eigenvalues(indices[i], 0)) > tol)
         {
-            eigenvectors.view(idx) = X.view(indices[i]);
+            V.view(idx) = X.view(indices[i]);
             idx++;
         }
     }
 
-    eigenvectors.resize(idx);
+    V.resize(idx);
 
     return 0;
 }

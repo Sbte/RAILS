@@ -46,27 +46,30 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
 endif()
 
 set(SOURCES
+  src/LapackWrapper
   src/SlicotWrapper
-  src/Timer
   src/StlVector
   src/StlWrapper
+  src/Timer
   )
 
 set(TEST_SOURCES
-  test/ScalarWrapper_test
-  test/SlicotWrapper_test
-  test/LyapunovSolver_test
   test/GenericDenseMatrixWrapper_test
   test/GenericMultiVectorWrapper_test
   test/GenericOperatorWrapper_test
+  test/LyapunovSolver_test
+  test/ScalarWrapper_test
+  test/SlicotWrapper_test
   )
 
 # Manually add headers without source file
 set(HEADERS ${HEADERS}
+  src/BlasWrapper.hpp
+  src/LapackWrapper.hpp
   src/LyapunovSolver.hpp
   src/LyapunovSolverDecl.hpp
-  src/SlicotWrapper.hpp
   src/ScalarWrapper.hpp
+  src/SlicotWrapper.hpp
   src/StlVector.hpp
   src/StlWrapper.hpp
   )
