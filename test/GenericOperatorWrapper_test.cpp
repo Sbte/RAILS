@@ -103,39 +103,6 @@ TYPED_TEST(GenericOperatorWrapperTest, Transpose2)
     EXPECT_EQ(2, this->B.transpose().N());
 }
 
-template<class Matrix, class MultiVector>
-class TestOperator
-{
-public:
-    Matrix A;
-    MultiVector V;
-
-    TestOperator(Matrix _A, MultiVector _V): A(_A), V(_V) {}
-    MultiVector operator *(MultiVector const &other) const
-        {
-            return A * other;
-        }
-};
-
-TYPED_TEST(GenericOperatorWrapperTest, FromOperator)
-{
-    this->A(0,0) = 1;
-    this->A(0,1) = 2;
-    this->A(1,0) = 3;
-    this->A(1,1) = 4;
-
-    this->a.random();
-
-    TestOperator<typename TypeParam::OperatorWrapper,
-                 typename TypeParam::MultiVectorWrapper> op(this->A, this->a);
-    typename TypeParam::OperatorWrapper mat =
-        TypeParam::OperatorWrapper::from_operator(op);
-    this->b = mat * this->a;
-
-    EXPECT_NEAR(this->a(0, 0) + 2.0 * this->a(1, 0), this->b(0, 0), 1e-14);
-    EXPECT_NEAR(3.0 * this->a(0, 0) + 4.0 * this->a(1, 0), this->b(1, 0), 1e-14);
-}
-
 TYPED_TEST(GenericOperatorWrapperTest, Eigs)
 {
     int n = 10;
@@ -167,15 +134,23 @@ TYPED_TEST(GenericOperatorWrapperTest, Eigs2)
                 this->E(i, j) = 0.0;
         }
 
-    TestOperator<typename TypeParam::OperatorWrapper,
-                 typename TypeParam::MultiVectorWrapper> op(this->E, this->V);
-    typename TypeParam::OperatorWrapper mat =
-        TypeParam::OperatorWrapper::from_operator(op);
+    // Check if orthogonaliozing works, which we do in the solver
 
-    mat.eigs(this->V, this->D, 2, 1e-6);
+    this->E.eigs(this->V, this->D, 2, 1e-6);
 
     EXPECT_NEAR(10, this->D(0,0), 1e-6);
     EXPECT_NEAR(9, this->D(1,0), 1e-6);
+
+    this->V.orthogonalize();
+    EXPECT_ORTHOGONAL(this->V);
+
+    this->E.eigs(this->V, this->D, 2, 1e-6);
+
+    EXPECT_NEAR(10, this->D(0,0), 1e-6);
+    EXPECT_NEAR(9, this->D(1,0), 1e-6);
+
+    this->V.orthogonalize();
+    EXPECT_ORTHOGONAL(this->V);
 }
 
 TYPED_TEST(GenericOperatorWrapperTest, Eigs3)
@@ -190,50 +165,9 @@ TYPED_TEST(GenericOperatorWrapperTest, Eigs3)
                 this->E(i, j) = 0.0;
         }
 
-    // Check if orthogonaliozing works, which we do in the solver
-
-    TestOperator<typename TypeParam::OperatorWrapper,
-                 typename TypeParam::MultiVectorWrapper> op(this->E, this->V);
-    typename TypeParam::OperatorWrapper mat =
-        TypeParam::OperatorWrapper::from_operator(op);
-
-    mat.eigs(this->V, this->D, 2, 1e-6);
-
-    EXPECT_NEAR(10, this->D(0,0), 1e-6);
-    EXPECT_NEAR(9, this->D(1,0), 1e-6);
-
-    this->V.orthogonalize();
-    EXPECT_ORTHOGONAL(this->V);
-
-    mat.eigs(this->V, this->D, 2, 1e-6);
-
-    EXPECT_NEAR(10, this->D(0,0), 1e-6);
-    EXPECT_NEAR(9, this->D(1,0), 1e-6);
-
-    this->V.orthogonalize();
-    EXPECT_ORTHOGONAL(this->V);
-}
-
-TYPED_TEST(GenericOperatorWrapperTest, Eigs4)
-{
-    int n = 10;
-    for (int i = 0; i < n; ++i)
-        for (int j = 0; j < n; ++j)
-        {
-            if (i == j)
-                this->E(i, i) = i + 1;
-            else
-                this->E(i, j) = 0.0;
-        }
-
     // Tolerance check
 
-    TestOperator<typename TypeParam::OperatorWrapper,
-                 typename TypeParam::MultiVectorWrapper> op(this->E, this->V);
-    typename TypeParam::OperatorWrapper mat =
-        TypeParam::OperatorWrapper::from_operator(op);
-
-    mat.eigs(this->V, this->D, 2, 9.5);
+    this->E.eigs(this->V, this->D, 2, 9.5);
 
     EXPECT_NEAR(10, this->D(0,0), 1e-1);
 

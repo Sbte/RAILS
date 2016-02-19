@@ -93,20 +93,6 @@ int Solver<Matrix, MultiVector, DenseMatrix>::set_parameters(ParameterList &para
 }
 
 template<class Matrix, class MultiVector, class DenseMatrix>
-class RestartOperator
-{
-public:
-    MultiVector V;
-    DenseMatrix T;
-
-    RestartOperator(MultiVector &_V, DenseMatrix &_T): V(_V), T(_T) {}
-    MultiVector operator *(MultiVector const &other) const
-        {
-            return V * (T * V.dot(other));
-        }
-};
-
-template<class Matrix, class MultiVector, class DenseMatrix>
 int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix &T)
 {
     FUNCTION_TIMER("Solver");

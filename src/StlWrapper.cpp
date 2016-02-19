@@ -22,8 +22,7 @@ StlWrapper::StlWrapper()
     n_max_(-1),
     orthogonalized_(0),
     is_view_(false),
-    transpose_(false),
-    op_(nullptr)
+    transpose_(false)
 {}
 
 StlWrapper::StlWrapper(StlWrapper const &other)
@@ -39,7 +38,6 @@ StlWrapper::StlWrapper(StlWrapper const &other)
     n_max_ = other.n_max_;
     orthogonalized_ = other.orthogonalized_;
     transpose_ = other.transpose_;
-    op_ = other.op_;
 }
 
 StlWrapper::StlWrapper(StlWrapper const &other, int n)
@@ -73,7 +71,6 @@ StlWrapper &StlWrapper::operator =(StlWrapper &other)
         n_max_ = other.n_max_;
         orthogonalized_ = other.orthogonalized_;
         transpose_ = other.transpose_;
-        op_ = other.op_;
         return *this;
     }
 
@@ -95,7 +92,6 @@ StlWrapper &StlWrapper::operator =(StlWrapper const &other)
         n_max_ = other.n_max_;
         orthogonalized_ = other.orthogonalized_;
         transpose_ = other.transpose_;
-        op_ = other.op_;
         return *this;
     }
 
@@ -153,9 +149,6 @@ StlWrapper StlWrapper::operator +(StlWrapper const &other) const
 StlWrapper StlWrapper::operator *(StlWrapper const &other) const
 {
     FUNCTION_TIMER("StlWrapper", "* S");
-
-    if (op_)
-      return *op_ * other;
 
     StlWrapper out(*this, other.N());
     if (other.M() != N())
@@ -343,24 +336,6 @@ StlWrapper StlWrapper::view(int m, int n) const
 StlWrapper StlWrapper::copy() const
 {
     FUNCTION_TIMER("StlWrapper", "copy");
-
-    if (op_)
-    {
-        // Copy an operator into a matrix
-        int m = op_->M();
-        int n = op_->M();
-
-        StlWrapper out(m, n);
-        StlWrapper test_vec(m, 1);
-        for (int i = 0; i < n; ++i)
-        {
-            test_vec *= 0.0;
-            test_vec(i, 0) = 1.0;
-            out.view(i) = (*op_) * test_vec;
-        }
-        return out;
-    }
-
     StlWrapper out(*this);
     return out;
 }
