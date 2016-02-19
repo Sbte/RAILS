@@ -329,7 +329,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::dense_solve(DenseMatrix const &A, 
 
     X *= -1.0;
 
-    if (info)
+    if (info != 0 && info != n + 1)
         std::cerr << "Error: sb03md returned info = " << info << std::endl;
 
     return info;
