@@ -11,6 +11,8 @@
 #include "Epetra_MultiVectorWrapper.hpp"
 #include "Epetra_SerialDenseMatrixWrapper.hpp"
 
+#include "EpetraExt_Transpose_RowMatrix.h"
+
 #include <Amesos_Klu.h>
 
 #define TIMER_ON
@@ -184,8 +186,15 @@ int SchurOperator::Compute()
     }
     CHECK_ZERO(A11_->FillComplete(map1, map1));
 
-    problem_->SetOperator(A11_.get());
-    CHECK_ZERO(solver_->SetUseTranspose(false));
+    // More efficient in KLU
+    A11T_ = Teuchos::RCP<EpetraExt::RowMatrix_Transpose>(
+        new EpetraExt::RowMatrix_Transpose());
+    problem_->SetOperator(&(*A11T_)(const_cast<Epetra_CrsMatrix&>(*A11_)));
+    CHECK_ZERO(solver_->SetUseTranspose(true));
+
+    // problem_->SetOperator(A11_.get());
+    // CHECK_ZERO(solver_->SetUseTranspose(false));
+
     CHECK_ZERO(solver_->SymbolicFactorization());
     CHECK_ZERO(solver_->NumericFactorization());
 

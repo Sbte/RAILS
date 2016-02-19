@@ -13,6 +13,10 @@ class Epetra_Map;
 class Epetra_MultiVector;
 class Epetra_SerialDenseMatrix;
 
+namespace EpetraExt {
+class RowMatrix_Transpose;
+}
+
 class SchurOperator: public Epetra_Operator
 {
     Teuchos::RCP<Epetra_CrsMatrix> A_;
@@ -22,6 +26,7 @@ class SchurOperator: public Epetra_Operator
     Teuchos::RCP<Amesos_BaseSolver> solver_;
     
     Teuchos::RCP<Epetra_CrsMatrix> A11_;
+    Teuchos::RCP<EpetraExt::RowMatrix_Transpose> A11T_;
     Teuchos::RCP<Epetra_CrsMatrix> A21_;
     Teuchos::RCP<Epetra_CrsMatrix> A12_;
     Teuchos::RCP<Epetra_CrsMatrix> A22_;
