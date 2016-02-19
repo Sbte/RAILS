@@ -102,6 +102,7 @@ Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator =(double other)
 {
     FUNCTION_TIMER("Epetra_MultiVectorWrapper", "= 3");
     ptr_->PutScalar(other);
+    orthogonalized_ = 0;
     return *this;
 }
 

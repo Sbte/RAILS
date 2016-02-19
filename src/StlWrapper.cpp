@@ -107,7 +107,9 @@ StlWrapper &StlWrapper::operator =(StlWrapper const &other)
 
 StlWrapper &StlWrapper::operator =(double other)
 {
+    FUNCTION_TIMER("StlWrapper", "= 3");
     std::fill_n(ptr_->get(), m_max_ * n_, other);
+    orthogonalized_ = 0;
     return *this;
 }
 
