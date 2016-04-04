@@ -8,14 +8,22 @@ class Epetra_SerialDenseMatrix;
 class Epetra_SerialDenseMatrixWrapper
 {
     Teuchos::RCP<Epetra_SerialDenseMatrix> ptr_;
+
+    bool is_view_;
+
+    bool transpose_;
 public:
     Epetra_SerialDenseMatrixWrapper();
     Epetra_SerialDenseMatrixWrapper(Teuchos::RCP<Epetra_SerialDenseMatrix> ptr);
     Epetra_SerialDenseMatrixWrapper(Epetra_SerialDenseMatrixWrapper const &other);
     Epetra_SerialDenseMatrixWrapper(int m, int n);
+    Epetra_SerialDenseMatrixWrapper(Epetra_SerialDenseMatrixWrapper &&other);
 
     virtual ~Epetra_SerialDenseMatrixWrapper() {}
 
+    Epetra_SerialDenseMatrixWrapper transpose() const;
+
+    Epetra_SerialDenseMatrixWrapper &operator =(Epetra_SerialDenseMatrixWrapper &other);
     Epetra_SerialDenseMatrixWrapper &operator =(Epetra_SerialDenseMatrixWrapper const &other);
 
     Epetra_SerialDenseMatrixWrapper &operator =(double other);
@@ -36,6 +44,7 @@ public:
 
     void resize(int m, int n);
 
+    Epetra_SerialDenseMatrixWrapper view();
     Epetra_SerialDenseMatrixWrapper copy() const;
 
     int M() const;

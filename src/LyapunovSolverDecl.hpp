@@ -27,8 +27,8 @@ public:
                       DenseMatrix &H, MultiVector &eigenvectors, DenseMatrix &eigenvalues,
                       int max_iter);
 
-    // Get the restart vectors based on th eigenvalues of V*T*V'
-    int compute_restart_vectors(MultiVector &V, DenseMatrix const &T, int num, double tol);
+    // Get the restart vectors based on the eigenvalues of T
+    int compute_restart_vectors(DenseMatrix &X, DenseMatrix const &T, int num, double tol);
 protected:
     Matrix A_;
     Matrix B_;

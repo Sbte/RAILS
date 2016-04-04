@@ -344,6 +344,12 @@ TYPED_TEST(GenericMultiVectorWrapperTest, Orthogonalize4)
     this->a /= 2.6;
     this->a.orthogonalize();
     EXPECT_ORTHOGONAL(this->a);
+
+    this->a.view(2).random();
+    this->a.resize(2);
+    this->a.resize(3);
+    this->a.orthogonalize();
+    EXPECT_ORTHOGONAL(this->a);
 }
 
 TYPED_TEST(GenericMultiVectorWrapperTest, Resize2)

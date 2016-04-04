@@ -76,7 +76,15 @@ StlWrapper &StlWrapper::operator =(StlWrapper &other)
 
     assert(N() == other.N());
 
-    ptr_->set(*other.ptr_);
+    if (m_max_ == other.m_max_)
+        ptr_->set(*other.ptr_);
+    else
+    {
+        for (int i = 0; i < std::min(n_, other.n_); ++i)
+            memcpy(&(*ptr_)(0, i), &(*other.ptr_)(0, i),
+                   sizeof(double) * m_);
+    }
+
     return *this;
 }
 
@@ -97,7 +105,15 @@ StlWrapper &StlWrapper::operator =(StlWrapper const &other)
 
     assert(N() == other.N());
 
-    ptr_->set(*other.ptr_);
+    if (m_max_ == other.m_max_)
+        ptr_->set(*other.ptr_);
+    else
+    {
+        for (int i = 0; i < std::min(n_, other.n_); ++i)
+            memcpy(&(*ptr_)(0, i), &(*other.ptr_)(0, i),
+                   sizeof(double) * m_);
+    }
+
     return *this;
 }
 
@@ -214,6 +230,9 @@ void StlWrapper::resize(int m)
 void StlWrapper::resize(int m, int n)
 {
     FUNCTION_TIMER("StlWrapper", "resize 2");
+
+    orthogonalized_ = std::min(orthogonalized_, n);
+
     if (m <= m_max_ && n <= n_max_)
     {
         m_ = m;

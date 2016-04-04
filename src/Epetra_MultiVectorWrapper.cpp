@@ -239,6 +239,7 @@ void Epetra_MultiVectorWrapper::resize(int m)
         ptr_ = Teuchos::rcp(new Epetra_MultiVector(View, *ptr_allocated_, 0, m));
     }
     size_ = m;
+    orthogonalized_ = std::min(orthogonalized_, m);
 }
 
 double Epetra_MultiVectorWrapper::norm() const

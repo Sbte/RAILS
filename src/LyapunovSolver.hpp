@@ -122,70 +122,74 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
     {
         // Perform VAV = V'*A*V by doing VAV = [[VAV; W'*AV], V'*AW]
 
-        // First compute AW and BW
-        START_TIMER("Apply A");
-        MultiVector AW = A_ * W;
-        END_TIMER("Apply A");
-
-        START_TIMER("Apply B");
-        MultiVector BW = B_.transpose() * W;
-        END_TIMER("Apply B");
-
-        // Initialize BV which looks like B', not V
-        if (!iter)
-        {
-            BV = MultiVector(BW, max_size);
-            BV.resize(0);
-        }
-
-        START_TIMER("Compute VAV");
-        // Now resize VAV. Resizing should not remove what was in VAV
-        // previously
         int N_V = V.N();
-        int N_AV = AV.N();
-        int s = N_AV + W.N();
-        VAV.resize(s, s);
-        VBV.resize(s, s);
-
-        // Now compute W'*AV and put it in VAV
-        // We also compute V'*B*B'*V here for maximum efficiency
-        // AV only exists after the first iteration
-        if (N_AV > 0)
+        if (W.N())
         {
-            DenseMatrix WAV = W.dot(AV);
-            DenseMatrix WBV = BW.dot(BV);
-            int WAV_m = WAV.M();
-            int WAV_n = WAV.N();
-            for (int i = 0; i < WAV_m; i++)
-                for (int j = 0; j < WAV_n; j++)
-                {
-                    VAV(i + N_AV, j) = WAV(i, j);
-                    VBV(i + N_AV, j) = WBV(i, j);
-                    VBV(j, i + N_AV) = WBV(i, j);
-                }
+
+            // First compute AW and BW
+            START_TIMER("Apply A");
+            MultiVector AW = std::move(A_ * W);
+            END_TIMER("Apply A");
+
+            START_TIMER("Apply B");
+            MultiVector BW = std::move(B_.transpose() * W);
+            END_TIMER("Apply B");
+
+            // Initialize BV which looks like B', not V
+            if (!iter)
+            {
+                BV = MultiVector(BW, max_size);
+                BV.resize(0);
+            }
+
+            START_TIMER("Compute VAV");
+            // Now resize VAV. Resizing should not remove what was in VAV
+            // previously
+            int N_AV = AV.N();
+            int s = N_AV + W.N();
+            VAV.resize(s, s);
+            VBV.resize(s, s);
+
+            // Now compute W'*AV and put it in VAV
+            // We also compute V'*B*B'*V here for maximum efficiency
+            // AV only exists after the first iteration
+            if (N_AV > 0)
+            {
+                DenseMatrix WAV = std::move(W.dot(AV));
+                DenseMatrix WBV = std::move(BW.dot(BV));
+                int WAV_m = WAV.M();
+                int WAV_n = WAV.N();
+                for (int i = 0; i < WAV_m; i++)
+                    for (int j = 0; j < WAV_n; j++)
+                    {
+                        VAV(i + N_AV, j) = WAV(i, j);
+                        VBV(i + N_AV, j) = WBV(i, j);
+                        VBV(j, i + N_AV) = WBV(i, j);
+                    }
+            }
+
+            // Now compute V'*AW and put it in VAV
+            DenseMatrix VAW = std::move(V.dot(AW));
+            int VAW_m = VAW.M();
+            int VAW_n = VAW.N();
+            for (int i = 0; i < VAW_m; i++)
+                for (int j = 0; j < VAW_n; j++)
+                    VAV(i, j + N_AV) = VAW(i, j);
+
+            // Compute the bottom-right block of VBV
+            DenseMatrix WBW = std::move(BW.dot(BW));
+            int WBW_m = WBW.M();
+            int WBW_n = WBW.N();
+            for (int i = 0; i < WBW_m; i++)
+                for (int j = 0; j < WBW_n; j++)
+                    VBV(i + N_AV, j + N_AV) = WBW(i, j);
+
+            // Now expand AV and BV
+            AV.push_back(AW);
+            BV.push_back(BW);
+
+            END_TIMER("Compute VAV");
         }
-
-        // Now compute V'*AW and put it in VAV
-        DenseMatrix VAW = V.dot(AW);
-        int VAW_m = VAW.M();
-        int VAW_n = VAW.N();
-        for (int i = 0; i < VAW_m; i++)
-            for (int j = 0; j < VAW_n; j++)
-                VAV(i, j + N_AV) = VAW(i, j);
-
-        // Compute the bottom-right block of VBV
-        DenseMatrix WBW = BW.dot(BW);
-        int WBW_m = WBW.M();
-        int WBW_n = WBW.N();
-        for (int i = 0; i < WBW_m; i++)
-            for (int j = 0; j < WBW_n; j++)
-                VBV(i + N_AV, j + N_AV) = WBW(i, j);
-
-        // Now expand AV and BV
-        AV.push_back(AW);
-        BV.push_back(BW);
-
-        END_TIMER("Compute VAV");
 
         dense_solve(VAV, VBV, T);
 
@@ -238,18 +242,44 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
                       << (reduced_size_ > 0 ? reduced_size_ : V.N())
                       << " vectors" << std::endl;
 
-            compute_restart_vectors(V, T, std::min(reduced_size_, V.N()), restart_tolerance_);
+            DenseMatrix X;
+            compute_restart_vectors(X, T, std::min(reduced_size_, V.N()), restart_tolerance_);
+
+            V.view(0, X.N()-1) = V * X;
+            V.resize(X.N());
 
             std::cout << "Restarted with " << V.N() << " vectors" << std::endl;
 
-            V.orthogonalize();
-            W = V;
+            bool reorthogonalize = false;
+            if (reorthogonalize)
+            {
+                V.orthogonalize();
+                W = V;
 
-            VAV.resize(0, 0);
-            AV.resize(0);
+                VAV.resize(0, 0);
+                AV.resize(0);
 
-            VBV.resize(0, 0);
-            BV.resize(0);
+                VBV.resize(0, 0);
+                BV.resize(0);
+            }
+            else
+            {
+                W.resize(0);
+
+                DenseMatrix tmp = std::move(X.transpose() * (VAV * X));
+                VAV.resize(X.N(), X.N());
+                VAV.view() = tmp;
+
+                AV.view(0, X.N()-1) = AV * X;
+                AV.resize(X.N());
+
+                tmp = std::move(X.transpose() * (VBV * X));
+                VBV.resize(X.N(), X.N());
+                VBV.view() = tmp;
+
+                BV.view(0, X.N()-1) = BV * X;
+                BV.resize(X.N());
+            }
 
             previous_restart = iter;
 
@@ -339,12 +369,12 @@ int Solver<Matrix, MultiVector, DenseMatrix>::resid_lanczos(MultiVector const &A
         Q.resize(iter + 2);
 
         START_TIMER("Residual Lanczos", "B apply");
-        MultiVector Y = B_.transpose() * Q.view(iter);
+        MultiVector Y = std::move(B_.transpose() * Q.view(iter));
         Q.view(iter+1) = B_ * Y;
         END_TIMER("Residual Lanczos", "B apply");
 
         START_TIMER("Residual Lanczos", "First part");
-        DenseMatrix Z = V.dot(Q.view(iter));
+        DenseMatrix Z = std::move(V.dot(Q.view(iter)));
         Z = T * Z;
         Q.view(iter+1) += AV * Z;
         END_TIMER("Residual Lanczos", "First part");
@@ -400,7 +430,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::resid_lanczos(MultiVector const &A
 }
 
 template<class Matrix, class MultiVector, class DenseMatrix>
-int Solver<Matrix, MultiVector, DenseMatrix>::compute_restart_vectors(MultiVector &V, DenseMatrix const &T, int num, double tol)
+int Solver<Matrix, MultiVector, DenseMatrix>::compute_restart_vectors(DenseMatrix &X, DenseMatrix const &T, int num, double tol)
 {
     FUNCTION_TIMER("Lyapunov", "compute_restart_vectors");
 
@@ -411,26 +441,25 @@ int Solver<Matrix, MultiVector, DenseMatrix>::compute_restart_vectors(MultiVecto
     LapackWrapper::DSYEV('V', 'U', eigenvectors.N(), eigenvectors,
                          eigenvectors.LDA(), eigenvalues, &info);
 
-    // Compute the eigenvectors of V*T*V'
-    MultiVector X = V * eigenvectors;
+    num = (num > 0 ? num : T.N());
 
-    num = (num > 0 ? num : V.N());
+    X = DenseMatrix(T.N(), num);
 
     std::vector<int> indices;
     find_largest_eigenvalues(eigenvalues, indices, num);
 
     int idx = 0;
-    V = 0.0;
     for (int i = 0; i < num; ++i)
     {
         if (std::abs(eigenvalues(indices[i], 0)) > tol)
         {
-            V.view(idx) = X.view(indices[i]);
+            for (int j = 0; j < T.N(); ++j)
+                X(j, i)  = eigenvectors(j, indices[i]);
             idx++;
         }
     }
 
-    V.resize(idx);
+    X.resize(T.N(), idx);
 
     return 0;
 }

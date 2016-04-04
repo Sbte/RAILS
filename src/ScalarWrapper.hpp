@@ -1,8 +1,6 @@
 #ifndef SCALARWRAPPER_H
 #define SCALARWRAPPER_H
 
-#define __scalar { assert(size_ == 1);}
-
 class ScalarWrapper
 {
     double *s_;
@@ -79,15 +77,15 @@ public:
             return *this;
         }
 
-  ScalarWrapper operator *=(ScalarWrapper const &other) {*s_ *= *other.s_; return *this;}
-    ScalarWrapper operator /=(ScalarWrapper const &other) {__scalar *s_ /= *other.s_; return *this;}
-    ScalarWrapper operator -=(ScalarWrapper const &other) {__scalar *s_ -= *other.s_; return *this;}
-    ScalarWrapper operator +=(ScalarWrapper const &other) {__scalar *s_ += *other.s_; return *this;}
+    ScalarWrapper operator *=(ScalarWrapper const &other) {*s_ *= *other.s_; return *this;}
+    ScalarWrapper operator /=(ScalarWrapper const &other) {*s_ /= *other.s_; return *this;}
+    ScalarWrapper operator -=(ScalarWrapper const &other) {*s_ -= *other.s_; return *this;}
+    ScalarWrapper operator +=(ScalarWrapper const &other) {*s_ += *other.s_; return *this;}
 
-    ScalarWrapper operator *(ScalarWrapper const &other) const {__scalar return *s_ * *other.s_;}
-    ScalarWrapper operator +(ScalarWrapper const &other) const {__scalar return *s_ + *other.s_;}
+    ScalarWrapper operator *(ScalarWrapper const &other) const {return *s_ * *other.s_;}
+    ScalarWrapper operator +(ScalarWrapper const &other) const {return *s_ + *other.s_;}
 
-    operator double() const {__scalar return *s_;};
+    operator double() const {return *s_;};
     operator double*() {return s_;};
     operator const double*() const {return s_;};
 
@@ -107,16 +105,16 @@ public:
             size_ = m;
         }
 
-    double norm() {__scalar return *s_;}
-    double norm_inf() {__scalar return *s_;}
-    void orthogonalize() {__scalar *s_ = 1;}
+    double norm() {return *s_;}
+    double norm_inf() {return *s_;}
+    void orthogonalize() {*s_ = 1;}
 
     ScalarWrapper transpose()
         {
             return *this;
         }
 
-    ScalarWrapper view(int m, int n = 0)
+    ScalarWrapper view(int m = 0, int n = 0)
         {
             ScalarWrapper s;
             delete[] s.s_;
@@ -140,15 +138,14 @@ public:
     int M() const {return 1;}
     int N() const {return size_;}
     int LDA() const {return 1;}
-    ScalarWrapper dot(ScalarWrapper const &other) const {__scalar return *this * other;}
+    ScalarWrapper dot(ScalarWrapper const &other) const {return *this * other;}
     void eigs(ScalarWrapper &v, ScalarWrapper &d, int num = 1, double tol = 1.0) const
         {
-            __scalar
             *v.s_ = 1;
             *d.s_ = *s_;
         }
 
-    void random() {__scalar *s_ = 0.2462561245;}
+    void random() {*s_ = 0.2462561245;}
 };
 
 #endif
