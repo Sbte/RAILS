@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(Lyapunov C CXX)
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   message(STATUS "Using GNU compiler flags")
 
   if (NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
@@ -124,6 +124,8 @@ enable_testing()
 find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS})
 
+set(test_list)
+
 find_package(Threads REQUIRED)
 foreach(test_source ${TEST_SOURCES})
   get_filename_component(test_name ${test_source} NAME)
@@ -133,4 +135,9 @@ foreach(test_source ${TEST_SOURCES})
   target_link_libraries(${test_name} ${CMAKE_THREAD_LIBS_INIT})
   
   add_test(${test_name} ${test_name})
+  list(APPEND test_list ${test_name})
 endforeach()
+
+# Use make check to both build tests and test
+add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND}
+  DEPENDS ${test_list})
