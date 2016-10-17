@@ -271,15 +271,26 @@ double StlWrapper::norm() const
 {
     FUNCTION_TIMER("StlWrapper", "norm");
 
-    // Frobenius norm
-    double out = 0.0;
-    for (int i = 0; i < m_; ++i)
-        for (int j = 0; j < n_; ++j)
-        {
-            double value = (*ptr_)(i, j);
-            out += value * value;
-        }
-    return sqrt(out);
+    // // Frobenius norm
+    // double out = 0.0;
+    // for (int i = 0; i < m_; ++i)
+    //     for (int j = 0; j < n_; ++j)
+    //     {
+    //         double value = (*ptr_)(i, j);
+    //         out += value * value;
+    //     }
+    // return sqrt(out);
+
+    // 2-norm
+    StlWrapper d;
+    StlWrapper v;
+    dot(*this).eigs(v, d);
+
+    // Get maximum
+    double max = 0.0;
+    for (int i = 0; i < n_; ++i)
+        max = std::max(max, sqrt(std::abs(d(i, 0))));
+    return max;
 }
 
 double StlWrapper::norm_inf() const

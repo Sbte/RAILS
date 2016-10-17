@@ -9,6 +9,8 @@
 #include <Epetra_SerialComm.h>
 #include <Epetra_Map.h>
 
+#include <EpetraExt_MatrixMatrix.h>
+
 #include <AnasaziBasicEigenproblem.hpp>
 #include <AnasaziEpetraAdapter.hpp>
 #include <AnasaziBlockKrylovSchurSolMgr.hpp>
@@ -107,14 +109,36 @@ int Epetra_OperatorWrapper::N() const
     return out;
 }
 
-double Epetra_OperatorWrapper::norm(int n)
+double Epetra_OperatorWrapper::norm()
 {
     FUNCTION_TIMER("Epetra_OperatorWrapper", "norm");
     Teuchos::RCP<Epetra_CrsMatrix> mat =
         Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(ptr_);
-    if (!mat.is_null())
-        return mat->NormFrobenius();
-    return ptr_->NormInf();
+    if (mat.is_null())
+        return ptr_->NormInf();
+    // return mat->NormFrobenius();
+
+    // 2-norm
+    assert(!mat->ColMap().DistributedGlobal());
+
+    int n = mat->NumMyCols();
+    Epetra_CrsMatrix out(Copy, mat->ColMap(), n);
+    EpetraExt::MatrixMatrix::Multiply(*mat, true, *mat, false, out);
+    Epetra_SerialDenseMatrixWrapper serial_out(n, n);
+
+    for (int i = 0; i < n; i++)
+    {
+        int num;
+        double *values;
+        out.ExtractMyRowView(i, num, values);
+        for (int j = 0; j < num; j++)
+            serial_out(i, j) = values[j];
+    }
+
+    Epetra_SerialDenseMatrixWrapper v(n, n);
+    Epetra_SerialDenseMatrixWrapper eigenvalues(n, n);
+    serial_out.eigs(v, eigenvalues);
+    return sqrt(eigenvalues.norm_inf());
 }
 
 int Epetra_OperatorWrapper::eigs(Epetra_MultiVectorWrapper &V,
@@ -233,7 +257,7 @@ double &Epetra_OperatorWrapper::operator ()(int m, int n)
         Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(ptr_);
     if (mat.is_null())
         std::cerr << "Matrix is not a CrsMatrix" << std::endl;
-    
+
     mat->ExtractMyRowView(m, num_entries, values);
     return values[n];
 }

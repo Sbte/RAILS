@@ -120,8 +120,39 @@ if (${Trilinos_FOUND})
   target_link_libraries(main lyapunov)
 endif()
 
+INCLUDE(ExternalProject)
+
+SET_DIRECTORY_PROPERTIES(PROPERTIES EP_PREFIX ${CMAKE_BINARY_DIR}/third_party)
+
+ExternalProject_Add(
+  googletest
+  URL https://github.com/google/googletest/archive/release-1.8.0.zip
+  INSTALL_COMMAND ""
+  LOG_DOWNLOAD ON
+  LOG_CONFIGURE ON
+  LOG_BUILD ON)
+
+ExternalProject_Get_Property(googletest source_dir)
+set(GTEST_INCLUDE_DIRS ${source_dir}/googletest/include)
+
+ExternalProject_Get_Property(googletest binary_dir)
+set(GTEST_LIBRARY_PATH ${binary_dir}/googlemock/gtest/${CMAKE_FIND_LIBRARY_PREFIXES}gtest.a)
+set(GTEST_MAIN_LIBRARY_PATH ${binary_dir}/googlemock/gtest/${CMAKE_FIND_LIBRARY_PREFIXES}gtest_main.a)
+set(GTEST_LIBRARY gtest)
+set(GTEST_MAIN_LIBRARY gtest_main)
+set(GTEST_BOTH_LIBRARIES gtest gtest_main)
+
+add_library(${GTEST_LIBRARY} UNKNOWN IMPORTED)
+set_property(TARGET ${GTEST_LIBRARY} PROPERTY IMPORTED_LOCATION
+  ${GTEST_LIBRARY_PATH})
+add_dependencies(${GTEST_LIBRARY} googletest)
+
+add_library(${GTEST_MAIN_LIBRARY} UNKNOWN IMPORTED)
+set_property(TARGET ${GTEST_MAIN_LIBRARY} PROPERTY IMPORTED_LOCATION
+  ${GTEST_MAIN_LIBRARY_PATH})
+add_dependencies(${GTEST_MAIN_LIBRARY} googletest)
+
 enable_testing()
-find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS})
 
 set(test_list)

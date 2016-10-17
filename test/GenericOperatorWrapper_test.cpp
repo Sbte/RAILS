@@ -26,6 +26,7 @@ protected:
     typename T::OperatorWrapper E;
     typename T::DenseMatrixWrapper D;
     typename T::MultiVectorWrapper V;
+    typename T::DenseMatrixWrapper DV;
 
     GenericOperatorWrapperTest()
         :
@@ -172,6 +173,51 @@ TYPED_TEST(GenericOperatorWrapperTest, Eigs3)
     EXPECT_NEAR(10, this->D(0,0), 1e-1);
 
     EXPECT_EQ(1, this->D.M());
+}
+
+TYPED_TEST(GenericOperatorWrapperTest, Norm)
+{
+    int n = 10;
+    this->V.view(0).random();
+
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < n; ++j)
+        {
+            if (j == 0)
+                this->E(i, j) = this->V(i, 0);
+            else
+                this->E(i, j) = 0.0;
+        }
+
+    EXPECT_NE(0.0, this->E.norm());
+    EXPECT_DOUBLE_EQ(this->V.view(0).norm(), this->E.norm());
+}
+
+TYPED_TEST(GenericOperatorWrapperTest, Norm2)
+{
+    int n = 10;
+    this->V.random();
+
+    // Symmetrize
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < i; ++j)
+            this->V(i, j) = this->V(j, i);
+
+    // Copy to E
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < n; ++j)
+            this->E(i, j) = this->V(i, j);
+
+    // Compute norm using eigs
+    this->V.dot(this->V).eigs(this->DV, this->D);
+
+    // Get maximum
+    double max = 0.0;
+    for (int i = 0; i < n; ++i)
+        max = std::max(max, sqrt(std::abs(this->D(i, 0))));
+
+    EXPECT_NE(0.0, max);
+    EXPECT_DOUBLE_EQ(max, this->E.norm());
 }
 
 #endif
