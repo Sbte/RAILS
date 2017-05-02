@@ -1,4 +1,4 @@
-function [V,S,res,iter,resvec,timevec] = RAILSsolver(A, M, B, varargin)
+function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varargin)
 % Solver for A*V*S*V'*M+M*V*S*V'*A'+B*B'=0
 % [V,S,res,iter] = RAILSsolver(A, M, B, maxit, tol, opts);
 %
@@ -11,6 +11,10 @@ function [V,S,res,iter,resvec,timevec] = RAILSsolver(A, M, B, varargin)
 %   1: V = r (default)
 %   1.1: V = A^{-1}r (start with A^{-1}V_0)
 %   1.2: V = A^{-1}r (start with A^{-1}B)
+%   1.3: V = A^{-1}r (start with V_0)
+%   2.1: V = [r, A^{-1}r] (start with [V_0, A^{-1}V_0])
+%   2.2: V = [r, A^{-1}r] (start with [B, A^{-1}B])
+%   2.3: V = [r, A^{-1}r] (start with V_0)
 %
 % opts.invA or opts.Ainv:
 %   Function that performs A^{-1}x. This can be approximate. It is
@@ -76,6 +80,8 @@ function [V,S,res,iter,resvec,timevec] = RAILSsolver(A, M, B, varargin)
     hasM = ~isempty(M);
     invA = [];
     V = [];
+    AV = [];
+    VAV = [];
 
     if nargin < args+1 || ~isnumeric(varargin{args-2})
         if  nargin >= args+1 && isempty(varargin{args-2})
@@ -125,6 +131,37 @@ function [V,S,res,iter,resvec,timevec] = RAILSsolver(A, M, B, varargin)
             if ~isempty(V) && size(V, 1) ~= size(B, 1)
                 error('RAILSsolver:InvalidOption',...
                       'opts.space should have the same row dimension as A');
+            end
+        end
+        if isfield(opts, 'V')
+            V = opts.V;
+            if ~isempty(V) && size(V, 1) ~= size(B, 1)
+                error('RAILSsolver:InvalidOption',...
+                      'opts.V should have the same row dimension as A');
+            end
+        end
+        if isfield(opts, 'restart_data')
+            if ~isempty(opts.restart_data)
+                if ~isfield(opts.restart_data, 'V') || ...
+                        ~isfield(opts.restart_data, 'AV') || ~isfield(opts.restart_data, 'VAV')
+                    error('RAILSsolver:InvalidOption',...
+                          'opts.restart_data does not contain valid restart data');
+                end
+                V = opts.restart_data.V;
+                if ~isempty(V) && size(V, 1) ~= size(B, 1)
+                    error('RAILSsolver:InvalidOption',...
+                          'opts.restart_data.V should have the same row dimension as A');
+                end
+                AV = opts.restart_data.AV;
+                if ~isempty(AV) && size(V, 1) ~= size(AV, 1)
+                    error('RAILSsolver:InvalidOption',...
+                          'opts.restart_data.AV should have the same row dimension as A');
+                end
+                VAV = opts.restart_data.VAV;
+                if ~isempty(VAV) && size(V, 2) ~= size(VAV, 1)
+                    error('RAILSsolver:InvalidOption',...
+                          'opts.restart_data.VAV should have the same column dimension as V');
+                end
             end
         end
         if isfield(opts, 'space_is_orthogonalized')
@@ -197,10 +234,19 @@ function [V,S,res,iter,resvec,timevec] = RAILSsolver(A, M, B, varargin)
     end
 
     if ~isempty(invA) && abs(projection_method - floor(projection_method) - 0.1) < sqrt(eps)
-        V = invA(V);
+        W = invA(V);
     end
     if ~isempty(invA) && abs(projection_method - floor(projection_method) - 0.2) < sqrt(eps)
-        V = invA(full(B));
+        V = full(B);
+        W = invA(V);
+    end
+
+    if floor(projection_method) == 2 && ...
+            abs(projection_method - floor(projection_method) - 0.3) > sqrt(eps)
+        V = [V, W];
+    elseif floor(projection_method) == 1 && ...
+            abs(projection_method - floor(projection_method) - 0.3) > sqrt(eps)
+        V = W;
     end
 
     if mortho
@@ -208,9 +254,6 @@ function [V,S,res,iter,resvec,timevec] = RAILSsolver(A, M, B, varargin)
     elseif ortho
         V = Morth(V, [], nullspace);
     end
-
-    AV = [];
-    VAV = [];
 
     MV = [];
     VMV = [];
@@ -237,8 +280,8 @@ function [V,S,res,iter,resvec,timevec] = RAILSsolver(A, M, B, varargin)
             fprintf('Iter %d\n', i);
         end
 
-        new_indices = size(VAV,2)+1:size(V,2);
         % VAV = V'*A*V;
+        new_indices = size(VAV,2)+1:size(V,2);
         AVnew = iterapp('mtimes', afun, atype, afcnstr, V(:, new_indices));
         if isempty(VAV)
             VAV = V'*AVnew;
@@ -248,6 +291,7 @@ function [V,S,res,iter,resvec,timevec] = RAILSsolver(A, M, B, varargin)
         AV = [AV, AVnew];
 
         % VBV = V'*B*B'*V;
+        new_indices = size(VBV,2)+1:size(V,2);
         BVnew = B' * V(:,new_indices);
         if isempty(VBV)
             VBV = BVnew'*BVnew;
@@ -261,6 +305,7 @@ function [V,S,res,iter,resvec,timevec] = RAILSsolver(A, M, B, varargin)
         % Lyapunov solver instead of a general one
         % VMV = V'*M*V;
         if hasM && ~mortho
+            new_indices = size(VMV,2)+1:size(V,2);
             MVnew = M*V(:, new_indices);
             if isempty(VMV)
                 VMV = V'*MVnew;
@@ -297,6 +342,11 @@ function [V,S,res,iter,resvec,timevec] = RAILSsolver(A, M, B, varargin)
                 if verbosity > 0
                     fprintf('Converged with space size %d\n', size(V, 2));
                 end
+                if nargout > 6
+                    restart_data.V = V;
+                    restart_data.AV = AV;
+                    restart_data.VAV = VAV;
+                end
                 break;
             end
             converged = true;
@@ -306,6 +356,11 @@ function [V,S,res,iter,resvec,timevec] = RAILSsolver(A, M, B, varargin)
         end
 
         if i >= maxit || size(V,2) >= m
+            if nargout > 6
+                restart_data.V = V;
+                restart_data.AV = AV;
+                restart_data.VAV = VAV;
+            end
             break;
         end
 
@@ -372,8 +427,9 @@ function [V,S,res,iter,resvec,timevec] = RAILSsolver(A, M, B, varargin)
         W = V2(:, 1:num);
 
         if ~isempty(invA) && projection_method < 2 && projection_method > 1
+            W = invA(W);
+        elseif ~isempty(invA) && projection_method < 3 && projection_method > 2
             W = [W, invA(W)];
-            % W = invA(W);
         end
 
         if mortho
@@ -493,13 +549,12 @@ function V = Morth(W, M, nullspace, V)
                 if isempty(M)
                     v1 = v1 - V*(V'*v1);
                 else
-                    v1 = v1 - V*(V'*M*v1);
+                    v1 = v1 - V*(V'*(M*v1));
                 end
             end
         end
-        nrm = norm(v1);
         if isempty(M)
-            V(:,size(V,2)+1) = v1 / nrm;
+            V(:,size(V,2)+1) = v1 / norm(v1);
         else
             V(:,size(V,2)+1) = v1 / sqrt(v1'*M*v1);
         end
@@ -517,7 +572,7 @@ function V = Morth2(W, M, nullspace, V)
 
     for i = 1:size(W,2)
         v1 = W(:,i);
-        for k = 1:3
+        for k = 1:2
             if ~isempty(nullspace)
                 v1 = v1 - nullspace*(nullspace'*v1);
             end
