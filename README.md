@@ -2,7 +2,7 @@
 
 RAILS is an iterative solver for generalized continuous time Lyapunov equations. These equations are of the form
 
-*A\*X\*M'+M\*X\*A'+B\*B' = 0*
+*A\*X\*M'+M\*X\*A'+B\*B' = 0*,
 
 where ' denotes the transpose, A and M are mxm, X is mxm and symmetric, and B is mxn where n << m. We solve for a low-rank approximation of *X* of the form *X=V\*T\*V'*. The method work by expanding the search space in every iteration by eigenvectors of the residual
 
@@ -11,6 +11,30 @@ where ' denotes the transpose, A and M are mxm, X is mxm and symmetric, and B is
 This method can be restarted, and therefore can limit the size of the search space, unlike many other method. It is especially well suited when one wants to perform multiple computations on similar systems since one can use the approximate solution from the previous computation as an initial guess (for instance in a continuation), or when n is relatively large since we can use any amount of eigenvectors of the residual to expand the space (as long as it's smaller or equal to n).
 
 This repository contains both a C++ and a Matlab implementation of the algorithm.
+
+## Installation
+
+The code can be compiled using cmake. One can for instance run
+
+```
+mkdir build
+cd build
+cmake ../
+make
+```
+
+This will build the code in the `build` directory. If Trilinos is present in your cmake path, it will also compile Trilinos wrappers so the code can be used in combination with Trilinos.
+
+An extensive test suite is also present, which can be run using
+
+```
+make test
+```
+
+## Dependencies
+
+* SLICOT
+* Trilinos (optional)
 
 ## Reference
 
