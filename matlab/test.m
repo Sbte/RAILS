@@ -3,10 +3,8 @@ clear all;
 import matlab.unittest.TestSuite;
 
 p = pwd;
-p2 = fileparts(pwd);
 
 % Add the files under test to our path
-rmpath(genpath(p2));
 addpath(p);
 
 tests = TestSuite.fromFolder('test');
