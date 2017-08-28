@@ -8,7 +8,7 @@ where ' denotes the transpose, A and M are mxm, X is mxm and symmetric, and B is
 
 *R = A\*V\*T\*V'\*M'+M\*V\*T\*V'\*A'+B\*B'*.
 
-This method can be restarted, and therefore can limit the size of the search space, unlike many other method. It is especially well suited when one wants to perform multiple computations on similar systems since one can use the approximate solution from the previous computation as an initial guess (for instance in a continuation), or when n is relatively large since we can use any amount of eigenvectors of the residual to expand the space (as long as it's smaller or equal to n).
+Unlike many other methods, this method can be restarted, and therefore can limit the size of the search space. It is especially well suited when one wants to perform multiple computations on similar systems since then one can use the approximate solution from the previous computation as an initial guess (for instance in a continuation), or when n is relatively large since we can use any amount of eigenvectors of the residual to expand the space (as long as it's smaller or equal to n).
 
 This repository contains both a C++ and a Matlab implementation of the algorithm.
 
