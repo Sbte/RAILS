@@ -327,7 +327,7 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
         % This is not needed if we use a normal
         % Lyapunov solver instead of a general one
         % VMV = V'*M*V;
-        if hasM && ~mortho
+        if hasM
             new_indices = size(VMV,2)+1:size(V,2);
             MVnew = M*V(:, new_indices);
             if isempty(VMV)
@@ -336,7 +336,8 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
                 VMV = [[VMV; V(:, new_indices)'*MV], V'*MVnew];
             end
             MV = [MV, MVnew];
-
+        end
+        if hasM && ~mortho
             S = lyap(VAV, VBV, [], VMV);
         else
             S = lyap(VAV, VBV);
@@ -347,9 +348,9 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
         eopts.issym = true;
         eopts.tol = eigs_tol;
         if hasM
-            [V2,D2] = eigs(@(x) AV*(S*(V'*(M'*x))) + M*(V*(S*(AV'*x))) + B*(B'*x), n, nev, 'lm');
+            [V2,D2] = eigs(@(x) AV*(S*(MV'*x)) + MV*(S*(AV'*x)) + B*(B'*x), n, nev, 'lm');
         else
-            [V2,D2] = eigs(@(x) AV*(S*(V'*(x))) + (V*(S*(AV'*x))) + B*(B'*x), n, nev, 'lm');
+            [V2,D2] = eigs(@(x) AV*(S*(V'*x))  + V*(S*(AV'*x))  + B*(B'*x), n, nev, 'lm');
         end
         H = D2;
 
