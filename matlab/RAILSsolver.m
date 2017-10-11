@@ -326,18 +326,20 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
 
         % This is not needed if we use a normal
         % Lyapunov solver instead of a general one
-        % VMV = V'*M*V;
         if hasM
-            new_indices = size(VMV,2)+1:size(V,2);
+            old_indices = 1:size(MV,2);
+            new_indices = size(MV,2)+1:size(V,2);
             MVnew = M*V(:, new_indices);
+            MV = [MV, MVnew];
+        end
+
+        if hasM && ~mortho
+            % VMV = V'*M*V;
             if isempty(VMV)
                 VMV = V'*MVnew;
             else
-                VMV = [[VMV; V(:, new_indices)'*MV], V'*MVnew];
+                VMV = [[VMV; V(:, new_indices)'*MV(:,old_indices)], V'*MVnew];
             end
-            MV = [MV, MVnew];
-        end
-        if hasM && ~mortho
             S = lyap(VAV, VBV, [], VMV);
         else
             S = lyap(VAV, VBV);
@@ -449,9 +451,11 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
             else
                 VAV = V3' * VAV * V3;
                 AV = AV * V3;
-                if hasM && ~mortho
-                    VMV = V3' * VMV * V3;
+                if ~isempty(MV)
                     MV = MV * V3;
+                end
+                if ~isempty(VMV)
+                    VMV = V3' * VMV * V3;
                 end
                 VBV = V3' * VBV * V3;
                 % Make this symmetric for safety reasons

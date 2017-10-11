@@ -139,3 +139,19 @@ function test_space(t)
     t.assertLessThan(res, 1E-4);
     t.assertLessThan(norm(A*V*S*V'*M+M*V*S*V'*A'+B*B') / norm(B'*B), 1E-4);
 end
+
+function test_morth(t)
+    rng(4634);
+    n = 256;
+    A = -delsq(numgrid('S', sqrt(n)+2));
+    M = spdiags(rand(n,1), 0, n, n);
+    B = rand(n,1);
+
+    opts.ortho = 'M';
+    [V, S, res, iter] = RAILSsolver(A,M,B,opts);
+
+    t.assertLessThan(iter, n-10);
+    t.assertLessThan(res * norm(B'*B), 1E-2);
+    t.assertLessThan(res, 1E-4);
+    t.assertLessThan(norm(A*V*S*V'*M+M*V*S*V'*A'+B*B') / norm(B'*B), 1E-4);
+end
