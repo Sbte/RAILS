@@ -18,7 +18,7 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
 %
 % opts.invA or opts.Ainv:
 %   Function that performs A^{-1}x. This can be approximate. It is
-%   only referenced when projection_method > 1
+%   only referenced when projection_method > 1.
 %
 % opts.space:
 %   Initial space. The default is a random vector, but it can be
@@ -30,37 +30,46 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
 %   used).
 %
 % opts.expand:
-%   Amount of vectors used to expand the space. (default 3)
+%   Amount of vectors used to expand the space. (default 3).
 %
 % opts.nullspace:
 %   Space we want to be projected out of V in each step. (default
-%   none)
+%   none).
 %
 % opts.ortho:
 %   Orthogonalization method. Default is standard
 %   orthogonalization, but one can also choose to use
-%   M-orthogonalization by setting this to 'M'
+%   M-orthogonalization by setting this to 'M'.
 %
 % opts.restart_iterations:
 %   Amount of iterations after which the method is restarted.
 %   Should be used in combination with a restart tolerance, not
-%   with the restart option mentioned above
+%   with the restart option mentioned above.
 %
 % opts.restart_tolerance:
 %   Tolerance used for retaining eigenvectors. If this is > 0 the
 %   amount of vectors in V is dependent on this tolerance. (default
-%   tol * 1e-3)
+%   tol * 1e-3).
 %
-% opts.lanczos_iterations:
-%   Maximum amount of iterations that is used by the lanczos
-%   method. Note that one could also just replace the lanczos
-%   method by a call to eigs if one wants.
+% opts.lanczos_vectors:
+%   Amount of eigenvectors that you want to compute using Lanczos.
+%   For this we use eigs at the moment. Usualy it is a good idea to
+%   use more vectors than the amount of expand vectors since it can
+%   happen that eigenvectors of the residual are already in the
+%   space. The default is 2 * expand.
+%
+% opts.lanczos_tolerance
+%   Tolerance for computing the eigenvectors/values.
+%
+% opts.fast_orthogonalization
+%   Uses vector operations + ortho instead of doing modified GS.
+%   This is less stable but about 10x as fast.
 %
 % opts.reduced:
 %   Amount of vectors that is used after a restart. This can be set
 %   in combination with the restart option. Note that by setting this
 %   it is possible to throw away too much information at every
-%   restart
+%   restart.
 
     if nargin < 3
         error('Not enough input arguments');
@@ -104,6 +113,9 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
     projection_method = 1;
     restart_tolerance = tol * 1e-3;
     restart_upon_convergence = true;
+    eigs_tol = [];
+    nev = [];
+    fast_orthogonalization = true;
 
     % Options
     verbosity = 0;
@@ -199,8 +211,14 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
         if isfield(opts, 'restart_tolerance')
             restart_tolerance = opts.restart_tolerance;
         end
-        if isfield(opts, 'lanczos_iterations')
-            lanczos_iterations = opts.lanczos_iterations;
+        if isfield(opts, 'lanczos_tolerance')
+            eigs_tol = opts.lanczos_tolerance;
+        end
+        if isfield(opts, 'lanczos_vectors')
+            nev = opts.lanczos_vectors;
+        end
+        if isfield(opts, 'fast_orthogonalization')
+            fast_orthogonalization = opts.fast_orthogonalization;
         end
         if isfield(opts, 'reduced')
             reduced_size = opts.reduced;
@@ -232,6 +250,7 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
         % We use a random vector
         V = (rand(n,1) - .5) * 2;
     end
+    W = V;
 
     if ~isempty(invA) && abs(projection_method - floor(projection_method) - 0.1) < sqrt(eps)
         W = invA(V);
@@ -250,9 +269,13 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
     end
 
     if mortho
-        V = Morth(V, M, nullspace);
+        V = Morth(V, M, nullspace, [], fast_orthogonalization);
     elseif ortho
-        V = Morth(V, [], nullspace);
+        V = Morth(V, [], nullspace, [], fast_orthogonalization);
+    end
+
+    if isempty(nev)
+        nev = expand * 2;
     end
 
     MV = [];
@@ -319,16 +342,26 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
             S = lyap(VAV, VBV);
         end
 
-        [~,H,V2,D2] = rlanczos(AV, B, M, V, S, max(lanczos_iterations, expand * 1 + 1), expand, verbosity);
+        % Compute eigenvalues and vectors of the residual, but make
+        % sure we do not compute too many
+        eopts.issym = true;
+        eopts.tol = eigs_tol;
+        [V2,D2] = eigs(@(x) AV*(S*(V'*(x))) + (V*(S*(AV'*x))) + B*(B'*x), n, nev, 'lm');
+        H = D2;
 
         % Sort eigenvectors by size of the eigenvalue
         [~,I2] = sort(abs(diag(D2)), 1, 'descend');
         V2 = V2(:, I2);
         D2 = D2(I2, I2);
 
+        % Orthogonalize so we do not use too eigenvectors that are
+        % already in the space
+        V2 = Morth(V2, [], V, [], fast_orthogonalization);
+
         res = norm(D2, inf);
         if verbosity > 0
-            fprintf('Estimate Lanczos, absolute: %e, relative: %e, iterations: %d\n', res, res / r0, size(V2, 2));
+            fprintf('Estimate Lanczos, absolute: %e, relative: %e, num eigenvectors: %d\n',...
+                    res, res / r0, size(V2, 2));
         end
         res = res / r0;
 
@@ -422,7 +455,7 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
         end
 
         % Max number of expansion vectors we want
-        num = min(min(expand, size(H,2)), m - size(V,2));
+        num = min(min(expand, size(V2,2)), m - size(V,2));
 
         W = V2(:, 1:num);
 
@@ -433,9 +466,9 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
         end
 
         if mortho
-            V = Morth(W, M, nullspace, V);
+            V = Morth(W, M, nullspace, V, fast_orthogonalization);
         else
-            V = Morth(W, [], nullspace, V);
+            V = Morth(W, [], nullspace, V, fast_orthogonalization);
         end
     end
 
@@ -444,146 +477,84 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
     end
 end
 
-function [Q, H, V, d] = rlanczos(AW, B, M, W, S, iters, nev, verbosity)
-    n = size(B,1);
-    m = 5;
-    if nargin > 5
-        m = iters;
-    end
-    
-    if nargin < 7
-        nev = 0;
+function V = Morth(W, M, nullspace, V, fast_orthogonalization)
+% MGS M-orthogonalisation
+    if nargin < 5
+        fast_orthogonalization = false;
     end
 
-    q1 = (rand(n,1) - .5) * 2;
-    Q = zeros(n, m+2);
-    Q(:,2) = q1/ norm(q1);
-    H = zeros(m+1, m+1);
-    beta = 0;
-
-    V = [];
-
-    iter = 0;
-    for k=1:m
-        if isempty(M)
-            z = AW*(S*(W'*Q(:,k+1))) + W*(S*(AW'*Q(:,k+1))) + B*(B'*Q(:,k+1));
-        else
-            z = AW*(S*(W'*(M'*Q(:,k+1)))) + M*(W*(S*(AW'*Q(:,k+1)))) + B*(B'*Q(:,k+1));
-        end
-
-        alpha = z'*Q(:,k+1);
-        H(k, k) = alpha;
-
-        z = z - alpha * Q(:,k+1) - beta * Q(:,k);
-        z = Morth2(z, [], V);
-        beta = norm(z);
-        if beta < 1e-14
-            iter = iter + 1;
-            break;
-        end
-
-        if nev > 0
-            [v,d] = eig(H(1:k,1:k));
-            [~,idx] = sort(abs(diag(d)), 1, 'descend');
-            v = v(:, idx);
-
-            % Determine residuals and check for convergence
-            conv = [];
-            for i=1:k
-                r = abs(beta * v(k, i)) / abs(d(idx(i), idx(i)));
-                if r < 1e-12
-                    conv = [conv i];
-                end
-            end
-
-            % If eigenvectors converged put them in V
-            if ~isempty(conv)
-                V = Morth(Q(:,2:k+1) * v(:, conv), []);
-            end
-
-            if isequal(conv(1:min(nev, length(conv))), 1:nev)
-                iter = iter + 1;
-                break;
-            end
-        end
-
-        H(k+1,k) = beta;
-        H(k,k+1) = beta;
-        Q(:,k+2) = z / beta;
-
-        iter = iter + 1;
-    end
-
-    H = H(1:iter,1:iter);
-    Q = Q(:,2:iter+1);
-
-    [v,d] = eig(H);
-
-    % Compute Ritz vectors
-    if nargout > 2
-        V = Q*v;
-    end
-end
-
-function V = Morth(W, M, nullspace, V)
-% GS M-orthogonalisation
     if nargin < 4
         V = [];
     end
     if nargin < 3
         nullspace = [];
     end
-    if isa(nullspace, 'function_handle')
-        nullspace_op = nullspace;
+
+    num_iter = 1;
+    tol = 1e-8;
+
+    if isempty(M)
+        if fast_orthogonalization
+            % Really fast orthogonalization, which is not so stable
+            if ~isempty(nullspace)
+                W = W - nullspace*(nullspace'*W);
+            end
+            if ~isempty(V)
+                W = W - V*(V'*W);
+            end
+            V = [V, orth(W)];
+        else
+            % Actual modified GS, which is supposed to be about as fast
+            % but is actually 10x as slow...
+            for i = 1:size(W,2)
+                v1 = W(:,i) / norm(W(:,i));
+                for k = 1:num_iter
+                    v1 = nullspace_op(v1);
+                    for j=1:size(V,2)
+                        v1 = v1 - V(:,j)*(V(:,j)'*(v1));
+                    end
+                end
+                nrm = norm(v1);
+                if nrm < tol
+                    continue;
+                end
+                V(:,size(V,2)+1) = v1 / nrm;
+            end
+        end
     else
-        nullspace_op = @(x)  x - nullspace*(nullspace'*x);
-    end
-
-    for i = 1:size(W,2)
-        v1 = W(:,i) / norm(W(:,i));
-        for k = 1:2
-            if ~isempty(nullspace)
+        % Modified GS with M-inner product
+        for i = 1:size(W,2)
+            v1 = W(:,i) / norm(W(:,i));
+            for k = 1:num_iter
                 v1 = nullspace_op(v1);
+                for j=1:size(V,2)
+                    v1 = v1 - V(:,j)*(V(:,j)'*(M*v1));
+                end
             end
-            if ~isempty(V)
+            nrm = sqrt(v1'*M*v1);
+            if nrm < tol
+                continue;
+            end
+            V(:,size(V,2)+1) = v1 / nrm;
+        end
+    end
+
+    function y = nullspace_op(x)
+        y = x;
+        if ~isempty(nullspace)
+            if isa(nullspace, 'function_handle')
+                y = nullspace(x);
+            else
                 if isempty(M)
-                    v1 = v1 - V*(V'*v1);
+                    for ii=1:size(nullspace, 2)
+                        y = y - nullspace(:,ii) * (nullspace(:,ii)' * y);
+                    end
                 else
-                    v1 = v1 - V*(V'*(M*v1));
+                    for ii=1:size(nullspace, 2)
+                        y = y - nullspace(:,ii) * (nullspace(:,ii)' * (M * y));
+                    end
                 end
             end
         end
-        if isempty(M)
-            V(:,size(V,2)+1) = v1 / norm(v1);
-        else
-            V(:,size(V,2)+1) = v1 / sqrt(v1'*M*v1);
-        end
-    end
-end
-
-function V = Morth2(W, M, nullspace, V)
-% GS M-orthogonalisation
-    if nargin < 4
-        V = [];
-    end
-    if nargin < 3
-        nullspace = [];
-    end
-
-    for i = 1:size(W,2)
-        v1 = W(:,i);
-        for k = 1:2
-            if ~isempty(nullspace)
-                v1 = v1 - nullspace*(nullspace'*v1);
-            end
-            if ~isempty(V)
-                if isempty(M)
-                    v1 = v1 - V*(V'*v1);
-                else
-                    v1 = v1 - V*(V'*M*v1);
-                end
-            end
-        end
-        V(:,size(V,2)+1) = v1;
     end
 end
