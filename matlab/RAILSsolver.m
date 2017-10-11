@@ -346,7 +346,11 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
         % sure we do not compute too many
         eopts.issym = true;
         eopts.tol = eigs_tol;
-        [V2,D2] = eigs(@(x) AV*(S*(V'*(x))) + (V*(S*(AV'*x))) + B*(B'*x), n, nev, 'lm');
+        if hasM
+            [V2,D2] = eigs(@(x) AV*(S*(V'*(M'*x))) + M*(V*(S*(AV'*x))) + B*(B'*x), n, nev, 'lm');
+        else
+            [V2,D2] = eigs(@(x) AV*(S*(V'*(x))) + (V*(S*(AV'*x))) + B*(B'*x), n, nev, 'lm');
+        end
         H = D2;
 
         % Sort eigenvectors by size of the eigenvalue
@@ -356,7 +360,11 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
 
         % Orthogonalize so we do not use too eigenvectors that are
         % already in the space
-        V2 = Morth(V2, [], V, [], fast_orthogonalization);
+        if mortho
+            V2 = Morth(V2, M, V, [], fast_orthogonalization);
+        else
+            V2 = Morth(V2, [], V, [], fast_orthogonalization);
+        end
 
         res = norm(D2, inf);
         if verbosity > 0
