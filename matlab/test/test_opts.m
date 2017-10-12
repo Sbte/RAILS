@@ -14,8 +14,8 @@ function test_tol(t)
 
     t.assertLessThan(iter, n-10);
     t.assertLessThan(res, tol);
-    t.assertLessThan(norm(A*V*S*V'*M+M*V*S*V'*A'+B*B') / norm(B'*B), tol);
-    t.assertGreaterThan(norm(A*V*S*V'*M+M*V*S*V'*A'+B*B') / norm(B'*B), tol / 10);
+    t.assertLessThan(norm(A*V*S*V'*M'+M*V*S*V'*A'+B*B') / norm(B'*B), tol);
+    t.assertGreaterThan(norm(A*V*S*V'*M'+M*V*S*V'*A'+B*B') / norm(B'*B), tol / 10);
 end
 
 function test_restart(t)
@@ -35,7 +35,7 @@ function test_restart(t)
     t.assertEqual(size(V, 2), size(S, 2));
     t.assertLessThan(res * norm(B'*B), 1E-2);
     t.assertLessThan(res, 1E-4);
-    t.assertLessThan(norm(A*V*S*V'*M+M*V*S*V'*A'+B*B') / norm(B'*B), 1E-4);
+    t.assertLessThan(norm(A*V*S*V'*M'+M*V*S*V'*A'+B*B') / norm(B'*B), 1E-4);
 end
 
 function test_restart2(t)
@@ -55,7 +55,7 @@ function test_restart2(t)
     t.assertEqual(size(V, 2), size(S, 2));
     t.assertLessThan(res * norm(B'*B), 1E-2);
     t.assertLessThan(res, 1E-4);
-    t.assertLessThan(norm(A*V*S*V'*M+M*V*S*V'*A'+B*B') / norm(B'*B), 1E-4);
+    t.assertLessThan(norm(A*V*S*V'*M'+M*V*S*V'*A'+B*B') / norm(B'*B), 1E-4);
 end
 
 function test_restart3(t)
@@ -77,7 +77,7 @@ function test_restart3(t)
     t.assertEqual(size(V, 2), size(S, 2));
     t.assertLessThan(res * norm(B'*B), 1E-2);
     t.assertLessThan(res, 1E-4);
-    t.assertLessThan(norm(A*V*S*V'*M+M*V*S*V'*A'+B*B') / norm(B'*B), 1E-4);
+    t.assertLessThan(norm(A*V*S*V'*M'+M*V*S*V'*A'+B*B') / norm(B'*B), 1E-4);
 end
 
 function test_wrong_restart(t)
@@ -137,7 +137,7 @@ function test_space(t)
     t.assertEqual(size(V, 2), size(S, 2));
     t.assertLessThan(res * norm(B'*B), 1E-2);
     t.assertLessThan(res, 1E-4);
-    t.assertLessThan(norm(A*V*S*V'*M+M*V*S*V'*A'+B*B') / norm(B'*B), 1E-4);
+    t.assertLessThan(norm(A*V*S*V'*M'+M*V*S*V'*A'+B*B') / norm(B'*B), 1E-4);
 end
 
 function test_morth(t)
@@ -153,5 +153,27 @@ function test_morth(t)
     t.assertLessThan(iter, n-10);
     t.assertLessThan(res * norm(B'*B), 1E-2);
     t.assertLessThan(res, 1E-4);
-    t.assertLessThan(norm(A*V*S*V'*M+M*V*S*V'*A'+B*B') / norm(B'*B), 1E-4);
+    t.assertLessThan(norm(A*V*S*V'*M'+M*V*S*V'*A'+B*B') / norm(B'*B), 1E-4);
+end
+
+function test_nullspace(t)
+    rng(4634);
+    n = 256;
+    A = -delsq(numgrid('S', sqrt(n)+2));
+    M = spdiags(rand(n,1), 0, n, n);
+    B = rand(n,1);
+
+    Q = rand(n,1);
+    Q = Q / norm(Q);
+    P = speye(n) - Q * Q';
+    A = P*A*P;
+    B = P*B;
+    M = P*M*P;
+    opts.nullspace = Q;
+    [V, S, res, iter] = RAILSsolver(A,M,B,opts);
+
+    t.assertLessThan(norm(Q'*V), 1E-10);
+    t.assertLessThan(res * norm(B'*B), 1E-2);
+    t.assertLessThan(res, 1E-4);
+    t.assertLessThan(norm(A*V*S*V'*M'+M*V*S*V'*A'+B*B') / norm(B'*B), 1E-4);
 end
