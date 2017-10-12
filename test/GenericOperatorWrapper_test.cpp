@@ -4,7 +4,9 @@
 
 #include "src/StlWrapper.hpp"
 
+#ifdef ENABLE_TRILINOS
 #include "Epetra_TestableWrappers.hpp"
+#endif
 
 template <typename A, typename B, typename C>
 struct TypeDefinitions
@@ -55,10 +57,14 @@ protected:
 
 using testing::Types;
 
+#ifdef ENABLE_TRILINOS
 typedef Types<TypeDefinitions<StlWrapper, StlWrapper, StlWrapper>,
               TypeDefinitions<TestableEpetra_OperatorWrapper,
                               TestableEpetra_MultiVectorWrapper,
                               Epetra_SerialDenseMatrixWrapper> > Implementations;
+#else
+typedef Types<TypeDefinitions<StlWrapper, StlWrapper, StlWrapper> > Implementations;
+#endif
 
 TYPED_TEST_CASE(GenericOperatorWrapperTest, Implementations);
 

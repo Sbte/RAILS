@@ -5,7 +5,9 @@
 #include "src/StlWrapper.hpp"
 #include "src/StlTools.hpp"
 
+#ifdef ENABLE_TRILINOS
 #include "Epetra_TestableWrappers.hpp"
+#endif
 
 template <class DenseMatrixWrapper>
 class GenericDenseMatrixWrapperTest: public testing::Test
@@ -46,7 +48,11 @@ protected:
 
 using testing::Types;
 
+#ifdef ENABLE_TRILINOS
 typedef Types<StlWrapper, Epetra_SerialDenseMatrixWrapper> Implementations;
+#else
+typedef Types<StlWrapper> Implementations;
+#endif
 
 TYPED_TEST_CASE(GenericDenseMatrixWrapperTest, Implementations);
 

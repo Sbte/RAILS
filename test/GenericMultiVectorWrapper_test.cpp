@@ -4,7 +4,9 @@
 
 #include "src/StlWrapper.hpp"
 
+#ifdef ENABLE_TRILINOS
 #include "Epetra_TestableWrappers.hpp"
+#endif
 
 template <class MultiVectorWrapper>
 class GenericMultiVectorWrapperTest: public testing::Test
@@ -47,7 +49,11 @@ protected:
 
 using testing::Types;
 
+#ifdef ENABLE_TRILINOS
 typedef Types<StlWrapper, TestableEpetra_MultiVectorWrapper> Implementations;
+#else
+typedef Types<StlWrapper> Implementations;
+#endif
 
 TYPED_TEST_CASE(GenericMultiVectorWrapperTest, Implementations);
 

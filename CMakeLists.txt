@@ -5,44 +5,20 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clan
   message(STATUS "Using GNU compiler flags")
 
   if (NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_C_FLAGS        "${CMAKE_C_FLAGS} -O2 -g -Wall")
     set(CMAKE_CXX_FLAGS      "${CMAKE_CXX_FLAGS} -O2 -g -std=c++11 -Wall")
-    set(CMAKE_Fortran_FLAGS  "${CMAKE_Fortran_FLAGS} -O2 -g -Wall")
   endif()
-
-  set(CMAKE_C_FLAGS_RELEASE        "-O3 -ffast-math -march=native")
-  set(CMAKE_CXX_FLAGS_RELEASE      "-O3 -ffast-math -march=native -std=c++11")
-  set(CMAKE_Fortran_FLAGS_RELEASE  "-O3 -ffast-math -march=native")
-
-  set (CMAKE_C_FLAGS_DEBUG       "-O0 -g -DTESTING -DDEBUGGING")
-  set (CMAKE_CXX_FLAGS_DEBUG     "-O0 -g -DTESTING -DDEBUGGING -std=c++11 -Wall")
-  set (CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -DTESTING -DDEBUGGING")
-
-  set (CMAKE_C_FLAGS_RELWITHDEBINFO       "${CMAKE_C_FLAGS_RELEASE}       -g")
-  set (CMAKE_CXX_FLAGS_RELWITHDEBINFO     "${CMAKE_CXX_FLAGS_RELEASE}     -g")
-  set (CMAKE_Fortran_FLAGS_RELWITHDEBINFO "${CMAKE_Fortran_FLAGS_RELEASE} -g")
+  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -ffast-math -march=native -std=c++11")
+  set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -DTESTING -DDEBUGGING -std=c++11 -Wall")
+  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELEASE} -g")
 elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
   message(STATUS "Using Intel compiler flags")
 
   if (NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_C_FLAGS        "${CMAKE_C_FLAGS} -O2 -g -mkl -DTESTING")
-    set(CMAKE_CXX_FLAGS      "${CMAKE_CXX_FLAGS} -O2 -g -mkl -DTESTING -std=c++11 -Wall")
-    set(CMAKE_Fortran_FLAGS  "${CMAKE_Fortran_FLAGS} -O2 -g -mkl -DTESTING")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -g -mkl -DTESTING -std=c++11 -Wall")
   endif()
-
-  set(CMAKE_C_FLAGS_RELEASE        "-O3 -mkl -ffast-math -march=native")
-  set(CMAKE_CXX_FLAGS_RELEASE      "-O3 -mkl -ffast-math -march=native -std=c++11")
-  set(CMAKE_Fortran_FLAGS_RELEASE  "-O3 -mkl -ffast-math -march=native")
-
-  set (CMAKE_C_FLAGS_DEBUG       "-O0 -g -mkl -DTESTING -DDEBUGGING")
-  set (CMAKE_CXX_FLAGS_DEBUG     "-O0 -g -mkl -DTESTING -DDEBUGGING -std=c++11 -Wall")
-  set (CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -mkl -DTESTING -DDEBUGGING")
-
-  set (CMAKE_C_FLAGS_RELWITHDEBINFO       "${CMAKE_C_FLAGS_RELEASE}       -g")
-  set (CMAKE_CXX_FLAGS_RELWITHDEBINFO     "${CMAKE_CXX_FLAGS_RELEASE}     -g")
-  set (CMAKE_Fortran_FLAGS_RELWITHDEBINFO "${CMAKE_Fortran_FLAGS_RELEASE} -g")
-
-  add_definitions(-DUSE_MKL)
+  set(CMAKE_CXX_FLAGS_RELEASE "-O3 -mkl -ffast-math -march=native -std=c++11")
+  set (CMAKE_CXX_FLAGS_DEBUG "-O0 -g -mkl -DTESTING -DDEBUGGING -std=c++11 -Wall")
+  set (CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELEASE} -g")
 endif()
 
 set(SOURCES
@@ -74,9 +50,9 @@ set(HEADERS ${HEADERS}
   src/StlWrapper.hpp
   )
 
-if (DEFINED ENV{TRILINOS_HOME})
-  set(Trilinos_DIR "$ENV{TRILINOS_HOME}/lib/cmake/Trilinos")
-endif()
+find_package(BLAS REQUIRED)
+find_package(LAPACK REQUIRED)
+
 find_package(Trilinos QUIET)
 
 if (${Trilinos_FOUND})
@@ -105,12 +81,16 @@ if (${Trilinos_FOUND})
 
   link_directories(${Trilinos_LIBRARY_DIRS})
   link_directories(${Trilinos_TPL_LIBRARY_DIRS})
+
+  add_definitions(-DENABLE_TRILINOS)
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR})
 
 add_library(lyapunov ${SOURCES})
 target_link_libraries(lyapunov "slicot")
+target_link_libraries(lyapunov ${BLAS_LIBRARIES})
+target_link_libraries(lyapunov ${LAPACK_LIBRARIES})
 
 if (${Trilinos_FOUND})
   target_link_libraries(lyapunov ${Trilinos_LIBRARIES})
@@ -164,7 +144,7 @@ foreach(test_source ${TEST_SOURCES})
   target_link_libraries(${test_name} lyapunov)
   target_link_libraries(${test_name} ${GTEST_BOTH_LIBRARIES})
   target_link_libraries(${test_name} ${CMAKE_THREAD_LIBS_INIT})
-  
+
   add_test(${test_name} ${test_name})
   list(APPEND test_list ${test_name})
 endforeach()
