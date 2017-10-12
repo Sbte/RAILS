@@ -14,7 +14,7 @@ function test_Laplace_64(t)
     t.assertLessThan(iter, n-10);
     t.assertLessThan(res * norm(B'*B), 1E-2);
     t.assertLessThan(res, 1E-4);
-    t.assertLessThan(norm(A*V*S*V'*M+M*V*S*V'*A'+B*B') / norm(B'*B), 1E-4);
+    t.assertLessThan(norm(A*V*S*V'*M'+M*V*S*V'*A'+B*B') / norm(B'*B), 1E-4);
 end
 
 function test_Laplace_256(t)
@@ -29,7 +29,7 @@ function test_Laplace_256(t)
     t.assertLessThan(iter, n-10);
     t.assertLessThan(res * norm(B'*B), 1E-2);
     t.assertLessThan(res, 1E-4);
-    t.assertLessThan(norm(A*V*S*V'*M+M*V*S*V'*A'+B*B') / norm(B'*B), 1E-4);
+    t.assertLessThan(norm(A*V*S*V'*M'+M*V*S*V'*A'+B*B') / norm(B'*B), 1E-4);
 end
 
 function test_Laplace_equivalence(t)

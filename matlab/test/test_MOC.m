@@ -66,7 +66,7 @@ function test_MOC_Erik(t)
     X(idx2, idx1) = X12(1:end-2, :)';
     X(idx2, idx2) = X22;
 
-    res = norm(A*X*M + M*X*A' + B*B', 'fro');
+    res = norm(A*X*M' + M*X*A' + B*B', 'fro');
     t.assertLessThan(res, 1E-4);
 
     rmpath([pwd, '/../DataErik']);

@@ -14,7 +14,7 @@ function test_random_ev(t)
     t.assertLessThan(iter, 10);
     t.assertLessThan(res * norm(B'*B), 1E-2);
     t.assertLessThan(res, 1E-4);
-    t.assertLessThan(norm(A*V*S*V'*M+M*V*S*V'*A'+B*B') / norm(B'*B), 1E-4);
+    t.assertLessThan(norm(A*V*S*V'*M'+M*V*S*V'*A'+B*B') / norm(B'*B), 1E-4);
 end
 
 function test_random_64(t)
@@ -28,5 +28,5 @@ function test_random_64(t)
 
     t.assertLessThan(res * norm(B'*B), 1E-2);
     t.assertLessThan(res, 1E-4);
-    t.assertLessThan(norm(A*V*S*V'*M+M*V*S*V'*A'+B*B') / norm(B'*B), 1E-4);
+    t.assertLessThan(norm(A*V*S*V'*M'+M*V*S*V'*A'+B*B') / norm(B'*B), 1E-4);
 end
