@@ -46,8 +46,10 @@ set(HEADERS ${HEADERS}
   src/LyapunovSolverDecl.hpp
   src/ScalarWrapper.hpp
   src/SlicotWrapper.hpp
+  src/StlTools.hpp
   src/StlVector.hpp
   src/StlWrapper.hpp
+  src/Timer.hpp
   )
 
 find_package(BLAS REQUIRED)
@@ -87,18 +89,54 @@ endif()
 
 include_directories(${PROJECT_SOURCE_DIR})
 
-add_library(lyapunov ${SOURCES})
-target_link_libraries(lyapunov "slicot")
-target_link_libraries(lyapunov ${BLAS_LIBRARIES})
-target_link_libraries(lyapunov ${LAPACK_LIBRARIES})
+set(BUILD_SHARED_LIBS ON)
+
+add_library(rails ${SOURCES})
+target_link_libraries(rails "slicot")
+target_link_libraries(rails ${BLAS_LIBRARIES})
+target_link_libraries(rails ${LAPACK_LIBRARIES})
 
 if (${Trilinos_FOUND})
-  target_link_libraries(lyapunov ${Trilinos_LIBRARIES})
-  target_link_libraries(lyapunov ${Trilinos_TPL_LIBRARIES})
+  target_link_libraries(rails ${Trilinos_LIBRARIES})
+  target_link_libraries(rails ${Trilinos_TPL_LIBRARIES})
 
   add_executable(main src/main.cpp)
-  target_link_libraries(main lyapunov)
+  target_link_libraries(main rails)
 endif()
+
+########## Install ##########
+
+set(INCLUDE_INSTALL_DIR include/RAILS)
+set(LIB_INSTALL_DIR lib)
+set(BIN_INSTALL_DIR bin)
+
+# Install libraries
+set(library_list)
+
+install(TARGETS rails EXPORT RAILSTargets LIBRARY DESTINATION ${LIB_INSTALL_DIR})
+list(APPEND library_list rails)
+
+# Install headers
+install(FILES ${HEADERS} DESTINATION ${INCLUDE_INSTALL_DIR})
+
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/RAILS/RAILSConfigVersion.cmake"
+  VERSION 0 COMPATIBILITY SameMajorVersion
+  )
+
+set(ConfigPackageLocation lib/cmake/RAILS)
+configure_package_config_file("${PROJECT_SOURCE_DIR}/cmake/RAILSConfig.cmake.in"
+  "${PROJECT_BINARY_DIR}/RAILSConfig.cmake" INSTALL_DESTINATION ${ConfigPackageLocation}
+  PATH_VARS INCLUDE_INSTALL_DIR)
+
+install(EXPORT RAILSTargets FILE RAILSTargets.cmake DESTINATION ${ConfigPackageLocation})
+install(FILES "${PROJECT_BINARY_DIR}/RAILSConfig.cmake"
+  "${CMAKE_CURRENT_BINARY_DIR}/RAILS/RAILSConfigVersion.cmake"
+  DESTINATION ${ConfigPackageLocation}
+  )
+
+########## Tests ############
 
 INCLUDE(ExternalProject)
 
@@ -141,7 +179,7 @@ find_package(Threads REQUIRED)
 foreach(test_source ${TEST_SOURCES})
   get_filename_component(test_name ${test_source} NAME)
   add_executable(${test_name} ${test_source})
-  target_link_libraries(${test_name} lyapunov)
+  target_link_libraries(${test_name} rails)
   target_link_libraries(${test_name} ${GTEST_BOTH_LIBRARIES})
   target_link_libraries(${test_name} ${CMAKE_THREAD_LIBS_INIT})
 

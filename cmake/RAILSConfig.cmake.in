@@ -1,0 +1,19 @@
+# - Config file for the RAILS package
+# It defines the following variables
+#  RAILS_INCLUDE_DIRS - include directories for RAILS
+#  RAILS_LIBRARIES    - libraries to link against
+#  RAILS_EXECUTABLE   - the bar executable
+ 
+# Compute paths
+get_filename_component(RAILS_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+
+include("${RAILS_CMAKE_DIR}/RAILSTargets.cmake")
+
+@PACKAGE_INIT@
+
+set_and_check(RAILS_INCLUDE_DIR "@PACKAGE_INCLUDE_INSTALL_DIR@")
+
+set(RAILS_INCLUDE_DIRS "${RAILS_INCLUDE_DIR}")
+set(RAILS_LIBRARIES @library_list@)
+
+check_required_components(RAILS)
