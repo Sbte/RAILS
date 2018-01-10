@@ -9,7 +9,7 @@ function test_random_ev(t)
     M = speye(n);
     [B,~] = eigs(A,1);
 
-    [V, S, res, iter] = RAILSsolver(A,M,B,64);
+    [V, S, res, iter] = RAILSsolver(A, M, B, 64);
 
     t.assertLessThan(iter, 10);
     t.assertLessThan(res * norm(B'*B), 1E-2);
@@ -24,7 +24,8 @@ function test_random_64(t)
     B = rand(n,1);
     M = spdiags(rand(n,1), 0, n, n);
 
-    [V, S, res] = RAILSsolver(A,M,B,65);
+    opts.restart_upon_convergence = false;
+    [V, S, res] = RAILSsolver(A, M, B, opts);
 
     t.assertLessThan(res * norm(B'*B), 1E-2);
     t.assertLessThan(res, 1E-4);

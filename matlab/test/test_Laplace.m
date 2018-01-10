@@ -32,6 +32,16 @@ function test_Laplace_256(t)
     t.assertLessThan(norm(A*V*S*V'*M'+M*V*S*V'*A'+B*B') / norm(B'*B), 1E-4);
 end
 
+function test_Laplace_maxit(t)
+    rng(4634);
+    n = 64;
+    A = -delsq(numgrid('S', sqrt(n)+2));
+    M = spdiags(rand(n,1), 0, n, n);
+    B = rand(n,1);
+
+    t.assertWarning(@(x) RAILSsolver(A, M, B, 10), 'RAILSsolver:ProjectionMethod');
+end
+
 function test_Laplace_equivalence(t)
 % Here we show that the Laplace problem is also a Lyapunov problem
     rng(4634);
@@ -52,7 +62,8 @@ function test_Laplace_equivalence(t)
 
     x_lapl = A_lapl \ b;
 
-    [V, S, res, iter] = RAILSsolver(A, [], B);
+    opts.restart_upon_convergence = false;
+    [V, S, res, iter] = RAILSsolver(A, [], B, opts);
 
     t.assertLessThan(res * norm(B'*B), 1E-2);
     t.assertLessThan(res, 1E-4);

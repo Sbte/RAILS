@@ -26,8 +26,8 @@ function test_restart(t)
     B = rand(n,1);
 
     clear opts;
-    opts.restart = 50;
-    opts.reduced = 10;
+    opts.restart_size = 50;
+    opts.reduced_size = 10;
     [V, S, res, iter] = RAILSsolver(A,M,B,opts);
 
     t.assertEqual(size(V,2), 10);
@@ -47,7 +47,7 @@ function test_restart2(t)
 
     maxit = 110;
     clear opts;
-    opts.reduced = 15;
+    opts.reduced_size = 15;
     opts.restart_iterations = 40;
     [V, S, res, iter] = RAILSsolver(A,M,B,maxit,opts);
 
@@ -67,8 +67,8 @@ function test_restart3(t)
 
     maxit = 150;
     clear opts;
-    opts.restart = 50;
-    opts.reduced = 10;
+    opts.restart_size = 50;
+    opts.reduced_size = 10;
     opts.restart_iterations = 20;
     opts.restart_tolerance = 1e-2;
     [V, S, res, iter] = RAILSsolver(A,M,B,maxit,opts);
@@ -88,8 +88,8 @@ function test_wrong_restart(t)
     B = rand(n,1);
 
     clear opts;
-    opts.restart = 10;
-    opts.reduced = 50;
+    opts.restart_size = 10;
+    opts.reduced_size = 50;
     t.assertError(@() RAILSsolver(A,M,B,opts), 'RAILSsolver:InvalidOption');
 end
 
@@ -126,8 +126,8 @@ function test_space(t)
 
     maxit = 150;
     clear opts;
-    opts.restart = 50;
-    opts.reduced = 10;
+    opts.restart_size = 50;
+    opts.reduced_size = 10;
     [V, S, res, iter] = RAILSsolver(A,M,B,maxit,opts);
     
     opts.space = V(:,1:9);

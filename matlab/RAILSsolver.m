@@ -1,6 +1,6 @@
 function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varargin)
 % Solver for A*V*S*V'*M+M*V*S*V'*A'+B*B'=0
-% [V,S,res,iter] = RAILSsolver(A, M, B, maxit, tol, opts);
+% [V,S,res,iter,resvec] = RAILSsolver(A, M, B, maxit, tol, opts);
 %
 % Input should be clear. M can be left empty for standard Lyapunov.
 %
@@ -8,7 +8,7 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
 %   Projected equations that are solver are of the form
 %   V'*A*V*S*V'*M'*V+V'*M*V*S*V'*A'*V+V'*B*B'*V=0
 %   where the options are
-%   1: V = r (default)
+%   1: V = r (default, start with V_0)
 %   1.1: V = A^{-1}r (start with A^{-1}V_0)
 %   1.2: V = A^{-1}r (start with A^{-1}B)
 %   1.3: V = A^{-1}r (start with V_0)
@@ -18,58 +18,70 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
 %
 % opts.invA or opts.Ainv:
 %   Function that performs A^{-1}x. This can be approximate. It is
-%   only referenced when projection_method > 1.
+%   only referenced when projection_method > 1. (default: @(x) A\x).
 %
 % opts.space:
-%   Initial space. The default is a random vector, but it can be
+%   Initial space V_0. The default is a random vector, but it can be
 %   set to for instance B. It will be orthonormalized within this
-%   function.
-%
-% opts.restart:
-%   Maximum amount of vectors that V can contain (default not
-%   used).
+%   function. (default: random vector).
 %
 % opts.expand:
-%   Amount of vectors used to expand the space. (default 3).
+%   Amount of vectors used to expand the space. (default: 3).
 %
 % opts.nullspace:
-%   Space we want to be projected out of V in each step. (default
-%   none).
+%   Space we want to be projected out of V in each step. (default: []).
 %
 % opts.ortho:
-%   Orthogonalization method. Default is standard
-%   orthogonalization, but one can also choose to use
-%   M-orthogonalization by setting this to 'M'.
+%   Orthogonalization method. Default is standard orthogonalization,
+%   but one can also choose to use M-orthogonalization by setting this
+%   to 'M'. (default: []).
 %
 % opts.restart_iterations:
-%   Amount of iterations after which the method is restarted.
-%   Should be used in combination with a restart tolerance, not
-%   with the restart option mentioned above.
+%   Amount of iterations after which the method is restarted. The
+%   method will not be restarted after a set amount of iterations if
+%   this is set to -1. This option should be used in combination with
+%   a restart tolerance, not with the restart size option mentioned
+%   below. (default: -1)
 %
 % opts.restart_tolerance:
 %   Tolerance used for retaining eigenvectors. If this is > 0 the
 %   amount of vectors in V is dependent on this tolerance. (default
 %   tol * 1e-3).
 %
+% opts.restart_upon_convergence: Perform a restart upon convergence to
+%   reduce the size of the space. This is the same as doing a rank
+%   reduction as a post-processing step except that it will also
+%   reiterate to make sure the convergence tolerance is still
+%   reached. (default: true).
+%
+% opts.restart_size:
+%   Maximum amount of vectors that V can contain. The amount of
+%   vectors will not be limited in case this is set to -1. Setting
+%   this may cause the method to not converge, since a minimum rank
+%   of the solution is required to reach a certain tolerance. Using
+%   a combination of restart_iterations and restart_tolerance is
+%   more robust. (default: -1).
+%
+% opts.reduced_size:
+%   Amount of vectors that is used after a restart. This can be set in
+%   combination with the restart size option. Note that by setting
+%   this it is possible to throw away too much information at every
+%   restart. The reduced size is not limited in case this is set to
+%   -1. (default: -1).
+%
 % opts.lanczos_vectors:
 %   Amount of eigenvectors that you want to compute using Lanczos.
-%   For this we use eigs at the moment. Usualy it is a good idea to
+%   For this we use eigs at the moment. Usually it is a good idea to
 %   use more vectors than the amount of expand vectors since it can
 %   happen that eigenvectors of the residual are already in the
-%   space. The default is 2 * expand.
+%   space. (default: 2 * expand).
 %
 % opts.lanczos_tolerance
 %   Tolerance for computing the eigenvectors/values.
 %
 % opts.fast_orthogonalization
 %   Uses vector operations + ortho instead of doing modified GS.
-%   This is less stable but about 10x as fast.
-%
-% opts.reduced:
-%   Amount of vectors that is used after a restart. This can be set
-%   in combination with the restart option. Note that by setting this
-%   it is possible to throw away too much information at every
-%   restart.
+%   This is less stable but about 10x as fast. (default: true).
 
     if nargin < 3
         error('Not enough input arguments');
@@ -87,7 +99,7 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
     end
 
     hasM = ~isempty(M);
-    invA = [];
+    invA = @(x) A \ x;
     V = [];
     AV = [];
     VAV = [];
@@ -183,8 +195,8 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
             end
             ortho = ~opts.space_is_orthogonalized;
         end
-        if isfield(opts, 'restart')
-            restart_size = opts.restart;
+        if isfield(opts, 'restart_size')
+            restart_size = opts.restart_size;
         end
         if isfield(opts, 'restart_upon_convergence')
             restart_upon_convergence = opts.restart_upon_convergence;
@@ -220,11 +232,11 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
         if isfield(opts, 'fast_orthogonalization')
             fast_orthogonalization = opts.fast_orthogonalization;
         end
-        if isfield(opts, 'reduced')
-            reduced_size = opts.reduced;
+        if isfield(opts, 'reduced_size')
+            reduced_size = opts.reduced_size;
             if reduced_size > 0 && restart_size > 0 && reduced_size >= restart_size
                 error('RAILSsolver:InvalidOption',...
-                      'opts.reduced should be smaller than opts.restart');
+                      'opts.reduced_size should be smaller than opts.restart_size');
             end
         elseif restart_size > 0
             reduced_size = restart_size / 2;
@@ -382,7 +394,7 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
         end
 
         if abs(res) < tol
-            if converged
+            if converged || ~restart_upon_convergence
                 if verbosity > 0
                     fprintf('Converged with space size %d\n', size(V, 2));
                 end
@@ -394,9 +406,6 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
                 break;
             end
             converged = true;
-            if ~restart_upon_convergence
-                reduced = true;
-            end
         end
 
         if i >= maxit || size(V,2) >= m
@@ -404,6 +413,14 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
                 restart_data.V = V;
                 restart_data.AV = AV;
                 restart_data.VAV = VAV;
+            end
+            if projection_method == 1
+                warning('RAILSsolver:ProjectionMethod', ...
+                        ['Convergence has not been achieved with ' ...
+                         'opts.projection_method = 1. ' ...
+                         'It is advised to set opts.projection_method ' ...
+                         'to a different value. For instance ' ...
+                         'opts.projection_method = 1.2.']);
             end
             break;
         end
