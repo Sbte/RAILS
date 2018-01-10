@@ -1,12 +1,12 @@
-function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varargin)
-% Solver for A*V*S*V'*M+M*V*S*V'*A'+B*B'=0
-% [V,S,res,iter,resvec] = RAILSsolver(A, M, B, maxit, tol, opts);
+function [V,T,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varargin)
+% Solver for A*V*T*V'*M+M*V*T*V'*A'+B*B'=0
+% [V,T,res,iter,resvec] = RAILSsolver(A, M, B, maxit, tol, opts);
 %
 % Input should be clear. M can be left empty for standard Lyapunov.
 %
 % opts.projection_method:
 %   Projected equations that are solver are of the form
-%   V'*A*V*S*V'*M'*V+V'*M*V*S*V'*A'*V+V'*B*B'*V=0
+%   V'*A*V*T*V'*M'*V+V'*M*V*T*V'*A'*V+V'*B*B'*V=0
 %   where the options are
 %   1: V = r (default, start with V_0)
 %   1.1: V = A^{-1}r (start with A^{-1}V_0)
@@ -18,7 +18,9 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
 %
 % opts.invA or opts.Ainv:
 %   Function that performs A^{-1}x. This can be approximate. It is
-%   only referenced when projection_method > 1. (default: @(x) A\x).
+%   only referenced when projection_method > 1. The default uses \
+%   but of course it is better to factorize this beforehand.
+%   (default: @(x) A\x).
 %
 % opts.space:
 %   Initial space V_0. The default is a random vector, but it can be
@@ -297,7 +299,7 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
     VBV = [];
     H = [];
 
-    S = [];
+    T = [];
     resvec = [];
     timevec = [];
     iter = 0;
@@ -352,9 +354,9 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
             else
                 VMV = [[VMV; V(:, new_indices)'*MV(:,old_indices)], V'*MVnew];
             end
-            S = lyap(VAV, VBV, [], VMV);
+            T = lyap(VAV, VBV, [], VMV);
         else
-            S = lyap(VAV, VBV);
+            T = lyap(VAV, VBV);
         end
 
         % Compute eigenvalues and vectors of the residual, but make
@@ -362,9 +364,9 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
         eopts.issym = true;
         eopts.tol = eigs_tol;
         if hasM
-            [V2,D2] = eigs(@(x) AV*(S*(MV'*x)) + MV*(S*(AV'*x)) + B*(B'*x), n, nev, 'lm');
+            [V2,D2] = eigs(@(x) AV*(T*(MV'*x)) + MV*(T*(AV'*x)) + B*(B'*x), n, nev, 'lm');
         else
-            [V2,D2] = eigs(@(x) AV*(S*(V'*x))  + V*(S*(AV'*x))  + B*(B'*x), n, nev, 'lm');
+            [V2,D2] = eigs(@(x) AV*(T*(V'*x))  + V*(T*(AV'*x))  + B*(B'*x), n, nev, 'lm');
         end
         H = D2;
 
@@ -426,8 +428,8 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
         end
 
         if (restart_iterations > 0 && iter_since_restart == restart_iterations) ...
-                || (isempty(H) && reduced_size > 0 && size(S,1) > reduced_size) ...
-                || (restart_size > 0 && size(S, 1) > restart_size) ...
+                || (isempty(H) && reduced_size > 0 && size(T,1) > reduced_size) ...
+                || (restart_size > 0 && size(T, 1) > restart_size) ...
                 || (converged && ~reduced)
 
             if reduced_size > 0 && reduced_size < size(V, 2)
@@ -435,13 +437,13 @@ function [V,S,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
                     fprintf(['Decreasing search space size. Trying %d ' ...
                              'vectors.\n'], reduced_size);
                 end
-                [V3, D3] = eigs(S, reduced_size);
+                [V3, D3] = eigs(T, reduced_size);
             else
                 if verbosity > 0
                     fprintf(['Decreasing search space size. Trying %d ' ...
                              'vectors.\n'], size(V, 2));
                 end
-                [V3, D3] = eig(S);
+                [V3, D3] = eig(T);
             end
 
             d = abs(diag(D3));
