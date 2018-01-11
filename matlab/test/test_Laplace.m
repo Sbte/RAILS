@@ -42,6 +42,17 @@ function test_Laplace_maxit(t)
     t.assertWarning(@(x) RAILSsolver(A, M, B, 10), 'RAILSsolver:ProjectionMethod');
 end
 
+function test_Laplace_singular(t)
+    rng(4634);
+    n = 64;
+    A = -delsq(numgrid('S', sqrt(n)+2));
+    M = spdiags(rand(n,1), 0, n, n);
+    M(n, n) = 0;
+    B = rand(n,1);
+
+    t.assertWarning(@(x) RAILSsolver(A, M, B, 10), 'RAILSsolver:SingularMassMatrix');
+end
+
 function test_Laplace_equivalence(t)
 % Here we show that the Laplace problem is also a Lyapunov problem
     rng(4634);

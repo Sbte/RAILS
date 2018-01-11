@@ -260,6 +260,13 @@ function [V,T,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
         n = m;
     end
 
+    % Check for a singular mass matrix
+    if ~isempty(M) && 1 / condest(M) < 1e-12
+        warning('RAILSsolver:SingularMassMatrix', ...
+                ['Your M matrix appears to be singular. ' ...
+                 'It is advised to use the provided RAILSschur method.']);
+    end
+
     if isempty(V)
         % We use a random vector
         V = (rand(n,1) - .5) * 2;

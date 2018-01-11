@@ -170,7 +170,9 @@ function test_nullspace(t)
     B = P*B;
     M = P*M*P;
     opts.nullspace = Q;
+    warning('off', 'RAILSsolver:SingularMassMatrix');
     [V, S, res, iter] = RAILSsolver(A,M,B,opts);
+    warning('on', 'RAILSsolver:SingularMassMatrix');
 
     t.assertLessThan(norm(Q'*V), 1E-10);
     t.assertLessThan(res * norm(B'*B), 1E-2);
