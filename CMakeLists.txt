@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8)
-project(Lyapunov C CXX)
+project(RAILS C CXX)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   message(STATUS "Using GNU compiler flags")

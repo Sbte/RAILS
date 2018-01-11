@@ -46,8 +46,8 @@ int SchurOperator::Compute()
     Epetra_Vector diag_m(map);
     M_->ExtractDiagonalCopy(diag_m);
 
-    int *indices1 = new int[diag_m.MyLength()+2];
-    int *indices2 = new int[diag_m.MyLength()+2];
+    int *indices1 = new int[diag_m.MyLength()];
+    int *indices2 = new int[diag_m.MyLength()];
 
     int num_indices1 = 0;
     int num_indices2 = 0;
@@ -59,15 +59,6 @@ int SchurOperator::Compute()
             indices1[num_indices1++] = map.GID(i);
         else
             indices2[num_indices2++] = map.GID(i);
-    }
-
-    // Add nullspace
-    int MyPID = Comm().MyPID();
-    int len = diag_m.GlobalLength();
-    if (MyPID == 0)
-    {
-        indices1[num_indices1++] = len;
-        indices1[num_indices1++] = len+1;
     }
 
     Epetra_Map map1(-1, num_indices1, indices1, 0, Comm());
@@ -82,8 +73,8 @@ int SchurOperator::Compute()
     Epetra_Import colImport(colMap, map);
     diag_m_col.Import(diag_m, colImport, Insert);
 
-    indices1 = new int[colMap.NumMyElements()+2];
-    indices2 = new int[colMap.NumMyElements()+2];
+    indices1 = new int[colMap.NumMyElements()];
+    indices2 = new int[colMap.NumMyElements()];
 
     num_indices1 = 0;
     num_indices2 = 0;
@@ -97,9 +88,6 @@ int SchurOperator::Compute()
             indices2[num_indices2++] = colMap.GID(i);
     }
 
-    indices1[num_indices1++] = len;
-    indices1[num_indices1++] = len+1;
-
     Epetra_Map colMap1(-1, num_indices1, indices1, 0, Comm());
     Epetra_Map colMap2(-1, num_indices2, indices2, 0, Comm());
 
@@ -112,7 +100,7 @@ int SchurOperator::Compute()
     // -1 on the diagonal of M so scale A until we use M
     A_->Scale(-1.0);
 
-    int MaxNumEntriesPerRow = A_->MaxNumEntries() + 2;
+    int MaxNumEntriesPerRow = A_->MaxNumEntries();
     A11_ = Teuchos::rcp(
         new Epetra_CrsMatrix(Copy, map1, colMap1, MaxNumEntriesPerRow));
     CHECK_ZERO(A11_->Import(*A_, import1, Insert));
@@ -128,62 +116,6 @@ int SchurOperator::Compute()
         new Epetra_CrsMatrix(Copy, map2, colMap2, MaxNumEntriesPerRow));
     CHECK_ZERO(A22_->Import(*A_, import2, Insert));
     CHECK_ZERO(A22_->FillComplete(map2, map2));
-
-    // Add nullspace
-    double val = 1.0;
-    int idx1 = len;
-    int idx2 = len+1;
-
-    //TODO: Don't hardcode this! 
-    for (int i = 0; i < A11_->NumMyRows(); i++)
-    {
-        if (A11_->GRID(i) % 6 == 3)
-        {
-            int m = A11_->GRID(i) / 6;
-            if ((m % nx_ + (m / nx_) % ny_) % 2 == 0)
-            {
-                CHECK_ZERO(A11_->InsertGlobalValues(
-                    A11_->GRID(i), 1, &val, &idx1));
-            }
-            else
-            {
-                CHECK_ZERO(A11_->InsertGlobalValues(
-                               A11_->GRID(i), 1, &val, &idx2));
-            }
-        }
-    }
-    if (MyPID == 0)
-    {
-        indices1 = new int[len / 6 / 2]();
-        indices2 = new int[len / 6 / 2]();
-        double *values1 = new double[len / 6 / 2]();
-        double *values2 = new double[len / 6 / 2]();
-        for (int i = 0; i < len; i++)
-        {
-            if (i % 6 == 3)
-            {
-                int m = i / 6;
-                if ((m % nx_ + (m / nx_) % ny_) % 2 == 0)
-                {
-                    indices1[i / 6 / 2] = i;
-                    values1[i / 6 / 2] = 1.0;
-                }
-                else
-                {
-                    indices2[i / 6 / 2] = i;
-                    values2[i / 6 / 2] = 1.0;
-                }
-            }
-        }
-        CHECK_ZERO(A11_->InsertGlobalValues(
-                       len, len / 6 / 2, values1, indices1));
-        CHECK_ZERO(A11_->InsertGlobalValues(
-                       len + 1, len / 6 / 2, values2, indices2));
-        delete[] indices1;
-        delete[] indices2;
-        delete[] values1;
-        delete[] values2;
-    }
     CHECK_ZERO(A11_->FillComplete(map1, map1));
 
     // More efficient in KLU
