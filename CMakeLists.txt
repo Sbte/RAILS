@@ -187,6 +187,8 @@ foreach(test_source ${TEST_SOURCES})
   list(APPEND test_list ${test_name})
 endforeach()
 
+set(test_targets ${test_list})
+
 ExternalProject_Add(
   moxunit
   GIT_REPOSITORY https://github.com/Sbte/MOxUnit.git
@@ -228,4 +230,4 @@ set_tests_properties(${test_list} PROPERTIES TIMEOUT 60)
 
 # Use make check to both build tests and test
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --force-new-ctest-process --verbose
-  DEPENDS ${test_list})
+  DEPENDS ${test_targets})
