@@ -1,9 +1,26 @@
-function tests = test_random
-    tests = functiontests(localfunctions);
+function test_suite = test_random
+    try
+        test_functions = localfunctions();
+        test_suite = functiontests(test_functions);
+    catch
+    end
+
+    try
+        initTestSuite;
+    catch
+    end
+end
+
+function seed()
+    if ~exist('rng')
+        rand('state', 4634);
+    else
+        rng(4634)
+    end
 end
 
 function test_random_ev(t)
-    rng(4634);
+    seed;
     n = 64;
     A = sprand(n,n,10/n);
     M = speye(n);
@@ -18,7 +35,7 @@ function test_random_ev(t)
 end
 
 function test_random_64(t)
-    rng(4634);
+    seed;
     n = 64;
     A = sprand(n,n,10/n);
     B = rand(n,1);

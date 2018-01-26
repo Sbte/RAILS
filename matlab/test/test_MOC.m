@@ -1,5 +1,14 @@
-function tests = test_MOC
-    tests = functiontests(localfunctions);
+function test_suite = test_MOC
+    try
+        test_functions = localfunctions();
+        test_suite = functiontests(test_functions);
+    catch
+    end
+
+    try
+        initTestSuite;
+    catch
+    end
 end
 
 function test_MOC_Erik(t)
@@ -11,13 +20,19 @@ function test_MOC_Erik(t)
     res = 0;
 
     % Add the nullspace to the matrix as border
-    warning('off', 'MATLAB:nearlySingularMatrix');
-    [V,D] = eigs(A, 2, 'sm');
     A2 = sparse(n+2, n+2);
     A2(1:n, 1:n) = A;
-    A2(n+1:n+2, 1:n) = V';
-    A2(1:n, n+1:n+2) = V;
-    warning('on', 'MATLAB:nearlySingularMatrix');
+    for j = 0:n-1
+        if (mod(j, 6) == 3)
+            if mod((mod(floor(j / 6), 4) + mod(floor(floor(j / 6) / 4), 16)), 2) == 0
+                A2(n+1, j+1) = 1;
+                A2(j+1, n+1) = 1;
+            else
+                A2(n+2, j+1) = 1;
+                A2(j+1, n+2) = 1;
+            end
+        end
+    end
 
     M2 = sparse(n+2, n+2);
     M2(1:n, 1:n) = M;
@@ -40,13 +55,14 @@ function test_MOC_Erik(t)
 end
 
 function [A,M,B] = get_MOC_data()
-    Abeg  = load([pwd, '/../DataErik/Ap1.beg']);
-    Aco   = load([pwd, '/../DataErik/Ap1.co']);
-    Ainfo = load([pwd, '/../DataErik/Ap1.info']);
-    Ajco  = load([pwd, '/../DataErik/Ap1.jco']);
-    Arl   = load([pwd, '/../DataErik/Ap1.rl']);
-    Mco   = load([pwd, '/../DataErik/Bp1.co']);
-    F     = load([pwd, '/../DataErik/Frcp1.co']);
+    dir = fileparts(mfilename('fullpath'));
+    Abeg  = load([dir, '/../DataErik/Ap1.beg']);
+    Aco   = load([dir, '/../DataErik/Ap1.co']);
+    Ainfo = load([dir, '/../DataErik/Ap1.info']);
+    Ajco  = load([dir, '/../DataErik/Ap1.jco']);
+    Arl   = load([dir, '/../DataErik/Ap1.rl']);
+    Mco   = load([dir, '/../DataErik/Bp1.co']);
+    F     = load([dir, '/../DataErik/Frcp1.co']);
 
     n = Ainfo(1);
     nnz = Ainfo(2);

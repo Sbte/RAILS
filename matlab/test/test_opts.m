@@ -1,11 +1,37 @@
-function tests = test_opts
-    tests = functiontests(localfunctions);
+function test_suite = test_opts
+    try
+        test_functions = localfunctions();
+        test_suite = functiontests(test_functions);
+    catch
+    end
+
+    try
+        initTestSuite;
+    catch
+    end
+end
+
+function A = laplacian2(n)
+    m = sqrt(n);
+    I = speye(m);
+    e = ones(m,1);
+    T = spdiags([e -4*e e], -1:1, m, m);
+    S = spdiags([e e], [-1 1], m, m);
+    A = (kron(I,T) + kron(S,I));
+end
+
+function seed()
+    if ~exist('rng')
+        rand('state', 4634);
+    else
+        rng(4634)
+    end
 end
 
 function test_tol(t)
-    rng(4634);
+    seed;
     n = 256;
-    A = -delsq(numgrid('S', sqrt(n)+2));
+    A = laplacian2(n);
     M = spdiags(rand(n,1), 0, n, n);
     B = rand(n,1);
 
@@ -19,9 +45,9 @@ function test_tol(t)
 end
 
 function test_restart(t)
-    rng(4634);
+    seed;
     n = 256;
-    A = -delsq(numgrid('S', sqrt(n)+2));
+    A = laplacian2(n);
     M = spdiags(rand(n,1), 0, n, n);
     B = rand(n,1);
 
@@ -39,9 +65,9 @@ function test_restart(t)
 end
 
 function test_restart2(t)
-    rng(4634);
+    seed;
     n = 256;
-    A = -delsq(numgrid('S', sqrt(n)+2));
+    A = laplacian2(n);
     M = spdiags(rand(n,1), 0, n, n);
     B = rand(n,1);
 
@@ -59,9 +85,9 @@ function test_restart2(t)
 end
 
 function test_restart3(t)
-    rng(4634);
+    seed;
     n = 256;
-    A = -delsq(numgrid('S', sqrt(n)+2));
+    A = laplacian2(n);
     M = spdiags(rand(n,1), 0, n, n);
     B = rand(n,1);
 
@@ -81,9 +107,9 @@ function test_restart3(t)
 end
 
 function test_wrong_restart(t)
-    rng(4634);
+    seed;
     n = 256;
-    A = -delsq(numgrid('S', sqrt(n)+2));
+    A = laplacian2(n);
     M = spdiags(rand(n,1), 0, n, n);
     B = rand(n,1);
 
@@ -94,9 +120,9 @@ function test_wrong_restart(t)
 end
 
 function test_wrong_expand(t)
-    rng(4634);
+    seed;
     n = 256;
-    A = -delsq(numgrid('S', sqrt(n)+2));
+    A = laplacian2(n);
     M = spdiags(rand(n,1), 0, n, n);
     B = rand(n,1);
 
@@ -106,9 +132,9 @@ function test_wrong_expand(t)
 end
 
 function test_wrong_space(t)
-    rng(4634);
+    seed;
     n = 256;
-    A = -delsq(numgrid('S', sqrt(n)+2));
+    A = laplacian2(n);
     M = spdiags(rand(n,1), 0, n, n);
     B = rand(n,1);
 
@@ -118,9 +144,9 @@ function test_wrong_space(t)
 end
 
 function test_space(t)
-    rng(4634);
+    seed;
     n = 256;
-    A = -delsq(numgrid('S', sqrt(n)+2));
+    A = laplacian2(n);
     M = spdiags(rand(n,1), 0, n, n);
     B = rand(n,1);
 
@@ -141,9 +167,9 @@ function test_space(t)
 end
 
 function test_morth(t)
-    rng(4634);
+    seed;
     n = 256;
-    A = -delsq(numgrid('S', sqrt(n)+2));
+    A = laplacian2(n);
     M = spdiags(rand(n,1), 0, n, n);
     B = rand(n,1);
 
@@ -157,9 +183,9 @@ function test_morth(t)
 end
 
 function test_nullspace(t)
-    rng(4634);
+    seed;
     n = 256;
-    A = -delsq(numgrid('S', sqrt(n)+2));
+    A = laplacian2(n);
     M = spdiags(rand(n,1), 0, n, n);
     B = rand(n,1);
 

@@ -248,13 +248,14 @@ function [V,T,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
     tstart = tic;
 
     % Allow for matrices and functions as input
-    [atype, afun, afcnstr] = iterchk(A);
-    if strcmp(atype, 'matrix')
+    Afun = A;
+    if isa(A, 'double')
         % Check matrix and right hand side vector inputs have appropriate sizes
         [m,n] = size(A);
         if (m ~= n)
             error('RAILSsolver:SquareMatrix', 'A should be a square matrix');
         end
+        Afun = @(x) A * x;
     else
         m = size(B,1);
         n = m;
@@ -326,7 +327,7 @@ function [V,T,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
 
         % VAV = V'*A*V;
         new_indices = size(VAV,2)+1:size(V,2);
-        AVnew = iterapp('mtimes', afun, atype, afcnstr, V(:, new_indices));
+        AVnew = Afun(V(:, new_indices));
         if isempty(VAV)
             VAV = V'*AVnew;
         else
