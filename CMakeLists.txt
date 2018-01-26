@@ -187,6 +187,45 @@ foreach(test_source ${TEST_SOURCES})
   list(APPEND test_list ${test_name})
 endforeach()
 
+ExternalProject_Add(
+  moxunit
+  GIT_REPOSITORY https://github.com/Sbte/MOxUnit.git
+  CONFIGURE_COMMAND ""
+  PREFIX ""
+  BUILD_COMMAND make
+  BUILD_IN_SOURCE 1
+  INSTALL_COMMAND ""
+  LOG_DOWNLOAD ON
+  LOG_CONFIGURE ON
+  LOG_BUILD ON)
+
+find_package(Matlab COMPONENTS MAIN_PROGRAM)
+
+find_program(OCTAVE octave)
+
+ExternalProject_Get_Property(moxunit source_dir)
+set(MATLAB_TEST_COMMAND "addpath('${source_dir}/MOxUnit'); \
+moxunit_set_path; \
+cd ${PROJECT_SOURCE_DIR}/matlab; \
+success = moxunit_runtests('test', '-verbose'); \
+exit(~success);")
+
+if (Matlab_FOUND)
+  add_test(NAME matlab_test COMMAND ${Matlab_MAIN_PROGRAM} "\
+-nojvm -r \"${MATLAB_TEST_COMMAND}\"")
+  list(APPEND test_list matlab_test)
+endif()
+
+if (OCTAVE)
+  add_test(NAME octave_test COMMAND ${OCTAVE} --no-gui --eval "\
+addpath('${CMAKE_CURRENT_BINARY_DIR}'); \
+mex ${PROJECT_SOURCE_DIR}/matlab/mex/lyap.c -lslicot; \
+${MATLAB_TEST_COMMAND}")
+  list(APPEND test_list octave_test)
+endif()
+
+set_tests_properties(${test_list} PROPERTIES TIMEOUT 60)
+
 # Use make check to both build tests and test
-add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND}
+add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} --force-new-ctest-process --verbose
   DEPENDS ${test_list})
