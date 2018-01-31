@@ -35,7 +35,7 @@ public:
     int M() const;
     int N() const;
 
-    double norm();
+    double norm() const;
     int eigs(Epetra_MultiVectorWrapper &V,
              Epetra_SerialDenseMatrixWrapper &D,
              int num, double tol = 1e-6) const;

@@ -79,7 +79,7 @@ public:
 
     void random();
 
-    StlWrapper transpose();
+    StlWrapper transpose() const;
 
     int eigs(StlWrapper &V, StlWrapper &D,
              int num = -1, double tol = 1e-16) const;

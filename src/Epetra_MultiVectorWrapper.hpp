@@ -28,6 +28,9 @@ class Epetra_MultiVectorWrapper
 
     // Vector is a view
     bool is_view_;
+
+    // Vector is used as transpose or not in * methods
+    bool transpose_;
 public:
     Epetra_MultiVectorWrapper();
     Epetra_MultiVectorWrapper(Teuchos::RCP<Epetra_MultiVector> ptr);
@@ -49,6 +52,7 @@ public:
 
     Epetra_MultiVectorWrapper operator +(Epetra_MultiVectorWrapper const &other) const;
     Epetra_MultiVectorWrapper operator *(Epetra_SerialDenseMatrixWrapper const &other) const;
+    Epetra_MultiVectorWrapper operator *(Epetra_MultiVectorWrapper const &other) const;
 
     Epetra_MultiVector &operator *();
     Epetra_MultiVector const &operator *() const;
@@ -63,6 +67,8 @@ public:
     Epetra_MultiVectorWrapper view(int m = -1, int n = -1);
     Epetra_MultiVectorWrapper view(int m = -1, int n = -1) const;
     Epetra_MultiVectorWrapper copy() const;
+
+    Epetra_MultiVectorWrapper transpose() const;
 
     void push_back(Epetra_MultiVectorWrapper const &other, int m = -1);
 

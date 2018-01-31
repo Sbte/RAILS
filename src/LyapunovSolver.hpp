@@ -15,8 +15,9 @@
 namespace Lyapunov {
 
 template<class Matrix, class MultiVector, class DenseMatrix>
+template<class YOLO>
 Solver<Matrix, MultiVector, DenseMatrix>::Solver(Matrix const &A,
-                                                 Matrix const &B,
+                                                 YOLO const &B,
                                                  Matrix const &M)
     :
     A_(A),
@@ -220,7 +221,9 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
                           << " iterations with a final relative residual of "
                           << res / r0 / r0 << ". The size of the space used "
                           << "for the solution is " << V.N() << std::endl;
-                break;
+                if (converged)
+                    return 0;
+                return -1;
             }
         }
 
@@ -325,7 +328,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
         W = V.view(N_V, N_V+expand_vectors-1);
     }
 
-    return 0;
+    return 1;
 }
 
 template<class Matrix, class MultiVector, class DenseMatrix>

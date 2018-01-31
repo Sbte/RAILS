@@ -105,11 +105,11 @@ public:
             size_ = m;
         }
 
-    double norm() {return *s_;}
-    double norm_inf() {return *s_;}
+    double norm() const {return *s_;}
+    double norm_inf() const {return *s_;}
     void orthogonalize() {*s_ = 1;}
 
-    ScalarWrapper transpose()
+    ScalarWrapper transpose() const
         {
             return *this;
         }

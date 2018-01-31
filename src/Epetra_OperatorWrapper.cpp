@@ -109,7 +109,7 @@ int Epetra_OperatorWrapper::N() const
     return out;
 }
 
-double Epetra_OperatorWrapper::norm()
+double Epetra_OperatorWrapper::norm() const
 {
     FUNCTION_TIMER("Epetra_OperatorWrapper", "norm");
     Teuchos::RCP<Epetra_CrsMatrix> mat =

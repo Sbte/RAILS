@@ -1,14 +1,17 @@
 #ifndef LYAPUNOVSOLVERDECL_H
 #define LYAPUNOVSOLVERDECL_H
 
+#include "MatrixOrMultiVectorWrapper.hpp"
+
 namespace Lyapunov {
 
 template<class Matrix, class MultiVector, class DenseMatrix>
 class Solver
 {
 public:
+    template<class MatrixOrMultiVector>
     Solver(Matrix const &A,
-           Matrix const &B,
+           MatrixOrMultiVector const &B,
            Matrix const &M);
 
     virtual ~Solver() {};
@@ -31,7 +34,7 @@ public:
     int compute_restart_vectors(DenseMatrix &X, DenseMatrix const &T, int num, double tol);
 protected:
     Matrix A_;
-    Matrix B_;
+    MatrixOrMultiVectorWrapper<Matrix, MultiVector> B_;
     Matrix M_;
 
     int max_iter_;

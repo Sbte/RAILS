@@ -44,6 +44,7 @@ set(HEADERS ${HEADERS}
   src/LapackWrapper.hpp
   src/LyapunovSolver.hpp
   src/LyapunovSolverDecl.hpp
+  src/MatrixOrMultiVectorWrapper.hpp
   src/ScalarWrapper.hpp
   src/SlicotWrapper.hpp
   src/StlTools.hpp

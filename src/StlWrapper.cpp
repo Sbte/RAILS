@@ -428,7 +428,7 @@ void StlWrapper::random()
     orthogonalized_ = 0;
 }
 
-StlWrapper StlWrapper::transpose()
+StlWrapper StlWrapper::transpose() const
 {
     FUNCTION_TIMER("StlWrapper", "transpose");
     StlWrapper tmp(*this);

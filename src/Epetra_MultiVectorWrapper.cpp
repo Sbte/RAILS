@@ -16,7 +16,8 @@ Epetra_MultiVectorWrapper::Epetra_MultiVectorWrapper()
     capacity_(-1),
     size_(-1),
     orthogonalized_(0),
-    is_view_(false)
+    is_view_(false),
+    transpose_(false)
 {}
 
 Epetra_MultiVectorWrapper::Epetra_MultiVectorWrapper(Teuchos::RCP<Epetra_MultiVector> ptr)
@@ -35,6 +36,7 @@ Epetra_MultiVectorWrapper::Epetra_MultiVectorWrapper(Epetra_MultiVectorWrapper c
     if (!other.ptr_.is_null())
         ptr_ = Teuchos::rcp(new Epetra_MultiVector(*other.ptr_));
     orthogonalized_ = other.orthogonalized_;
+    transpose_ = other.transpose_;
 }
 
 Epetra_MultiVectorWrapper::Epetra_MultiVectorWrapper(Epetra_MultiVectorWrapper const &other, int n)
@@ -71,6 +73,7 @@ Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator =(
         ptr_ = other.ptr_;
         size_ = other.size_;
         orthogonalized_ = other.orthogonalized_;
+        transpose_ = other.transpose_;
         return *this;
     }
 
@@ -89,6 +92,7 @@ Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator =(
         ptr_ = other.ptr_;
         size_ = other.size_;
         orthogonalized_ = other.orthogonalized_;
+        transpose_ = other.transpose_;
         return *this;
     }
 
@@ -162,9 +166,37 @@ Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::operator *(
         return out;
     }
 
+    if (transpose_)
+    {
+        std::cerr << "Not correctly implemented for transpose" << std::endl;
+        return out;
+    }
+
     Teuchos::RCP<Epetra_MultiVector> mv = SerialDenseMatrixToMultiVector(
         View, *other, ptr_->Comm());
-    (*out).Multiply('N', 'N', 1.0, *ptr_, *mv, 0.0);
+    (*out).Multiply(transpose_ ? 'T' : 'N', 'N', 1.0, *ptr_, *mv, 0.0);
+
+    return out;
+}
+
+Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::operator *(
+    Epetra_MultiVectorWrapper const &other) const
+{
+    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "* MV");
+    
+    Epetra_LocalMap map(M(), 0, ptr_->Comm());
+    Epetra_MultiVectorWrapper out(
+        Teuchos::rcp(new Epetra_MultiVector(map, other.N())));
+
+    if (other.M() != N())
+    {
+        std::cerr << "Incomplatible matrices of sizes "
+                  << ptr_->MyLength() << "x" << ptr_->NumVectors() << " and "
+                  << other.M() << "x" << other.N() << std::endl;
+        return out;
+    }
+
+    (*out).Multiply(transpose_ ? 'T' : 'N', 'N', 1.0, *ptr_, *other.ptr_, 0.0);
 
     return out;
 }
@@ -324,6 +356,13 @@ Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::copy() const
     return out;
 }
 
+Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::transpose() const
+{
+    Epetra_MultiVectorWrapper tmp(*this);
+    tmp.transpose_ = !tmp.transpose_;
+    return tmp;
+}
+
 void Epetra_MultiVectorWrapper::push_back(Epetra_MultiVectorWrapper const &other, int m)
 {
     FUNCTION_TIMER("Epetra_MultiVectorWrapper", "push_back");
@@ -337,13 +376,13 @@ void Epetra_MultiVectorWrapper::push_back(Epetra_MultiVectorWrapper const &other
 int Epetra_MultiVectorWrapper::M() const
 {
     FUNCTION_TIMER("Epetra_MultiVectorWrapper", "M");
-    return ptr_->Map().NumGlobalPoints();
+    return transpose_ ? (size_ ? ptr_->NumVectors() : size_) : ptr_->Map().NumGlobalPoints();
 }
 
 int Epetra_MultiVectorWrapper::N() const
 {
     FUNCTION_TIMER("Epetra_MultiVectorWrapper", "N");
-    return (size_ ? ptr_->NumVectors() : size_);
+    return transpose_ ? ptr_->Map().NumGlobalPoints() : (size_ ? ptr_->NumVectors() : size_);
 }
 
 Epetra_SerialDenseMatrixWrapper Epetra_MultiVectorWrapper::dot(
@@ -381,7 +420,7 @@ Teuchos::RCP<Epetra_MultiVector> SerialDenseMatrixToMultiVector(
 {
     Epetra_LocalMap map(src.M(), 0, comm);
     return Teuchos::rcp(new Epetra_MultiVector(
-                            CV, map, src.A(), src.M(), src.N()));;
+                            CV, map, src.A(), src.M(), src.N()));
 }
 
 Teuchos::RCP<Epetra_SerialDenseMatrix> MultiVectorToSerialDenseMatrix(
@@ -389,5 +428,5 @@ Teuchos::RCP<Epetra_SerialDenseMatrix> MultiVectorToSerialDenseMatrix(
 {
     return Teuchos::rcp(new Epetra_SerialDenseMatrix(
                             CV, src.Values(), src.MyLength(),
-                            src.MyLength(), src.NumVectors()));;
+                            src.MyLength(), src.NumVectors()));
 }

@@ -50,7 +50,8 @@ TEST(LyapunovSolverTest, ScalarSolver)
 
     Lyapunov::Solver<ScalarWrapper, ScalarWrapper, ScalarWrapper> solver(A, B, 0);
 
-    solver.solve(X, T);
+    int ret = solver.solve(X, T);
+    EXPECT_EQ(0, ret);
 
     EXPECT_EQ(-4, X * T * X);
 }
@@ -135,7 +136,8 @@ TEST(LyapunovSolverTest, StlSolver)
 
     Lyapunov::Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
 
-    solver.solve(X, T);
+    int ret = solver.solve(X, T);
+    EXPECT_EQ(0, ret);
 
     // Compute the residual
     R = A * X * T * X.transpose()
@@ -144,7 +146,8 @@ TEST(LyapunovSolverTest, StlSolver)
     EXPECT_VECTOR_NEAR(R_exp, R);
 
     // Solve twice
-    solver.solve(X, T);
+    ret = solver.solve(X, T);
+    EXPECT_EQ(0, ret);
 
     // Compute the residual
     R = A * X * T * X.transpose()
@@ -214,7 +217,8 @@ TEST(LyapunovSolverTest, StlSolverRestart)
     params.set("Minimize solution space", false);
     solver.set_parameters(params);
 
-    solver.solve(X, T);
+    int ret = solver.solve(X, T);
+    EXPECT_EQ(0, ret);
 
     // Compute the residual
     StlWrapper R = A * X * T * X.transpose()
@@ -246,7 +250,8 @@ TEST(LyapunovSolverTest, StlSolverMinimize)
     params.set("Minimize solution space", false);
     solver.set_parameters(params);
 
-    solver.solve(X, T);
+    int ret = solver.solve(X, T);
+    EXPECT_EQ(0, ret);
 
     // Compute the residual
     R = A * X * T * X.transpose()
@@ -258,7 +263,8 @@ TEST(LyapunovSolverTest, StlSolverMinimize)
     params.set("Minimize solution space", true);
     solver.set_parameters(params);
 
-    solver.solve(X, T);
+    ret = solver.solve(X, T);
+    EXPECT_EQ(0, ret);
 
     // Compute the residual
     R = A * X * T * X.transpose()
@@ -290,7 +296,8 @@ TEST(LyapunovSolverTest, StlSolverRestartIterations)
     params.set("Expand size", 1);
     solver.set_parameters(params);
 
-    solver.solve(X, T);
+    int ret = solver.solve(X, T);
+    EXPECT_EQ(0, ret);
 
     // Compute the residual
     R = A * X * T * X.transpose()

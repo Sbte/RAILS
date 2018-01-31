@@ -471,4 +471,36 @@ TYPED_TEST(GenericMultiVectorWrapperTest, PushBack)
     EXPECT_VECTOR_EQ(this->b, this->a);
 }
 
+TYPED_TEST(GenericMultiVectorWrapperTest, Transpose)
+{
+    this->a.resize(10);
+    this->a = 0.0;
+
+    this->a(0,0) = 1;
+    this->a(0,1) = 2;
+    this->a(1,0) = 3;
+    this->a(1,1) = 4;
+
+    this->b.resize(1);
+    this->b.random();
+
+    this->c = this->a.transpose() * this->b;
+    this->d = this->a * this->b;
+
+    EXPECT_NEAR(this->b(0, 0) + 3.0 * this->b(1, 0), this->c(0, 0), 1e-14);
+    EXPECT_NEAR(2.0 * this->b(0, 0) + 4.0 * this->b(1, 0), this->c(1, 0), 1e-14);
+
+    EXPECT_NEAR(this->b(0, 0) + 2.0 * this->b(1, 0), this->d(0, 0), 1e-14);
+    EXPECT_NEAR(3.0 * this->b(0, 0) + 4.0 * this->b(1, 0), this->d(1, 0), 1e-14);
+}
+
+TYPED_TEST(GenericMultiVectorWrapperTest, Transpose2)
+{
+    this->a.resize(1);
+    EXPECT_EQ(10, this->a.M());
+    EXPECT_EQ(1,  this->a.N());
+    EXPECT_EQ(1,  this->a.transpose().M());
+    EXPECT_EQ(10, this->a.transpose().N());
+}
+
 #endif
