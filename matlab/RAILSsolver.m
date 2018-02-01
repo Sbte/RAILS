@@ -101,7 +101,7 @@ function [V,T,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
     end
 
     hasM = ~isempty(M);
-    invA = @(x) A \ x;
+    invA = [];
     V = [];
     AV = [];
     VAV = [];
@@ -266,6 +266,15 @@ function [V,T,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
         warning('RAILSsolver:SingularMassMatrix', ...
                 ['Your M matrix appears to be singular. ' ...
                  'It is advised to use the provided RAILSschur method.']);
+    end
+
+    % Check projection method usage
+    if ~isempty(invA) && projection_method == 1
+        warning('RAILSsolver:InverseNotUsed', ...
+                ['An inverse application method is provided, but the current ', ...
+                 'projection method does not make use of this']);
+    elseif isempty(invA)
+        invA = @(x) A \ x;
     end
 
     if isempty(V)

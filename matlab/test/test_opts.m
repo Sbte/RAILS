@@ -143,6 +143,18 @@ function test_wrong_space(t)
     t.assertError(@() RAILSsolver(A,M,B,opts), 'RAILSsolver:InvalidOption');
 end
 
+function test_no_inverse(t)
+    seed;
+    n = 64;
+    A = laplacian2(n);
+    M = spdiags(rand(n,1), 0, n, n);
+    B = rand(n,1);
+
+    clear opts;
+    opts.Ainv = @(x) [];
+    t.assertWarning(@() RAILSsolver(A,M,B,opts), 'RAILSsolver:InverseNotUsed');
+end
+
 function test_space(t)
     seed;
     n = 256;
