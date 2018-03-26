@@ -15,9 +15,9 @@
 namespace Lyapunov {
 
 template<class Matrix, class MultiVector, class DenseMatrix>
-template<class YOLO>
+template<class MatrixOrMultiVector>
 Solver<Matrix, MultiVector, DenseMatrix>::Solver(Matrix const &A,
-                                                 YOLO const &B,
+                                                 MatrixOrMultiVector const &B,
                                                  Matrix const &M)
     :
     A_(A),
