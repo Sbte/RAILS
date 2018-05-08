@@ -17,8 +17,8 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -g -mkl -DTESTING -std=c++11 -Wall")
   endif()
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -mkl -ffast-math -march=native -std=c++11")
-  set (CMAKE_CXX_FLAGS_DEBUG "-O0 -g -mkl -DTESTING -DDEBUGGING -std=c++11 -Wall")
-  set (CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELEASE} -g")
+  set(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -mkl -DTESTING -DDEBUGGING -std=c++11 -Wall")
+  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELEASE} -g")
 endif()
 
 set(SOURCES
@@ -86,6 +86,11 @@ if (${Trilinos_FOUND})
   link_directories(${Trilinos_TPL_LIBRARY_DIRS})
 
   add_definitions(-DENABLE_TRILINOS)
+
+  find_package(MPI)
+
+  include_directories(${MPI_CXX_INCLUDE_DIRS})
+  link_directories(${MPI_CXX_LIBRARY_DIRS})
 endif()
 
 include_directories(${PROJECT_SOURCE_DIR})
@@ -100,6 +105,7 @@ target_link_libraries(rails ${LAPACK_LIBRARIES})
 if (${Trilinos_FOUND})
   target_link_libraries(rails ${Trilinos_LIBRARIES})
   target_link_libraries(rails ${Trilinos_TPL_LIBRARIES})
+  target_link_libraries(rails ${MPI_CXX_LIBRARIES})
 
   add_executable(main src/main.cpp)
   target_link_libraries(main rails)
@@ -145,7 +151,8 @@ SET_DIRECTORY_PROPERTIES(PROPERTIES EP_PREFIX ${CMAKE_BINARY_DIR}/third_party)
 
 ExternalProject_Add(
   googletest
-  URL https://github.com/google/googletest/archive/release-1.8.0.zip
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG release-1.8.0
   INSTALL_COMMAND ""
   LOG_DOWNLOAD ON
   LOG_CONFIGURE ON
