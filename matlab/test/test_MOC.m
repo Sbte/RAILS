@@ -38,7 +38,7 @@ function test_MOC_Erik(t)
     M2(1:n, 1:n) = M;
 
     B2 = sparse(n+2, size(B,2));
-    B2(1:n, size(B,2)) = B;
+    B2(1:n, 1:size(B,2)) = B;
 
     % Solve the Schur complement system
     [S, MS, BS, Sinv, Vtrans] = RAILSschur(A2, M2, B2);

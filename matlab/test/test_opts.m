@@ -108,7 +108,7 @@ end
 
 function test_wrong_restart(t)
     seed;
-    n = 256;
+    n = 64;
     A = laplacian2(n);
     M = spdiags(rand(n,1), 0, n, n);
     B = rand(n,1);
@@ -121,7 +121,7 @@ end
 
 function test_wrong_expand(t)
     seed;
-    n = 256;
+    n = 64;
     A = laplacian2(n);
     M = spdiags(rand(n,1), 0, n, n);
     B = rand(n,1);
@@ -133,7 +133,7 @@ end
 
 function test_wrong_space(t)
     seed;
-    n = 256;
+    n = 64;
     A = laplacian2(n);
     M = spdiags(rand(n,1), 0, n, n);
     B = rand(n,1);

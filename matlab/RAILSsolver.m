@@ -48,7 +48,7 @@ function [V,T,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
 % opts.restart_tolerance:
 %   Tolerance used for retaining eigenvectors. If this is > 0 the
 %   amount of vectors in V is dependent on this tolerance. (default
-%   tol * 1e-3).
+%   tol).
 %
 % opts.restart_upon_convergence: Perform a restart upon convergence to
 %   reduce the size of the space. This is the same as doing a rank
@@ -125,7 +125,7 @@ function [V,T,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
     ortho = true;
     nullspace = [];
     projection_method = 1;
-    restart_tolerance = tol * 1e-3;
+    restart_tolerance = tol;
     restart_upon_convergence = true;
     eigs_tol = [];
     nev = [];
@@ -464,7 +464,7 @@ function [V,T,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
             end
 
             d = abs(diag(D3));
-            I3 = find(d > restart_tolerance);
+            I3 = find(d / max(d) > restart_tolerance);
 
             % Restart using only the part of the largest eigenvectors
             [~,s] = sort(d(I3),'descend');
