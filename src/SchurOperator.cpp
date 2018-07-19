@@ -3,6 +3,7 @@
 
 #include <Epetra_LinearProblem.h>
 #include <Epetra_CrsMatrix.h>
+#include <Epetra_Vector.h>
 #include <Epetra_MultiVector.h>
 #include <Epetra_Map.h>
 #include <Epetra_Import.h>
@@ -19,46 +20,71 @@
 #include "Timer.hpp"
 
 SchurOperator::SchurOperator(Teuchos::RCP<Epetra_CrsMatrix> const &A,
-                             Teuchos::RCP<Epetra_CrsMatrix> const &M)
-    :
+                             Teuchos::RCP<Epetra_Vector> const &M,
+                             Teuchos::RCP<Epetra_MultiVector> const &border)
+:
     A_(A),
-    M_(M),
+    diagM_(M),
+    border_(border),
     problem_(Teuchos::rcp(new Epetra_LinearProblem)),
     solver_(new Amesos_Klu(*problem_)),
     hasSolution_(false),
     mvps_(0)
 {}
 
-int SchurOperator::set_parameters(Teuchos::ParameterList &params)
-{
-    nx_ = params.get("nx", 1);
-    ny_ = params.get("ny", 1);
-    nz_ = params.get("nz", 1);
-
-    return 0;
-}
+SchurOperator::SchurOperator(Teuchos::RCP<Epetra_CrsMatrix> const &A,
+                             Teuchos::RCP<Epetra_CrsMatrix> const &M,
+                             Teuchos::RCP<Epetra_MultiVector> const &border)
+    :
+    A_(A),
+    M_(M),
+    border_(border),
+    problem_(Teuchos::rcp(new Epetra_LinearProblem)),
+    solver_(new Amesos_Klu(*problem_)),
+    hasSolution_(false),
+    mvps_(0)
+{}
 
 int SchurOperator::Compute()
 {
     FUNCTION_TIMER("SchurOperator", "Compute");
     Epetra_BlockMap const &map = A_->Map();
 
-    Epetra_Vector diag_m(map);
-    M_->ExtractDiagonalCopy(diag_m);
+    if (diagM_ == Teuchos::null)
+    {
+        diagM_ = Teuchos::rcp(new Epetra_Vector(map));
+        M_->ExtractDiagonalCopy(*diagM_);
+    }
 
-    int *indices1 = new int[diag_m.MyLength()];
-    int *indices2 = new int[diag_m.MyLength()];
+    int borderSize = 0;
+    if (border_ != Teuchos::null)
+        borderSize = border_->NumVectors();
+
+    int *indices1 = new int[diagM_->MyLength()+borderSize];
+    int *indices2 = new int[diagM_->MyLength()+borderSize];
 
     int num_indices1 = 0;
     int num_indices2 = 0;
 
     // Iterate over M looking for nonzero parts
-    for (int i = 0; i < diag_m.MyLength(); i++)
+    for (int i = 0; i < diagM_->MyLength(); i++)
     {
-        if (abs(diag_m[i]) < 1e-15)
+        if (abs((*diagM_)[i]) < 1e-15)
             indices1[num_indices1++] = map.GID(i);
         else
             indices2[num_indices2++] = map.GID(i);
+    }
+
+    // Add border
+    int MyPID = Comm().MyPID();
+    int len = diagM_->GlobalLength();
+    if (border_ != Teuchos::null)
+    {
+        if (MyPID == 0)
+        {
+            for (int i = 0; i < borderSize; i++)
+                indices1[num_indices1++] = len + i;
+        }
     }
 
     Epetra_Map map1(-1, num_indices1, indices1, 0, Comm());
@@ -69,12 +95,12 @@ int SchurOperator::Compute()
 
     Epetra_Map const &colMap = A_->ColMap();
 
-    Epetra_Vector diag_m_col(colMap);
+    Epetra_Vector diagM_col(colMap);
     Epetra_Import colImport(colMap, map);
-    diag_m_col.Import(diag_m, colImport, Insert);
+    diagM_col.Import(*diagM_, colImport, Insert);
 
-    indices1 = new int[colMap.NumMyElements()];
-    indices2 = new int[colMap.NumMyElements()];
+    indices1 = new int[colMap.NumMyElements()+borderSize];
+    indices2 = new int[colMap.NumMyElements()+borderSize];
 
     num_indices1 = 0;
     num_indices2 = 0;
@@ -82,10 +108,16 @@ int SchurOperator::Compute()
     // Iterate over M looking for nonzero parts
     for (int i = 0; i < colMap.NumMyElements(); i++)
     {
-        if (abs(diag_m_col[i]) < 1e-15)
+        if (abs(diagM_col[i]) < 1e-15)
             indices1[num_indices1++] = colMap.GID(i);
         else
             indices2[num_indices2++] = colMap.GID(i);
+    }
+
+    if (border_ != Teuchos::null)
+    {
+        for (int i = 0; i < borderSize; i++)
+            indices1[num_indices1++] = len + i;
     }
 
     Epetra_Map colMap1(-1, num_indices1, indices1, 0, Comm());
@@ -100,7 +132,7 @@ int SchurOperator::Compute()
     // -1 on the diagonal of M so scale A until we use M
     A_->Scale(-1.0);
 
-    int MaxNumEntriesPerRow = A_->MaxNumEntries();
+    int MaxNumEntriesPerRow = A_->MaxNumEntries() + borderSize;
     A11_ = Teuchos::rcp(
         new Epetra_CrsMatrix(Copy, map1, colMap1, MaxNumEntriesPerRow));
     CHECK_ZERO(A11_->Import(*A_, import1, Insert));
@@ -116,6 +148,26 @@ int SchurOperator::Compute()
         new Epetra_CrsMatrix(Copy, map2, colMap2, MaxNumEntriesPerRow));
     CHECK_ZERO(A22_->Import(*A_, import2, Insert));
     CHECK_ZERO(A22_->FillComplete(map2, map2));
+
+    // Add border
+    if (border_ != Teuchos::null)
+    {
+        for (int col = 0; col < borderSize; col++)
+        {
+            int idx = col + len;
+            for (int i = 0; i < A11_->NumMyRows(); i++)
+            {
+                int gid = A11_->GRID(i);
+                double val = (*border_)[col][i];
+                if (val != 0)
+                {
+                    CHECK_ZERO(A11_->InsertGlobalValues(gid, 1, &val, &idx));
+                    if (MyPID == 0)
+                        CHECK_ZERO(A11_->InsertGlobalValues(idx, 1, &val, &gid));
+                }
+            }
+        }
+    }
     CHECK_ZERO(A11_->FillComplete(map1, map1));
 
     // More efficient in KLU

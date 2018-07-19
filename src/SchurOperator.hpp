@@ -10,6 +10,7 @@ class Amesos_BaseSolver;
 class Epetra_CrsMatrix;
 class Epetra_LinearProblem;
 class Epetra_Map;
+class Epetra_Vector;
 class Epetra_MultiVector;
 class Epetra_SerialDenseMatrix;
 
@@ -21,6 +22,9 @@ class SchurOperator: public Epetra_Operator
 {
     Teuchos::RCP<Epetra_CrsMatrix> A_;
     Teuchos::RCP<Epetra_CrsMatrix> M_;
+    Teuchos::RCP<Epetra_Vector> diagM_;
+
+    Teuchos::RCP<const Epetra_MultiVector> border_;
 
     Teuchos::RCP<Epetra_LinearProblem> problem_;
     Teuchos::RCP<Amesos_BaseSolver> solver_;
@@ -36,17 +40,18 @@ class SchurOperator: public Epetra_Operator
 
     bool hasSolution_;
 
-    int nx_, ny_, nz_;
-
     mutable int mvps_;
 
 public:
     SchurOperator(Teuchos::RCP<Epetra_CrsMatrix> const &A,
-                  Teuchos::RCP<Epetra_CrsMatrix> const &M);
+                  Teuchos::RCP<Epetra_CrsMatrix> const &M,
+                  Teuchos::RCP<Epetra_MultiVector> const &border = Teuchos::null);
+
+    SchurOperator(Teuchos::RCP<Epetra_CrsMatrix> const &A,
+                  Teuchos::RCP<Epetra_Vector> const &M,
+                  Teuchos::RCP<Epetra_MultiVector> const &border = Teuchos::null);
 
     virtual ~SchurOperator() {};
-
-    int set_parameters(Teuchos::ParameterList &params);
 
     int Compute();
 
