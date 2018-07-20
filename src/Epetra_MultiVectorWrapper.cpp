@@ -9,6 +9,9 @@
 #define TIMER_ON
 #include "Timer.hpp"
 
+namespace RAILS
+{
+
 Epetra_MultiVectorWrapper::Epetra_MultiVectorWrapper()
     :
     ptr_(Teuchos::null),
@@ -24,7 +27,7 @@ Epetra_MultiVectorWrapper::Epetra_MultiVectorWrapper(Teuchos::RCP<Epetra_MultiVe
     :
     Epetra_MultiVectorWrapper()
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "constructor 1");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "constructor 1");
     ptr_ = ptr;
 }
 
@@ -32,7 +35,7 @@ Epetra_MultiVectorWrapper::Epetra_MultiVectorWrapper(Epetra_MultiVectorWrapper c
     :
     Epetra_MultiVectorWrapper()
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "constructor 2");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "constructor 2");
     if (!other.ptr_.is_null())
         ptr_ = Teuchos::rcp(new Epetra_MultiVector(*other.ptr_));
     orthogonalized_ = other.orthogonalized_;
@@ -43,7 +46,7 @@ Epetra_MultiVectorWrapper::Epetra_MultiVectorWrapper(Epetra_MultiVectorWrapper c
     :
     Epetra_MultiVectorWrapper()
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "constructor 3");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "constructor 3");
     size_ = n;
     capacity_ = n;
     if (!other.ptr_.is_null())
@@ -54,7 +57,7 @@ Epetra_MultiVectorWrapper::Epetra_MultiVectorWrapper(int m, int n)
     :
     Epetra_MultiVectorWrapper()
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "constructor 3");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "constructor 3");
     size_ = n;
     capacity_ = n;
 
@@ -67,7 +70,7 @@ Epetra_MultiVectorWrapper::Epetra_MultiVectorWrapper(int m, int n)
 Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator =(
     Epetra_MultiVectorWrapper &other)
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "= 1");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "= 1");
     if (!is_view_)
     {
         ptr_ = other.ptr_;
@@ -86,7 +89,7 @@ Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator =(
 Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator =(
     Epetra_MultiVectorWrapper const &other)
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "= 2");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "= 2");
     if (!is_view_)
     {
         ptr_ = other.ptr_;
@@ -104,7 +107,7 @@ Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator =(
 
 Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator =(double other)
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "= 3");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "= 3");
     ptr_->PutScalar(other);
     orthogonalized_ = 0;
     return *this;
@@ -112,7 +115,7 @@ Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator =(double other)
 
 Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator *=(double other)
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "*=");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "*=");
     ptr_->Scale(other);
     orthogonalized_ = 0;
     return *this;
@@ -120,7 +123,7 @@ Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator *=(double other)
 
 Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator /=(double other)
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "/=");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "/=");
     ptr_->Scale(1.0 / other);
     orthogonalized_ = 0;
     return *this;
@@ -129,7 +132,7 @@ Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator /=(double other)
 Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator -=(
     Epetra_MultiVectorWrapper const &other)
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "-=");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "-=");
     ptr_->Update(-1.0, *other, 1.0);
     orthogonalized_ = 0;
     return *this;
@@ -137,7 +140,7 @@ Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator -=(
 Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator +=(
     Epetra_MultiVectorWrapper const &other)
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "+=");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "+=");
     ptr_->Update(1.0, *other, 1.0);
     orthogonalized_ = 0;
     return *this;
@@ -146,7 +149,7 @@ Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator +=(
 Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::operator +(
     Epetra_MultiVectorWrapper const &other) const
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "+");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "+");
     Epetra_MultiVectorWrapper e(*this);
     e += other;
     return e;
@@ -155,7 +158,7 @@ Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::operator +(
 Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::operator *(
     Epetra_SerialDenseMatrixWrapper const &other) const
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "* SDM");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "* SDM");
     Epetra_MultiVectorWrapper out(*this, other.N());
 
     if (other.M() != ptr_->NumVectors())
@@ -182,7 +185,7 @@ Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::operator *(
 Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::operator *(
     Epetra_MultiVectorWrapper const &other) const
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "* MV");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "* MV");
     
     Epetra_LocalMap map(M(), 0, ptr_->Comm());
     Epetra_MultiVectorWrapper out(
@@ -201,41 +204,33 @@ Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::operator *(
     return out;
 }
 
-Epetra_MultiVectorWrapper operator *(double d, Epetra_MultiVectorWrapper const &other)
-{
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "double *");
-    Epetra_MultiVectorWrapper e(other);
-    e *= d;
-    return e;
-}
-
 Epetra_MultiVector &Epetra_MultiVectorWrapper::operator *()
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "*");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "*");
     return *ptr_;
 }
 
 Epetra_MultiVector const &Epetra_MultiVectorWrapper::operator *() const
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "* 2");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "* 2");
     return *ptr_;
 }
 
 double &Epetra_MultiVectorWrapper::operator ()(int m, int n)
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "()");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "()");
     return (*ptr_)[n][m];
 }
 
 double const &Epetra_MultiVectorWrapper::operator ()(int m, int n) const
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "() 2");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "() 2");
     return (*ptr_)[n][m];
 }
 
 void Epetra_MultiVectorWrapper::resize(int m)
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "resize");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "resize");
     // Check if ptr_allocated_ is set
     if (ptr_allocated_.is_null())
         ptr_allocated_ = ptr_;
@@ -276,7 +271,7 @@ void Epetra_MultiVectorWrapper::resize(int m)
 
 double Epetra_MultiVectorWrapper::norm() const
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "norm");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "norm");
     double *nrm = new double[N()];
     ptr_->Norm2(nrm);
 
@@ -291,7 +286,7 @@ double Epetra_MultiVectorWrapper::norm() const
 
 double Epetra_MultiVectorWrapper::norm_inf() const
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "norm_inf");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "norm_inf");
     double out;
     ptr_->NormInf(&out);
     return out;
@@ -299,7 +294,7 @@ double Epetra_MultiVectorWrapper::norm_inf() const
 
 void Epetra_MultiVectorWrapper::orthogonalize()
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "orthogonalize");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "orthogonalize");
     for (int i = orthogonalized_; i < N(); i++)
     {
         Epetra_MultiVectorWrapper v = view(i);
@@ -317,7 +312,7 @@ void Epetra_MultiVectorWrapper::orthogonalize()
 
 Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::view(int m, int n)
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "view");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "view");
     Epetra_MultiVectorWrapper out;
     int num = 1;
     if (n > 0 && m >= 0)
@@ -334,7 +329,7 @@ Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::view(int m, int n)
 
 Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::view(int m, int n) const
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "view");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "view");
     Epetra_MultiVectorWrapper out;
     int num = 1;
     if (n > 0 && m >= 0)
@@ -351,7 +346,7 @@ Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::view(int m, int n) const
 
 Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::copy() const
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "copy");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "copy");
     Epetra_MultiVectorWrapper out(*this);
     return out;
 }
@@ -365,7 +360,7 @@ Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::transpose() const
 
 void Epetra_MultiVectorWrapper::push_back(Epetra_MultiVectorWrapper const &other, int m)
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "push_back");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "push_back");
     int n = N();
     if (m == -1)
         m = other.N();
@@ -375,41 +370,41 @@ void Epetra_MultiVectorWrapper::push_back(Epetra_MultiVectorWrapper const &other
 
 int Epetra_MultiVectorWrapper::M() const
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "M");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "M");
     return transpose_ ? (size_ ? ptr_->NumVectors() : size_) : ptr_->Map().NumGlobalPoints();
 }
 
 int Epetra_MultiVectorWrapper::N() const
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "N");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "N");
     return transpose_ ? ptr_->Map().NumGlobalPoints() : (size_ ? ptr_->NumVectors() : size_);
 }
 
 Epetra_SerialDenseMatrixWrapper Epetra_MultiVectorWrapper::dot(
     Epetra_MultiVectorWrapper const &other) const
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "dot");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "dot");
 
-    START_TIMER("Epetra_MultiVectorWrapper", "dot copy");
+    RAILS_START_TIMER("Epetra_MultiVectorWrapper", "dot copy");
     Teuchos::RCP<Epetra_SerialDenseMatrix> mat = Teuchos::rcp(
         new Epetra_SerialDenseMatrix(N(), other.N()));
     Teuchos::RCP<Epetra_MultiVector> mv = SerialDenseMatrixToMultiVector(
         View, *mat, ptr_->Comm());
-    END_TIMER("Epetra_MultiVectorWrapper", "dot copy");
+    RAILS_END_TIMER("Epetra_MultiVectorWrapper", "dot copy");
 
-    START_TIMER("Epetra_MultiVectorWrapper", "dot multiply");
+    RAILS_START_TIMER("Epetra_MultiVectorWrapper", "dot multiply");
     mv->Multiply('T', 'N', 1.0, *ptr_, *other.ptr_, 0.0);
-    END_TIMER("Epetra_MultiVectorWrapper", "dot multiply");
+    RAILS_END_TIMER("Epetra_MultiVectorWrapper", "dot multiply");
 
-    START_TIMER("Epetra_MultiVectorWrapper", "dot copy 2");
+    RAILS_START_TIMER("Epetra_MultiVectorWrapper", "dot copy 2");
     Epetra_SerialDenseMatrixWrapper out(mat);
-    END_TIMER("Epetra_MultiVectorWrapper", "dot copy 2");
+    RAILS_END_TIMER("Epetra_MultiVectorWrapper", "dot copy 2");
     return out;
 }
 
 void Epetra_MultiVectorWrapper::random()
 {
-    FUNCTION_TIMER("Epetra_MultiVectorWrapper", "random");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "random");
     ptr_->Random();
     orthogonalized_ = 0;
 }
@@ -429,4 +424,15 @@ Teuchos::RCP<Epetra_SerialDenseMatrix> MultiVectorToSerialDenseMatrix(
     return Teuchos::rcp(new Epetra_SerialDenseMatrix(
                             CV, src.Values(), src.MyLength(),
                             src.MyLength(), src.NumVectors()));
+}
+
+}
+
+RAILS::Epetra_MultiVectorWrapper operator *(
+    double d,RAILS::Epetra_MultiVectorWrapper const &other)
+{
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "double *");
+    RAILS::Epetra_MultiVectorWrapper e(other);
+    e *= d;
+    return e;
 }

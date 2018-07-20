@@ -7,6 +7,9 @@
 #define TIMER_ON
 #include "Timer.hpp"
 
+namespace RAILS
+{
+
 Epetra_SerialDenseMatrixWrapper::Epetra_SerialDenseMatrixWrapper()
     :
     ptr_(Teuchos::null),
@@ -18,7 +21,7 @@ Epetra_SerialDenseMatrixWrapper::Epetra_SerialDenseMatrixWrapper(Teuchos::RCP<Ep
     :
     Epetra_SerialDenseMatrixWrapper()
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "constructor 1");
+    RAILS_FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "constructor 1");
     ptr_ = ptr;
 
     if (!ptr.is_null())
@@ -29,7 +32,7 @@ Epetra_SerialDenseMatrixWrapper::Epetra_SerialDenseMatrixWrapper(Epetra_SerialDe
     :
     Epetra_SerialDenseMatrixWrapper()
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "constructor 2");
+    RAILS_FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "constructor 2");
     if (!other.ptr_.is_null())
         ptr_ = Teuchos::rcp(new Epetra_SerialDenseMatrix(*other.ptr_));
     transpose_ = other.transpose_;
@@ -39,7 +42,7 @@ Epetra_SerialDenseMatrixWrapper::Epetra_SerialDenseMatrixWrapper(int m, int n)
     :
     Epetra_SerialDenseMatrixWrapper()
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "constructor 3");
+    RAILS_FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "constructor 3");
     ptr_ = Teuchos::rcp(new Epetra_SerialDenseMatrix(m, n));
 }
 
@@ -49,7 +52,7 @@ Epetra_SerialDenseMatrixWrapper::Epetra_SerialDenseMatrixWrapper(Epetra_SerialDe
     is_view_(std::move(other.is_view_)),
     transpose_(std::move(other.transpose_))
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "constructor 3");
+    RAILS_FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "constructor 3");
 }
 
 Epetra_SerialDenseMatrixWrapper Epetra_SerialDenseMatrixWrapper::transpose() const
@@ -62,7 +65,7 @@ Epetra_SerialDenseMatrixWrapper Epetra_SerialDenseMatrixWrapper::transpose() con
 Epetra_SerialDenseMatrixWrapper &Epetra_SerialDenseMatrixWrapper::operator =(
     Epetra_SerialDenseMatrixWrapper &other)
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "=");
+    RAILS_FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "=");
     if (!is_view_)
         ptr_ = other.ptr_;
     else
@@ -77,7 +80,7 @@ Epetra_SerialDenseMatrixWrapper &Epetra_SerialDenseMatrixWrapper::operator =(
 Epetra_SerialDenseMatrixWrapper &Epetra_SerialDenseMatrixWrapper::operator =(
     Epetra_SerialDenseMatrixWrapper const &other)
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "= 2");
+    RAILS_FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "= 2");
     if (!is_view_)
         ptr_ = other.ptr_;
     else
@@ -92,34 +95,34 @@ Epetra_SerialDenseMatrixWrapper &Epetra_SerialDenseMatrixWrapper::operator =(
 Epetra_SerialDenseMatrixWrapper &Epetra_SerialDenseMatrixWrapper::operator =(
     double other)
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "=");
+    RAILS_FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "=");
     std::fill_n(ptr_->A(), ptr_->LDA() * ptr_->N(), other);
     return *this;
 }
 
 Epetra_SerialDenseMatrixWrapper &Epetra_SerialDenseMatrixWrapper::operator *=(double other)
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "*=");
+    RAILS_FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "*=");
     ptr_->Scale(other);
     return *this;
 }
 
 Epetra_SerialDenseMatrix &Epetra_SerialDenseMatrixWrapper::operator *()
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "*");
+    RAILS_FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "*");
     return *ptr_;
 }
 
 Epetra_SerialDenseMatrix const &Epetra_SerialDenseMatrixWrapper::operator *() const
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "* 2");
+    RAILS_FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "* 2");
     return *ptr_;
 }
 
 Epetra_SerialDenseMatrixWrapper Epetra_SerialDenseMatrixWrapper::operator *(
     Epetra_SerialDenseMatrixWrapper const &other) const
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "* SDM");
+    RAILS_FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "* SDM");
     Epetra_SerialDenseMatrixWrapper out(Teuchos::rcp(new Epetra_SerialDenseMatrix(*other)));
 
     out.resize(M(), other.N());
@@ -144,31 +147,31 @@ Epetra_SerialDenseMatrixWrapper Epetra_SerialDenseMatrixWrapper::operator *(
 
 Epetra_SerialDenseMatrixWrapper::operator double*() const
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "double*");
+    RAILS_FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "double*");
     return ptr_->A();
 }
 
 double &Epetra_SerialDenseMatrixWrapper::operator ()(int m, int n)
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "()");
+    RAILS_FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "()");
     return (*ptr_)(m, n);
 }
 
 double const &Epetra_SerialDenseMatrixWrapper::operator ()(int m, int n) const
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "() 2");
+    RAILS_FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "() 2");
     return (*ptr_)(m, n);
 }
 
 double Epetra_SerialDenseMatrixWrapper::norm_inf() const
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "norm_inf");
+    RAILS_FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "norm_inf");
     return ptr_->NormInf();
 }
 
 void Epetra_SerialDenseMatrixWrapper::resize(int m, int n)
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "resize");
+    RAILS_FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "resize");
     if (ptr_.is_null())
         ptr_ = Teuchos::rcp(new Epetra_SerialDenseMatrix(m, n));
     else
@@ -177,7 +180,7 @@ void Epetra_SerialDenseMatrixWrapper::resize(int m, int n)
 
 Epetra_SerialDenseMatrixWrapper Epetra_SerialDenseMatrixWrapper::view()
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "view");
+    RAILS_FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "view");
     Epetra_SerialDenseMatrixWrapper out = std::move(*this);
     out.is_view_ = true;
     return out;
@@ -185,33 +188,33 @@ Epetra_SerialDenseMatrixWrapper Epetra_SerialDenseMatrixWrapper::view()
 
 Epetra_SerialDenseMatrixWrapper Epetra_SerialDenseMatrixWrapper::copy() const
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "copy");
+    RAILS_FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "copy");
     Epetra_SerialDenseMatrixWrapper out(*this);
     return out;
 }
 
 int Epetra_SerialDenseMatrixWrapper::M() const
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "M");
+    RAILS_FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "M");
     return transpose_ ? ptr_->N() : ptr_->M();
 }
 
 int Epetra_SerialDenseMatrixWrapper::N() const
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "N");
+    RAILS_FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "N");
     return transpose_ ? ptr_->M() : ptr_->N();
 }
 
 int Epetra_SerialDenseMatrixWrapper::LDA() const
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "LDA");
+    RAILS_FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "LDA");
     return ptr_->LDA();
 }
 
 void Epetra_SerialDenseMatrixWrapper::eigs(Epetra_SerialDenseMatrixWrapper &v,
                                            Epetra_SerialDenseMatrixWrapper &d) const
 {
-    FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "eigs");
+    RAILS_FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "eigs");
     int m = M();
     v = copy();
 
@@ -235,4 +238,6 @@ void Epetra_SerialDenseMatrixWrapper::eigs(Epetra_SerialDenseMatrixWrapper &v,
 
     if (info)
         std::cerr << "Eigenvalues info = " << info << std::endl;
+}
+
 }

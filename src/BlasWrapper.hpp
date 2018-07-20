@@ -12,6 +12,9 @@ extern "C"
                 double *c, int *ldc);
 }
 
+namespace RAILS
+{
+
 namespace BlasWrapper
 {
 
@@ -34,6 +37,8 @@ void DGEMM(char transa, char transb, int m, int n, int k,
 {
     dgemm_(&transa, &transb, &m, &n, &k, &alpha,
            a, &lda, b, &ldb, &beta, c, &ldc);
+}
+
 }
 
 }

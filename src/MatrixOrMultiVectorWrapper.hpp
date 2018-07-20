@@ -1,6 +1,9 @@
 #ifndef MATRIXORMULTIVECTORWRAPPER_H
 #define MATRIXORMULTIVECTORWRAPPER_H
 
+namespace RAILS
+{
+
 template<class Matrix, class MultiVector>
 class MatrixOrMultiVectorWrapper
 {
@@ -93,5 +96,7 @@ public:
             return std::move(type_ * other);
         }
 };
+
+}
 
 #endif

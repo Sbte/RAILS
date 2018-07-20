@@ -19,6 +19,9 @@
 #define TIMER_ON
 #include "Timer.hpp"
 
+namespace RAILS
+{
+
 SchurOperator::SchurOperator(Teuchos::RCP<Epetra_CrsMatrix> const &A,
                              Teuchos::RCP<Epetra_Vector> const &M,
                              Teuchos::RCP<Epetra_MultiVector> const &border)
@@ -47,7 +50,7 @@ SchurOperator::SchurOperator(Teuchos::RCP<Epetra_CrsMatrix> const &A,
 
 int SchurOperator::Compute()
 {
-    FUNCTION_TIMER("SchurOperator", "Compute");
+    RAILS_FUNCTION_TIMER("SchurOperator", "Compute");
     Epetra_BlockMap const &map = A_->Map();
 
     if (diagM_ == Teuchos::null)
@@ -197,32 +200,32 @@ int SchurOperator::SetSolution(const Epetra_MultiVector& V, const Epetra_SerialD
 
 int SchurOperator::Apply(const Epetra_MultiVector& X, Epetra_MultiVector& Y) const
 {
-    FUNCTION_TIMER("SchurOperator", "Apply");
+    RAILS_FUNCTION_TIMER("SchurOperator", "Apply");
 
     if (!hasSolution_)
     {
         mvps_ += X.NumVectors();
-        START_TIMER("SchurOperator", "Apply A22");
+        RAILS_START_TIMER("SchurOperator", "Apply A22");
         CHECK_ZERO(A22_->Apply(X, Y));
-        END_TIMER("SchurOperator", "Apply A22");
+        RAILS_END_TIMER("SchurOperator", "Apply A22");
 
         Epetra_MultiVector tmp1(A11_->DomainMap(), Y.NumVectors());
         Epetra_MultiVector tmp2(A11_->RangeMap(), Y.NumVectors());
         Epetra_MultiVector tmp3(Y.Map(), Y.NumVectors());
 
-        START_TIMER("SchurOperator", "Apply A12");
+        RAILS_START_TIMER("SchurOperator", "Apply A12");
         CHECK_ZERO(A12_->Apply(X, tmp1));
-        END_TIMER("SchurOperator", "Apply A12");
+        RAILS_END_TIMER("SchurOperator", "Apply A12");
 
-        START_TIMER("SchurOperator", "Apply A11");
+        RAILS_START_TIMER("SchurOperator", "Apply A11");
         problem_->SetLHS(&tmp2);
         problem_->SetRHS(&tmp1);
         CHECK_ZERO(solver_->Solve());
-        END_TIMER("SchurOperator", "Apply A11");
+        RAILS_END_TIMER("SchurOperator", "Apply A11");
 
-        START_TIMER("SchurOperator", "Apply A21");
+        RAILS_START_TIMER("SchurOperator", "Apply A21");
         CHECK_ZERO(A21_->Apply(tmp2, tmp3));
-        END_TIMER("SchurOperator", "Apply A21");
+        RAILS_END_TIMER("SchurOperator", "Apply A21");
 
         CHECK_ZERO(Y.Update(-1.0, tmp3, 1.0));
 
@@ -392,4 +395,6 @@ bool SchurOperator::HasNormInf() const
 int SchurOperator::GetMVPs() const
 {
     return mvps_;
+}
+
 }

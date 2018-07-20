@@ -1,5 +1,5 @@
-#ifndef LYAPUNOV_TIMER_H
-#define LYAPUNOV_TIMER_H
+#ifndef RAILS_LYAPUNOV_TIMER_H
+#define RAILS_LYAPUNOV_TIMER_H
 
 #ifdef HAVE_MPI
 #include <mpi.h>
@@ -7,6 +7,9 @@
 
 #include <ctime>
 #include <string>
+
+namespace RAILS
+{
 
 class Timer
 {
@@ -78,23 +81,25 @@ public:
     ~DestructibleTimer();
 };
 
+}
+
 #ifndef TIMER_ON
 
-#define TIMER_START(args...)
-#define TIMER_END(args...)
-#define START_TIMER(args...)
-#define END_TIMER(args...)
-#define FUNCTION_TIMER(args...)
-#define SAVE_PROFILES(args...)
+#define RAILS_TIMER_START(args...)
+#define RAILS_TIMER_END(args...)
+#define RAILS_START_TIMER(args...)
+#define RAILS_END_TIMER(args...)
+#define RAILS_FUNCTION_TIMER(args...)
+#define RAILS_SAVE_PROFILES(args...)
 
 #else
 
-#define TIMER_START(args...) timer_start(args)
-#define TIMER_END(args...) timer_end(args)
-#define START_TIMER(args...) timer_start(args)
-#define END_TIMER(args...) timer_end(args)
-#define FUNCTION_TIMER(args...) DestructibleTimer function_timer(args)
-#define SAVE_PROFILES(args...) save_profiles(args)
+#define RAILS_TIMER_START(args...) timer_start(args)
+#define RAILS_TIMER_END(args...) timer_end(args)
+#define RAILS_START_TIMER(args...) timer_start(args)
+#define RAILS_END_TIMER(args...) timer_end(args)
+#define RAILS_FUNCTION_TIMER(args...) RAILS::DestructibleTimer function_timer(args)
+#define RAILS_SAVE_PROFILES(args...) save_profiles(args)
 
 #endif
 

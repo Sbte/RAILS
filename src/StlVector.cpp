@@ -3,6 +3,9 @@
 #include <cstring>
 #include <ostream>
 
+namespace RAILS
+{
+
 StlVector::StlVector(int m, int n)
     :
     ptr_(new double[m * n]),
@@ -65,4 +68,6 @@ std::ostream &operator<<(std::ostream &os, StlVector &vec)
         os << std::endl;
     }
     return os;
+}
+
 }

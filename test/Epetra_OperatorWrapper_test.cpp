@@ -11,6 +11,8 @@
 #include <Epetra_CrsMatrix.h>
 #include <Epetra_SerialComm.h>
 
+using namespace RAILS;
+
 class Epetra_OperatorWrapperTest : public ::testing::Test
 {
 protected:

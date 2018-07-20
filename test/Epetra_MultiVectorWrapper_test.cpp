@@ -9,6 +9,8 @@
 #include <Epetra_MultiVector.h>
 #include <Epetra_SerialComm.h>
 
+using namespace RAILS;
+
 #define EXPECT_VECTOR_EQ(a, b) {                                        \
         int m = (b).MyLength();                                         \
         int n = (b).NumVectors();                                       \

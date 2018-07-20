@@ -9,6 +9,9 @@ class Epetra_MultiVector;
 class Epetra_SerialDenseMatrix;
 class Epetra_Comm;
 
+namespace RAILS
+{
+
 class Epetra_SerialDenseMatrixWrapper;
 
 class Epetra_MultiVectorWrapper
@@ -94,6 +97,9 @@ Teuchos::RCP<Epetra_MultiVector> SerialDenseMatrixToMultiVector(
 Teuchos::RCP<Epetra_SerialDenseMatrix> MultiVectorToSerialDenseMatrix(
     Epetra_DataAccess CV, Epetra_MultiVector const &src);
 
-Epetra_MultiVectorWrapper operator *(double d, Epetra_MultiVectorWrapper const &other);
+}
+
+RAILS::Epetra_MultiVectorWrapper operator *(
+    double d, RAILS::Epetra_MultiVectorWrapper const &other);
 
 #endif

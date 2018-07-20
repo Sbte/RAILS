@@ -35,6 +35,8 @@
 #define TIMER_ON
 #include "Timer.hpp"
 
+using namespace RAILS;
+
 // Parallel Projection Lanczos Lyapunov Solver
 int main(int argc, char *argv[])
 {
@@ -91,9 +93,9 @@ int main(int argc, char *argv[])
     Epetra_OperatorWrapper Schur_wrapper = Schur_operator;
     Teuchos::RCP<Epetra_Operator> B22_operator = B22;
 
-    Lyapunov::Solver<Epetra_OperatorWrapper, Epetra_MultiVectorWrapper,
-                     Epetra_SerialDenseMatrixWrapper> solver(
-                         Schur_wrapper, B22_operator, B22_operator);
+    RAILS::Solver<Epetra_OperatorWrapper, Epetra_MultiVectorWrapper,
+                  Epetra_SerialDenseMatrixWrapper> solver(
+                      Schur_wrapper, B22_operator, B22_operator);
 
     Epetra_MultiVectorWrapper V;
     Epetra_SerialDenseMatrixWrapper T;
@@ -138,7 +140,7 @@ int main(int argc, char *argv[])
     Schur->SetSolution(*V, *T);
     Schur_wrapper.set_parameters(*params);
 
-    START_TIMER("Compute eigenvalues");
+    RAILS_START_TIMER("Compute eigenvalues");
 
     Epetra_MultiVectorWrapper eigenvectors;
     Epetra_SerialDenseMatrixWrapper eigenvalues(0,0);
@@ -152,9 +154,9 @@ int main(int argc, char *argv[])
     Schur_wrapper.eigs(eigenvectors, eigenvalues,
                        eig_params.get("Number of Eigenvalues", 10));
 
-    END_TIMER("Compute eigenvalues");
+    RAILS_END_TIMER("Compute eigenvalues");
 
-    START_TIMER("Compute trace");
+    RAILS_START_TIMER("Compute trace");
     double trace = Schur->Trace();
 
     int num_eigs = eigenvalues.M();
@@ -165,10 +167,10 @@ int main(int argc, char *argv[])
                   << std::endl;
     }
 
-    END_TIMER("Compute trace");
+    RAILS_END_TIMER("Compute trace");
 
     if (!MyPID)
-        SAVE_PROFILES("");
+        RAILS_SAVE_PROFILES("");
 
 #ifdef HAVE_MPI
     MPI_Finalize();

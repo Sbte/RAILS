@@ -5,6 +5,9 @@
 
 class Epetra_SerialDenseMatrix;
 
+namespace RAILS
+{
+
 class Epetra_SerialDenseMatrixWrapper
 {
     Teuchos::RCP<Epetra_SerialDenseMatrix> ptr_;
@@ -53,5 +56,7 @@ public:
 
     void eigs(Epetra_SerialDenseMatrixWrapper &v, Epetra_SerialDenseMatrixWrapper &d) const;
 };
+
+}
 
 #endif

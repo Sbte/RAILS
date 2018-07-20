@@ -3,6 +3,9 @@
 
 #include <iosfwd>
 
+namespace RAILS
+{
+
 class StlVector
 {
     double *ptr_;
@@ -27,5 +30,7 @@ public:
 
     friend std::ostream &operator<<(std::ostream &os, StlVector &vec);
 };
+
+}
 
 #endif

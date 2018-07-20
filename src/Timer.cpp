@@ -6,6 +6,9 @@
 #include <string>
 #include <iomanip>
 
+namespace RAILS
+{
+
 std::vector<Profile> profiles;
 
 static Profile *find_profile(std::string const &name)
@@ -112,4 +115,6 @@ DestructibleTimer::DestructibleTimer(std::string const &cls, std::string const &
 DestructibleTimer::~DestructibleTimer()
 {
     timer_end(name);
+}
+
 }

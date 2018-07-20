@@ -1,6 +1,9 @@
 #ifndef SCALARWRAPPER_H
 #define SCALARWRAPPER_H
 
+namespace RAILS
+{
+
 class ScalarWrapper
 {
     double *s_;
@@ -147,5 +150,7 @@ public:
 
     void random() {*s_ = 0.2462561245;}
 };
+
+}
 
 #endif

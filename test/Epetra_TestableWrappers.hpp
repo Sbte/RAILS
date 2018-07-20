@@ -9,6 +9,8 @@
 #include "Epetra_MultiVector.h"
 #include "Epetra_Operator.h"
 
+using namespace RAILS;
+
 class TestableEpetra_MultiVectorWrapper: public Epetra_MultiVectorWrapper
 {
 public:

@@ -8,6 +8,8 @@
 #include "Epetra_TestableWrappers.hpp"
 #endif
 
+using namespace RAILS;
+
 template <typename A, typename B, typename C>
 struct TypeDefinitions
 {

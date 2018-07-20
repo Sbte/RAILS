@@ -14,23 +14,25 @@
 #include <Epetra_CrsMatrix.h>
 #include <Epetra_SerialComm.h>
 
+using namespace RAILS;
+
 TEST(LyapunovSolverEpetraTest, DenseSolver)
 {
     Teuchos::RCP<Epetra_Operator> tmp = Teuchos::null;
 
     // Create the solver object
-    Lyapunov::Solver<Epetra_OperatorWrapper, Epetra_MultiVectorWrapper,
-                     Epetra_SerialDenseMatrixWrapper> solver(tmp, tmp, tmp);
+    Solver<Epetra_OperatorWrapper, Epetra_MultiVectorWrapper,
+           Epetra_SerialDenseMatrixWrapper> solver(tmp, tmp, tmp);
 
     // A = [0,1;-5,-5];
     double A_val[4] = {0, -5, 1, -5};
     Teuchos::RCP<Epetra_SerialDenseMatrix> A = Teuchos::rcp(
-      new Epetra_SerialDenseMatrix(Copy, A_val, 2, 2, 2));
+        new Epetra_SerialDenseMatrix(Copy, A_val, 2, 2, 2));
 
     // B = [-1,0;0,-1];
     double B_val[4] = {-1, 0, 0, -1};
     Teuchos::RCP<Epetra_SerialDenseMatrix> B = Teuchos::rcp(
-      new Epetra_SerialDenseMatrix(Copy, B_val, 2, 2, 2));
+        new Epetra_SerialDenseMatrix(Copy, B_val, 2, 2, 2));
 
     Epetra_SerialDenseMatrixWrapper AW(A);
     Epetra_SerialDenseMatrixWrapper BW(B);
@@ -73,8 +75,8 @@ TEST(LyapunovSolverEpetraTest, Solver)
     Teuchos::RCP<Epetra_Operator> M_operator = B;
 
     // Create the solver object FIXME: Use M here not B
-    Lyapunov::Solver<Epetra_OperatorWrapper, Epetra_MultiVectorWrapper,
-                     Epetra_SerialDenseMatrixWrapper > solver(A_operator, B_operator, M_operator);
+    Solver<Epetra_OperatorWrapper, Epetra_MultiVectorWrapper,
+           Epetra_SerialDenseMatrixWrapper > solver(A_operator, B_operator, M_operator);
 
     Teuchos::ParameterList params;
     params.set("Minimize solution space", false);
@@ -111,7 +113,7 @@ TEST(LyapunovSolverEpetraTest, BVector)
     Teuchos::RCP<Epetra_Map> col_map = Teuchos::rcp(new Epetra_Map(1, 0, *comm));
 
     Teuchos::RCP<Epetra_CrsMatrix> A = Teuchos::rcp(
-      new Epetra_CrsMatrix(Copy, *map, 2));
+        new Epetra_CrsMatrix(Copy, *map, 2));
 
     // A = [0,1;-5,-5];
     double A_val[4] = {0, 1, -5, -5};
@@ -121,7 +123,7 @@ TEST(LyapunovSolverEpetraTest, BVector)
     A->FillComplete();
 
     Teuchos::RCP<Epetra_CrsMatrix> B = Teuchos::rcp(
-      new Epetra_CrsMatrix(Copy, *map, *col_map, 1));
+        new Epetra_CrsMatrix(Copy, *map, *col_map, 1));
 
     // B = [-1;-1];
     double B_val = -1;
@@ -131,7 +133,7 @@ TEST(LyapunovSolverEpetraTest, BVector)
     B->FillComplete(*col_map, *map);
 
     Teuchos::RCP<Epetra_CrsMatrix> M = Teuchos::rcp(
-      new Epetra_CrsMatrix(Copy, *map, 1));
+        new Epetra_CrsMatrix(Copy, *map, 1));
 
     // M = [-1,0;-1,0];
     double M_val = -1;
@@ -144,8 +146,8 @@ TEST(LyapunovSolverEpetraTest, BVector)
     Teuchos::RCP<Epetra_Operator> B_operator = B;
     Teuchos::RCP<Epetra_Operator> M_operator = M;
 
-    Lyapunov::Solver<Epetra_OperatorWrapper, Epetra_MultiVectorWrapper,
-                     Epetra_SerialDenseMatrixWrapper > solver(A_operator, B_operator, M_operator);
+    Solver<Epetra_OperatorWrapper, Epetra_MultiVectorWrapper,
+           Epetra_SerialDenseMatrixWrapper > solver(A_operator, B_operator, M_operator);
 
     Teuchos::ParameterList params;
     params.set("Minimize solution space", false);
@@ -206,8 +208,8 @@ TEST(LyapunovSolverEpetraTest, BMultiVector)
     Teuchos::RCP<Epetra_Operator> A_operator = A;
     Teuchos::RCP<Epetra_Operator> M_operator = M;
 
-    Lyapunov::Solver<Epetra_OperatorWrapper, Epetra_MultiVectorWrapper,
-                     Epetra_SerialDenseMatrixWrapper> solver(A_operator, B, M_operator);
+    Solver<Epetra_OperatorWrapper, Epetra_MultiVectorWrapper,
+           Epetra_SerialDenseMatrixWrapper> solver(A_operator, B, M_operator);
 
     Teuchos::ParameterList params;
     params.set("Minimize solution space", false);
@@ -265,8 +267,8 @@ TEST(LyapunovSolverEpetraTest, Lanczos)
     Teuchos::RCP<Epetra_Operator> M_operator = B;
 
     // Create the solver object FIXME: Use M here not B
-    Lyapunov::Solver<Epetra_OperatorWrapper, Epetra_MultiVectorWrapper,
-                     Epetra_SerialDenseMatrixWrapper > solver(A_operator, B_operator, M_operator);
+    Solver<Epetra_OperatorWrapper, Epetra_MultiVectorWrapper,
+           Epetra_SerialDenseMatrixWrapper > solver(A_operator, B_operator, M_operator);
 
     Teuchos::ParameterList params;
     params.set("Minimize solution space", false);

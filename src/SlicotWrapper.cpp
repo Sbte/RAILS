@@ -2,7 +2,8 @@
 #include <cstring>
 #include <iostream>
 
-namespace Lyapunov {
+namespace RAILS
+{
 
 void sb03md(char dico, char job, char fact, char trans, int n,
             double *A, int lda, double *X, int ldx,

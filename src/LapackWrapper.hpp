@@ -9,6 +9,9 @@ extern "C"
                 double *w, double *work, int *ldwork, int *info);
 }
 
+namespace RAILS
+{
+
 namespace LapackWrapper
 {
 
@@ -17,6 +20,8 @@ void DSTEQR(char compz, int n, double *d, double *e,
 
 void DSYEV(char jobz, char uplo, int n, double *a, int lda,
            double *w, int *info);
+
+}
 
 }
 

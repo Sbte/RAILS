@@ -5,6 +5,9 @@
 #include <vector>
 #include <algorithm>
 
+namespace RAILS
+{
+
 static bool eigenvalue_sorter(std::pair<int, double> const &a, std::pair<int, double> const &b)
 {
     return std::abs(a.second) > std::abs(b.second);
@@ -23,6 +26,8 @@ int find_largest_eigenvalues(DenseMatrix const &eigenvalues, std::vector<int> &i
         indices.push_back(index_to_value[i].first);
 
     return 0;
+}
+
 }
 
 #endif

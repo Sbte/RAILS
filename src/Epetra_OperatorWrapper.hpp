@@ -8,6 +8,10 @@
 
 class Epetra_Operator;
 class Epetra_BlockMap;
+
+namespace RAILS
+{
+
 class Epetra_SerialDenseMatrixWrapper;
 
 class Epetra_OperatorWrapper
@@ -47,5 +51,7 @@ protected:
     double &operator ()(int m, int n = 0);
     double const &operator ()(int m, int n = 0) const;
 };
+
+}
 
 #endif

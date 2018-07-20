@@ -18,6 +18,9 @@
 #define TIMER_ON
 #include "Timer.hpp"
 
+namespace RAILS
+{
+
 Epetra_OperatorWrapper::Epetra_OperatorWrapper()
     :
     ptr_(Teuchos::null),
@@ -28,7 +31,7 @@ Epetra_OperatorWrapper::Epetra_OperatorWrapper(Teuchos::RCP<Epetra_Operator> ptr
     :
     Epetra_OperatorWrapper()
 {
-    FUNCTION_TIMER("Epetra_OperatorWrapper", "constructor 1");
+    RAILS_FUNCTION_TIMER("Epetra_OperatorWrapper", "constructor 1");
     ptr_ = ptr;
 
     if (!ptr.is_null())
@@ -39,7 +42,7 @@ Epetra_OperatorWrapper::Epetra_OperatorWrapper(Epetra_OperatorWrapper const &oth
     :
     Epetra_OperatorWrapper()
 {
-    FUNCTION_TIMER("Epetra_OperatorWrapper", "constructor 2");
+    RAILS_FUNCTION_TIMER("Epetra_OperatorWrapper", "constructor 2");
     ptr_ = other.ptr_;
     transpose_ = other.transpose_;
 }
@@ -59,20 +62,20 @@ int Epetra_OperatorWrapper::set_parameters(Teuchos::ParameterList &params)
 
 Epetra_Operator &Epetra_OperatorWrapper::operator *()
 {
-    FUNCTION_TIMER("Epetra_OperatorWrapper", "*");
+    RAILS_FUNCTION_TIMER("Epetra_OperatorWrapper", "*");
     return *ptr_;
 }
 
 Epetra_Operator const &Epetra_OperatorWrapper::operator *() const
 {
-    FUNCTION_TIMER("Epetra_OperatorWrapper", "* 2");
+    RAILS_FUNCTION_TIMER("Epetra_OperatorWrapper", "* 2");
     return *ptr_;
 }
 
 Epetra_MultiVectorWrapper Epetra_OperatorWrapper::operator *(
     Epetra_MultiVectorWrapper const &other) const
 {
-    FUNCTION_TIMER("Epetra_OperatorWrapper", "* MV");
+    RAILS_FUNCTION_TIMER("Epetra_OperatorWrapper", "* MV");
 
     bool use_transpose = ptr_->UseTranspose();
     ptr_->SetUseTranspose(transpose_);
@@ -111,7 +114,7 @@ int Epetra_OperatorWrapper::N() const
 
 double Epetra_OperatorWrapper::norm() const
 {
-    FUNCTION_TIMER("Epetra_OperatorWrapper", "norm");
+    RAILS_FUNCTION_TIMER("Epetra_OperatorWrapper", "norm");
     Teuchos::RCP<Epetra_CrsMatrix> mat =
         Teuchos::rcp_dynamic_cast<Epetra_CrsMatrix>(ptr_);
     if (mat.is_null())
@@ -145,7 +148,7 @@ int Epetra_OperatorWrapper::eigs(Epetra_MultiVectorWrapper &V,
                                  Epetra_SerialDenseMatrixWrapper &D,
                                  int num, double tol) const
 {
-    FUNCTION_TIMER("Epetra_OperatorWrapper", "eigs");
+    RAILS_FUNCTION_TIMER("Epetra_OperatorWrapper", "eigs");
     Teuchos::RCP<Teuchos::ParameterList> params;
     if (params_.is_null())
     {
@@ -222,7 +225,7 @@ Epetra_OperatorWrapper::Epetra_OperatorWrapper(int m, int n)
     :
     Epetra_OperatorWrapper()
 {
-    FUNCTION_TIMER("Epetra_OperatorWrapper", "constructor 3");
+    RAILS_FUNCTION_TIMER("Epetra_OperatorWrapper", "constructor 3");
 
     Epetra_SerialComm comm;
     Epetra_Map row_map(m, 0, comm);
@@ -248,7 +251,7 @@ Epetra_OperatorWrapper::Epetra_OperatorWrapper(int m, int n)
 
 double &Epetra_OperatorWrapper::operator ()(int m, int n)
 {
-    FUNCTION_TIMER("Epetra_OperatorWrapper", "()");
+    RAILS_FUNCTION_TIMER("Epetra_OperatorWrapper", "()");
 
     double *values;
     int num_entries;
@@ -264,7 +267,7 @@ double &Epetra_OperatorWrapper::operator ()(int m, int n)
 
 double const &Epetra_OperatorWrapper::operator ()(int m, int n) const
 {
-    FUNCTION_TIMER("Epetra_OperatorWrapper", "() 2");
+    RAILS_FUNCTION_TIMER("Epetra_OperatorWrapper", "() 2");
 
     double *values;
     int num_entries;
@@ -276,4 +279,6 @@ double const &Epetra_OperatorWrapper::operator ()(int m, int n) const
     
     mat->ExtractMyRowView(m, num_entries, values);
     return values[n];
+}
+
 }

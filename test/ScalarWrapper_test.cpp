@@ -3,6 +3,8 @@
 
 #include "src/ScalarWrapper.hpp"
 
+using namespace RAILS;
+
 TEST(ScalarWrapper, Assignment)
 {
     ScalarWrapper a(1);

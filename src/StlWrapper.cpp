@@ -13,6 +13,9 @@
 #define TIMER_ON
 #include "Timer.hpp"
 
+namespace RAILS
+{
+
 StlWrapper::StlWrapper()
     :
     ptr_(nullptr),
@@ -29,7 +32,7 @@ StlWrapper::StlWrapper(StlWrapper const &other)
     :
     StlWrapper()
 {
-    FUNCTION_TIMER("StlWrapper", "constructor 2");
+    RAILS_FUNCTION_TIMER("StlWrapper", "constructor 2");
     if (other.ptr_)
         ptr_ = std::make_shared<StlVector>(*other.ptr_);
     m_ = other.m_;
@@ -44,14 +47,14 @@ StlWrapper::StlWrapper(StlWrapper const &other, int n)
     :
     StlWrapper(other.M(), n)
 {
-    FUNCTION_TIMER("StlWrapper", "constructor 3");
+    RAILS_FUNCTION_TIMER("StlWrapper", "constructor 3");
 }
 
 StlWrapper::StlWrapper(int m, int n)
     :
     StlWrapper()
 {
-    FUNCTION_TIMER("StlWrapper", "constructor 4");
+    RAILS_FUNCTION_TIMER("StlWrapper", "constructor 4");
     m_ = m;
     n_ = n;
     m_max_ = m;
@@ -61,7 +64,7 @@ StlWrapper::StlWrapper(int m, int n)
 
 StlWrapper &StlWrapper::operator =(StlWrapper &other)
 {
-    FUNCTION_TIMER("StlWrapper", "= 1");
+    RAILS_FUNCTION_TIMER("StlWrapper", "= 1");
     if (!is_view_)
     {
         ptr_ = other.ptr_;
@@ -90,7 +93,7 @@ StlWrapper &StlWrapper::operator =(StlWrapper &other)
 
 StlWrapper &StlWrapper::operator =(StlWrapper const &other)
 {
-    FUNCTION_TIMER("StlWrapper", "= 2");
+    RAILS_FUNCTION_TIMER("StlWrapper", "= 2");
     if (!is_view_)
     {
         ptr_ = other.ptr_;
@@ -119,7 +122,7 @@ StlWrapper &StlWrapper::operator =(StlWrapper const &other)
 
 StlWrapper &StlWrapper::operator =(double other)
 {
-    FUNCTION_TIMER("StlWrapper", "= 3");
+    RAILS_FUNCTION_TIMER("StlWrapper", "= 3");
     std::fill_n(ptr_->get(), m_max_ * n_, other);
     orthogonalized_ = 0;
     return *this;
@@ -127,7 +130,7 @@ StlWrapper &StlWrapper::operator =(double other)
 
 StlWrapper &StlWrapper::operator *=(double other)
 {
-    FUNCTION_TIMER("StlWrapper", "*=");
+    RAILS_FUNCTION_TIMER("StlWrapper", "*=");
     BlasWrapper::DSCAL(m_max_ * n_, other, ptr_->get());
     orthogonalized_ = 0;
     return *this;
@@ -135,20 +138,20 @@ StlWrapper &StlWrapper::operator *=(double other)
 
 StlWrapper &StlWrapper::operator /=(double other)
 {
-    FUNCTION_TIMER("StlWrapper", "/=");
+    RAILS_FUNCTION_TIMER("StlWrapper", "/=");
     return *this *= 1.0 / other;
 }
 
 StlWrapper &StlWrapper::operator -=(StlWrapper const &other)
 {
-    FUNCTION_TIMER("StlWrapper", "-=");
+    RAILS_FUNCTION_TIMER("StlWrapper", "-=");
     BlasWrapper::DAXPY(m_ * n_, -1.0, other.ptr_->get(), ptr_->get());
     orthogonalized_ = 0;
     return *this;
 }
 StlWrapper &StlWrapper::operator +=(StlWrapper const &other)
 {
-    FUNCTION_TIMER("StlWrapper", "+=");
+    RAILS_FUNCTION_TIMER("StlWrapper", "+=");
     BlasWrapper::DAXPY(m_ * n_, 1.0, other.ptr_->get(), ptr_->get());
     orthogonalized_ = 0;
     return *this;
@@ -156,7 +159,7 @@ StlWrapper &StlWrapper::operator +=(StlWrapper const &other)
 
 StlWrapper StlWrapper::operator +(StlWrapper const &other) const
 {
-    FUNCTION_TIMER("StlWrapper", "+");
+    RAILS_FUNCTION_TIMER("StlWrapper", "+");
     StlWrapper e(*this);
     e += other;
     return e;
@@ -164,7 +167,7 @@ StlWrapper StlWrapper::operator +(StlWrapper const &other) const
 
 StlWrapper StlWrapper::operator *(StlWrapper const &other) const
 {
-    FUNCTION_TIMER("StlWrapper", "* S");
+    RAILS_FUNCTION_TIMER("StlWrapper", "* S");
 
     StlWrapper out(*this, other.N());
     if (other.M() != N())
@@ -183,53 +186,45 @@ StlWrapper StlWrapper::operator *(StlWrapper const &other) const
     return out;
 }
 
-StlWrapper operator *(double d, StlWrapper const &other)
-{
-    FUNCTION_TIMER("StlWrapper", "double *");
-    StlWrapper e(other);
-    e *= d;
-    return e;
-}
-
 StlVector &StlWrapper::operator *()
 {
-    FUNCTION_TIMER("StlWrapper", "*");
+    RAILS_FUNCTION_TIMER("StlWrapper", "*");
     return *ptr_;
 }
 
 StlVector const &StlWrapper::operator *() const
 {
-    FUNCTION_TIMER("StlWrapper", "* 2");
+    RAILS_FUNCTION_TIMER("StlWrapper", "* 2");
     return *ptr_;
 }
 
 StlWrapper::operator double*() const
 {
-    FUNCTION_TIMER("StlWrapper", "double*");
+    RAILS_FUNCTION_TIMER("StlWrapper", "double*");
     return ptr_->get();
 }
 
 double &StlWrapper::operator ()(int m, int n)
 {
-    FUNCTION_TIMER("StlWrapper", "()");
+    RAILS_FUNCTION_TIMER("StlWrapper", "()");
     return (*ptr_)(m, n);
 }
 
 double const &StlWrapper::operator ()(int m, int n) const
 {
-    FUNCTION_TIMER("StlWrapper", "() 2");
+    RAILS_FUNCTION_TIMER("StlWrapper", "() 2");
     return (*ptr_)(m, n);
 }
 
 void StlWrapper::resize(int m)
 {
-    FUNCTION_TIMER("StlWrapper", "resize");
+    RAILS_FUNCTION_TIMER("StlWrapper", "resize");
     resize(m_, m);
 }
 
 void StlWrapper::resize(int m, int n)
 {
-    FUNCTION_TIMER("StlWrapper", "resize 2");
+    RAILS_FUNCTION_TIMER("StlWrapper", "resize 2");
 
     orthogonalized_ = std::min(orthogonalized_, n);
 
@@ -269,7 +264,7 @@ void StlWrapper::resize(int m, int n)
 
 double StlWrapper::norm() const
 {
-    FUNCTION_TIMER("StlWrapper", "norm");
+    RAILS_FUNCTION_TIMER("StlWrapper", "norm");
 
     // // Frobenius norm
     // double out = 0.0;
@@ -295,7 +290,7 @@ double StlWrapper::norm() const
 
 double StlWrapper::norm_inf() const
 {
-    FUNCTION_TIMER("StlWrapper", "norm_inf");
+    RAILS_FUNCTION_TIMER("StlWrapper", "norm_inf");
     double out = 0.0;
     for (int i = 0; i < m_; ++i)
     {
@@ -309,7 +304,7 @@ double StlWrapper::norm_inf() const
 
 void StlWrapper::orthogonalize()
 {
-    FUNCTION_TIMER("StlWrapper", "orthogonalize");
+    RAILS_FUNCTION_TIMER("StlWrapper", "orthogonalize");
     for (int i = orthogonalized_; i < N(); i++)
     {
         StlWrapper v = view(i);
@@ -327,7 +322,7 @@ void StlWrapper::orthogonalize()
 
 StlWrapper StlWrapper::view(int m, int n)
 {
-    FUNCTION_TIMER("StlWrapper", "view");
+    RAILS_FUNCTION_TIMER("StlWrapper", "view");
     StlWrapper out = *this;
     int num = 1;
     if (n > 0 && m >= 0)
@@ -346,7 +341,7 @@ StlWrapper StlWrapper::view(int m, int n)
 
 StlWrapper StlWrapper::view(int m, int n) const
 {
-    FUNCTION_TIMER("StlWrapper", "view 2");
+    RAILS_FUNCTION_TIMER("StlWrapper", "view 2");
     StlWrapper out = *this;
     int num = 1;
     if (n > 0 && m >= 0)
@@ -365,14 +360,14 @@ StlWrapper StlWrapper::view(int m, int n) const
 
 StlWrapper StlWrapper::copy() const
 {
-    FUNCTION_TIMER("StlWrapper", "copy");
+    RAILS_FUNCTION_TIMER("StlWrapper", "copy");
     StlWrapper out(*this);
     return out;
 }
 
 void StlWrapper::push_back(StlWrapper const &other)
 {
-    FUNCTION_TIMER("StlWrapper", "push_back");
+    RAILS_FUNCTION_TIMER("StlWrapper", "push_back");
     int n = N();
     int other_n = other.N();
     resize(other_n + n);
@@ -381,25 +376,25 @@ void StlWrapper::push_back(StlWrapper const &other)
 
 int StlWrapper::M() const
 {
-    FUNCTION_TIMER("StlWrapper", "M");
+    RAILS_FUNCTION_TIMER("StlWrapper", "M");
     return transpose_ ? n_ : m_;
 }
 
 int StlWrapper::N() const
 {
-    FUNCTION_TIMER("StlWrapper", "N");
+    RAILS_FUNCTION_TIMER("StlWrapper", "N");
     return transpose_ ? m_ : n_;
 }
 
 int StlWrapper::LDA() const
 {
-    FUNCTION_TIMER("StlWrapper", "N");
+    RAILS_FUNCTION_TIMER("StlWrapper", "N");
     return transpose_ ? n_max_ : m_max_;
 }
 
 StlWrapper StlWrapper::dot(StlWrapper const &other) const
 {
-    FUNCTION_TIMER("StlWrapper", "dot");
+    RAILS_FUNCTION_TIMER("StlWrapper", "dot");
     StlWrapper out(N(), other.N());
 
     if (other.M() != M())
@@ -419,7 +414,7 @@ StlWrapper StlWrapper::dot(StlWrapper const &other) const
 
 void StlWrapper::random()
 {
-    FUNCTION_TIMER("StlWrapper", "random");
+    RAILS_FUNCTION_TIMER("StlWrapper", "random");
     std::default_random_engine generator(std::rand());
     std::uniform_real_distribution<double> distribution(-1,1);
     for (int i = 0; i < m_; ++i)
@@ -430,7 +425,7 @@ void StlWrapper::random()
 
 StlWrapper StlWrapper::transpose() const
 {
-    FUNCTION_TIMER("StlWrapper", "transpose");
+    RAILS_FUNCTION_TIMER("StlWrapper", "transpose");
     StlWrapper tmp(*this);
     tmp.transpose_ = !tmp.transpose_;
     return tmp;
@@ -439,7 +434,7 @@ StlWrapper StlWrapper::transpose() const
 int StlWrapper::eigs(StlWrapper &v, StlWrapper &d,
                      int num, double tol) const
 {
-    FUNCTION_TIMER("StlWrapper", "eigs");
+    RAILS_FUNCTION_TIMER("StlWrapper", "eigs");
     v = copy();
 
     int m = v.M();
@@ -482,4 +477,14 @@ int StlWrapper::eigs(StlWrapper &v, StlWrapper &d,
         std::cerr << "Eigenvalues info = " << info << std::endl;
 
     return info;
+}
+
+}
+
+RAILS::StlWrapper operator *(double d, RAILS::StlWrapper const &other)
+{
+    RAILS_FUNCTION_TIMER("StlWrapper", "double *");
+    RAILS::StlWrapper e(other);
+    e *= d;
+    return e;
 }

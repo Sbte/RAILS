@@ -18,6 +18,9 @@ namespace EpetraExt {
 class RowMatrix_Transpose;
 }
 
+namespace RAILS
+{
+
 class SchurOperator: public Epetra_Operator
 {
     Teuchos::RCP<Epetra_CrsMatrix> A_;
@@ -81,5 +84,7 @@ public:
 
     int GetMVPs() const;
 };
+
+}
 
 #endif

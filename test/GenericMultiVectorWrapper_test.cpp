@@ -8,6 +8,8 @@
 #include "Epetra_TestableWrappers.hpp"
 #endif
 
+using namespace RAILS;
+
 template <class MultiVectorWrapper>
 class GenericMultiVectorWrapperTest: public testing::Test
 {

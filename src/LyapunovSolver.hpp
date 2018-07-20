@@ -12,7 +12,8 @@
 #define TIMER_ON
 #include "Timer.hpp"
 
-namespace Lyapunov {
+namespace RAILS
+{
 
 template<class Matrix, class MultiVector, class DenseMatrix>
 template<class MatrixOrMultiVector>
@@ -96,7 +97,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::set_parameters(ParameterList &para
 template<class Matrix, class MultiVector, class DenseMatrix>
 int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix &T)
 {
-    FUNCTION_TIMER("Solver");
+    RAILS_FUNCTION_TIMER("Solver");
     int n = V.M();
 
     int max_size = std::min(restart_size_ > 0 ? restart_size_ : 100, n);
@@ -128,13 +129,13 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
         {
 
             // First compute AW and BW
-            START_TIMER("Apply A");
+            RAILS_START_TIMER("Apply A");
             MultiVector AW = std::move(A_ * W);
-            END_TIMER("Apply A");
+            RAILS_END_TIMER("Apply A");
 
-            START_TIMER("Apply B");
+            RAILS_START_TIMER("Apply B");
             MultiVector BW = std::move(B_.transpose() * W);
-            END_TIMER("Apply B");
+            RAILS_END_TIMER("Apply B");
 
             // Initialize BV which looks like B', not V
             if (!iter)
@@ -143,7 +144,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
                 BV.resize(0);
             }
 
-            START_TIMER("Compute VAV");
+            RAILS_START_TIMER("Compute VAV");
             // Now resize VAV. Resizing should not remove what was in VAV
             // previously
             int N_AV = AV.N();
@@ -189,7 +190,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
             AV.push_back(AW);
             BV.push_back(BW);
 
-            END_TIMER("Compute VAV");
+            RAILS_END_TIMER("Compute VAV");
         }
 
         dense_solve(VAV, VBV, T);
@@ -296,7 +297,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
         // vectors because it might be very expensive
         if (V.N() + expand_vectors > max_size)
         {
-            START_TIMER("Resize spaces");
+            RAILS_START_TIMER("Resize spaces");
             max_size += 100;
             int previous_size = V.N();
 
@@ -314,7 +315,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
 
             VBV.resize(max_size, max_size);
             VBV.resize(previous_size, previous_size);
-            END_TIMER("Resize spaces");
+            RAILS_END_TIMER("Resize spaces");
         }
 
         // Find the vectors belonging to the largest eigenvalues
@@ -334,7 +335,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
 template<class Matrix, class MultiVector, class DenseMatrix>
 int Solver<Matrix, MultiVector, DenseMatrix>::dense_solve(DenseMatrix const &A, DenseMatrix const &B, DenseMatrix &X)
 {
-    FUNCTION_TIMER("dense_solve");
+    RAILS_FUNCTION_TIMER("dense_solve");
     X = B.copy();
     DenseMatrix A_copy = A.copy();
     double scale = 1.0;
@@ -353,15 +354,15 @@ int Solver<Matrix, MultiVector, DenseMatrix>::dense_solve(DenseMatrix const &A, 
 template<class Matrix, class MultiVector, class DenseMatrix>
 int Solver<Matrix, MultiVector, DenseMatrix>::resid_lanczos(MultiVector const &AV, MultiVector const &V, DenseMatrix const &T, DenseMatrix &H, MultiVector &eigenvectors, DenseMatrix &eigenvalues, int max_iter)
 {
-    FUNCTION_TIMER("Lyapunov", "resid_lanczos");
-    START_TIMER("Residual Lanczos", "Top");
+    RAILS_FUNCTION_TIMER("Lyapunov", "resid_lanczos");
+    RAILS_START_TIMER("Residual Lanczos", "Top");
     MultiVector Q(V, max_iter+1);
     Q.resize(1);
     Q.random();
     Q.view(0) /= Q.norm();
 
     H = 0.0;
-    END_TIMER("Residual Lanczos", "Top");
+    RAILS_END_TIMER("Residual Lanczos", "Top");
 
     double alpha = 0.0;
     double beta = 0.0;
@@ -371,37 +372,37 @@ int Solver<Matrix, MultiVector, DenseMatrix>::resid_lanczos(MultiVector const &A
     {
         Q.resize(iter + 2);
 
-        START_TIMER("Residual Lanczos", "B apply");
+        RAILS_START_TIMER("Residual Lanczos", "B apply");
         MultiVector Y = std::move(B_.transpose() * Q.view(iter));
         Q.view(iter+1) = B_ * Y;
-        END_TIMER("Residual Lanczos", "B apply");
+        RAILS_END_TIMER("Residual Lanczos", "B apply");
 
-        START_TIMER("Residual Lanczos", "First part");
+        RAILS_START_TIMER("Residual Lanczos", "First part");
         DenseMatrix Z = std::move(V.dot(Q.view(iter)));
         Z = T * Z;
         Q.view(iter+1) += AV * Z;
-        END_TIMER("Residual Lanczos", "First part");
+        RAILS_END_TIMER("Residual Lanczos", "First part");
 
-        START_TIMER("Residual Lanczos", "Second part");
+        RAILS_START_TIMER("Residual Lanczos", "Second part");
         Z = AV.dot(Q.view(iter));
         Z = T * Z;
         Q.view(iter+1) += V * Z;
-        END_TIMER("Residual Lanczos", "Second part");
+        RAILS_END_TIMER("Residual Lanczos", "Second part");
 
-        START_TIMER("Residual Lanczos", "alpha");
+        RAILS_START_TIMER("Residual Lanczos", "alpha");
         alpha = Q.view(iter+1).dot(Q.view(iter))(0, 0);
         H(iter, iter) = alpha;
-        END_TIMER("Residual Lanczos", "alpha");
+        RAILS_END_TIMER("Residual Lanczos", "alpha");
 
-        START_TIMER("Residual Lanczos", "update");
+        RAILS_START_TIMER("Residual Lanczos", "update");
         Q.view(iter+1) -= alpha * Q.view(iter);
         if (iter > 0)
             Q.view(iter+1) -= beta * Q.view(iter-1);
-        END_TIMER("Residual Lanczos", "update");
+        RAILS_END_TIMER("Residual Lanczos", "update");
 
-        START_TIMER("Residual Lanczos", "beta");
+        RAILS_START_TIMER("Residual Lanczos", "beta");
         beta = Q.view(iter+1).norm();
-        END_TIMER("Residual Lanczos", "beta");
+        RAILS_END_TIMER("Residual Lanczos", "beta");
         if (beta < 1e-14)
         {
             // Beta is zero, but the offdiagonal elements of H
@@ -419,7 +420,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::resid_lanczos(MultiVector const &A
         iter++;
     }
 
-    START_TIMER("Residual Lanczos", "eigv");
+    RAILS_START_TIMER("Residual Lanczos", "eigv");
     H.resize(iter, iter);
     Q.resize(iter);
 
@@ -427,7 +428,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::resid_lanczos(MultiVector const &A
     H.eigs(v, eigenvalues);
 
     eigenvectors = Q * v;
-    END_TIMER("Residual Lanczos", "eigv");
+    RAILS_END_TIMER("Residual Lanczos", "eigv");
 
     return 0;
 }
@@ -435,7 +436,7 @@ int Solver<Matrix, MultiVector, DenseMatrix>::resid_lanczos(MultiVector const &A
 template<class Matrix, class MultiVector, class DenseMatrix>
 int Solver<Matrix, MultiVector, DenseMatrix>::compute_restart_vectors(DenseMatrix &X, DenseMatrix const &T, int num, double tol)
 {
-    FUNCTION_TIMER("Lyapunov", "compute_restart_vectors");
+    RAILS_FUNCTION_TIMER("Lyapunov", "compute_restart_vectors");
 
     // Compute the eigenvalues and eigenvectors of T
     int info;

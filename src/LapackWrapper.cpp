@@ -2,6 +2,9 @@
 
 #include <iostream>
 
+namespace RAILS
+{
+
 namespace LapackWrapper
 {
 
@@ -33,6 +36,8 @@ void DSYEV(char jobz, char uplo, int n, double *a, int lda,
 
     if (*info)
         std::cerr << "DSYEV info = " << info << std::endl;
+}
+
 }
 
 }

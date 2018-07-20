@@ -10,6 +10,8 @@
 #include <map>
 #include <string>
 
+using namespace RAILS;
+
 TEST(LyapunovSolverTest, ScalarEigenvalueSolver)
 {
     ScalarWrapper A = 2;
@@ -20,7 +22,7 @@ TEST(LyapunovSolverTest, ScalarEigenvalueSolver)
     ScalarWrapper eigenvectors = 0;
     ScalarWrapper eigenvalues = 0;
 
-    Lyapunov::Solver<ScalarWrapper, ScalarWrapper, ScalarWrapper> solver(A, B, 0);
+    Solver<ScalarWrapper, ScalarWrapper, ScalarWrapper> solver(A, B, 0);
 
     solver.resid_lanczos(A, V, T, H, eigenvectors, eigenvalues, 2);
 
@@ -34,7 +36,7 @@ TEST(LyapunovSolverTest, ScalarDenseSolver)
     ScalarWrapper B = -4;
     ScalarWrapper X = -4;
 
-    Lyapunov::Solver<ScalarWrapper, ScalarWrapper, ScalarWrapper> solver(A, B, 0);
+    Solver<ScalarWrapper, ScalarWrapper, ScalarWrapper> solver(A, B, 0);
 
     solver.dense_solve(A, B, X);
 
@@ -48,7 +50,7 @@ TEST(LyapunovSolverTest, ScalarSolver)
     ScalarWrapper X = -3;
     ScalarWrapper T = 123;
 
-    Lyapunov::Solver<ScalarWrapper, ScalarWrapper, ScalarWrapper> solver(A, B, 0);
+    Solver<ScalarWrapper, ScalarWrapper, ScalarWrapper> solver(A, B, 0);
 
     int ret = solver.solve(X, T);
     EXPECT_EQ(0, ret);
@@ -72,7 +74,7 @@ TEST(LyapunovSolverTest, StlDenseSolver)
 
     StlWrapper X;
 
-    Lyapunov::Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
+    Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
 
     solver.dense_solve(A, B, X);
 
@@ -101,7 +103,7 @@ TEST(LyapunovSolverTest, StlDenseSolverResize)
 
     StlWrapper X;
 
-    Lyapunov::Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
+    Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
 
     solver.dense_solve(A, B, X);
 
@@ -134,14 +136,14 @@ TEST(LyapunovSolverTest, StlSolver)
     StlWrapper R_exp(n, n);
     R_exp = 0.0;
 
-    Lyapunov::Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
+    Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
 
     int ret = solver.solve(X, T);
     EXPECT_EQ(0, ret);
 
     // Compute the residual
     R = A * X * T * X.transpose()
-      + X * T * X.transpose() * A.transpose() + B * B.transpose();
+        + X * T * X.transpose() * A.transpose() + B * B.transpose();
 
     EXPECT_VECTOR_NEAR(R_exp, R);
 
@@ -151,7 +153,7 @@ TEST(LyapunovSolverTest, StlSolver)
 
     // Compute the residual
     R = A * X * T * X.transpose()
-      + X * T * X.transpose() * A.transpose() + B * B.transpose();
+        + X * T * X.transpose() * A.transpose() + B * B.transpose();
 
     EXPECT_VECTOR_NEAR(R_exp, R);
 }
@@ -208,7 +210,7 @@ TEST(LyapunovSolverTest, StlSolverRestart)
     StlWrapper X(n,1);
     StlWrapper T;
 
-    Lyapunov::Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
+    Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
 
     ParameterList params;
     params.set("Restart Size", 19);
@@ -222,7 +224,7 @@ TEST(LyapunovSolverTest, StlSolverRestart)
 
     // Compute the residual
     StlWrapper R = A * X * T * X.transpose()
-      + X * T * X.transpose() * A.transpose() + B * B.transpose();
+        + X * T * X.transpose() * A.transpose() + B * B.transpose();
     StlWrapper R_exp(n, n);
     R_exp = 0.0;
 
@@ -244,7 +246,7 @@ TEST(LyapunovSolverTest, StlSolverMinimize)
     StlWrapper R_exp(n, n);
     R_exp = 0.0;
 
-    Lyapunov::Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
+    Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
 
     ParameterList params;
     params.set("Minimize solution space", false);
@@ -255,7 +257,7 @@ TEST(LyapunovSolverTest, StlSolverMinimize)
 
     // Compute the residual
     R = A * X * T * X.transpose()
-      + X * T * X.transpose() * A.transpose() + B * B.transpose();
+        + X * T * X.transpose() * A.transpose() + B * B.transpose();
 
     EXPECT_EQ(n, X.N());
 
@@ -268,7 +270,7 @@ TEST(LyapunovSolverTest, StlSolverMinimize)
 
     // Compute the residual
     R = A * X * T * X.transpose()
-      + X * T * X.transpose() * A.transpose() + B * B.transpose();
+        + X * T * X.transpose() * A.transpose() + B * B.transpose();
 
     EXPECT_GT(n, X.N());
 
@@ -288,7 +290,7 @@ TEST(LyapunovSolverTest, StlSolverRestartIterations)
     StlWrapper R_exp(n, n);
     R_exp = 0.0;
 
-    Lyapunov::Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
+    Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
 
     ParameterList params;
     params.set("Restart iterations", 10);
@@ -301,7 +303,7 @@ TEST(LyapunovSolverTest, StlSolverRestartIterations)
 
     // Compute the residual
     R = A * X * T * X.transpose()
-      + X * T * X.transpose() * A.transpose() + B * B.transpose();
+        + X * T * X.transpose() * A.transpose() + B * B.transpose();
 
     EXPECT_GT(n, X.N());
 

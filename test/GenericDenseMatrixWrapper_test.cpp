@@ -9,6 +9,8 @@
 #include "Epetra_TestableWrappers.hpp"
 #endif
 
+using namespace RAILS;
+
 template <class DenseMatrixWrapper>
 class GenericDenseMatrixWrapperTest: public testing::Test
 {

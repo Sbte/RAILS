@@ -3,7 +3,8 @@
 
 #include "MatrixOrMultiVectorWrapper.hpp"
 
-namespace Lyapunov {
+namespace RAILS
+{
 
 template<class Matrix, class MultiVector, class DenseMatrix>
 class Solver
@@ -49,4 +50,5 @@ protected:
 };
 
 }
+
 #endif
