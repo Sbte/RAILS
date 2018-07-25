@@ -32,7 +32,8 @@ Solver<Matrix, MultiVector, DenseMatrix>::Solver(Matrix const &A,
     reduced_size_(-1),
     restart_iterations_(20),
     restart_tolerance_(tol_ * 1e-3),
-    minimize_solution_space_(true)
+    minimize_solution_space_(true),
+    restart_from_solution_(false)
 {
 }
 
@@ -82,6 +83,8 @@ int Solver<Matrix, MultiVector, DenseMatrix>::set_parameters(ParameterList &para
     restart_tolerance_ = get_parameter(params, "Restart tolerance", tol_ * 1e-3);
     minimize_solution_space_ = get_parameter(params, "Minimize solution space",
                                              minimize_solution_space_);
+    restart_from_solution_ = get_parameter(params, "Restart from solution",
+                                           restart_from_solution_);
 
     if (lanczos_iterations_ <= expand_size_)
     {
@@ -100,12 +103,22 @@ int Solver<Matrix, MultiVector, DenseMatrix>::solve(MultiVector &V, DenseMatrix 
     RAILS_FUNCTION_TIMER("Solver");
     int n = V.M();
 
-    int max_size = std::min(restart_size_ > 0 ? restart_size_ : 100, n);
-    V.resize(max_size);
+    int max_size = std::max(V.N(), std::min(restart_size_ > 0 ? restart_size_ : 100, n));
 
-    V.resize(1);
-    V.random();
-    V.orthogonalize();
+    if (!restart_from_solution_)
+    {
+        V.resize(max_size);
+
+        V.resize(1);
+        V.random();
+        V.orthogonalize();
+    }
+    else if (max_size != V.N())
+    {
+        int previous_size = V.N();
+        V.resize(max_size);
+        V.resize(previous_size);
+    }
 
     MultiVector W = V;
 

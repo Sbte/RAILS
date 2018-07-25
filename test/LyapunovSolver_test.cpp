@@ -309,3 +309,45 @@ TEST(LyapunovSolverTest, StlSolverRestartIterations)
 
     EXPECT_VECTOR_NEAR(R_exp, R);
 }
+
+TEST(LyapunovSolverTest, StlSolverRestartFromSolution)
+{
+    int n = 20;
+    StlWrapper A, B;
+    get_tridiagonal_problem(n, A, B);
+
+    StlWrapper X(n,1);
+    StlWrapper T;
+
+    Solver<StlWrapper, StlWrapper, StlWrapper> solver(A, B, B);
+
+    ParameterList params;
+    params.set("Minimize solution space", true);
+    params.set("Tolerance", 1e-8);
+    solver.set_parameters(params);
+
+    int ret = solver.solve(X, T);
+    EXPECT_EQ(0, ret);
+
+    EXPECT_GT(n, X.N());
+
+    A(n-1,n-1) = 4.0;
+
+    Solver<StlWrapper, StlWrapper, StlWrapper> solver2(A, B, B);
+
+    params.set("Restart from solution", true);
+    solver2.set_parameters(params);
+
+    ret = solver2.solve(X, T);
+    EXPECT_EQ(0, ret);
+
+    // Compute the residual
+    StlWrapper R = A * X * T * X.transpose()
+        + X * T * X.transpose() * A.transpose() + B * B.transpose();
+    StlWrapper R_exp(n, n);
+    R_exp = 0.0;
+
+    EXPECT_GT(n, X.N());
+
+    EXPECT_VECTOR_NEAR(R_exp, R);
+}

@@ -47,6 +47,7 @@ protected:
     int restart_iterations_;
     double restart_tolerance_;
     bool minimize_solution_space_;
+    bool restart_from_solution_;
 };
 
 }
