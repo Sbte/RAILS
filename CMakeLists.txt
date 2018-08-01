@@ -145,38 +145,15 @@ install(FILES "${PROJECT_BINARY_DIR}/RAILSConfig.cmake"
 
 ########## Tests ############
 
-INCLUDE(ExternalProject)
+add_subdirectory(cmake)
 
-SET_DIRECTORY_PROPERTIES(PROPERTIES EP_PREFIX ${CMAKE_BINARY_DIR}/third_party)
-
-ExternalProject_Add(
-  googletest
+include(BuildExternalProject)
+BuildExternalProject(
+  GTest
   GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG release-1.8.0
-  INSTALL_COMMAND ""
-  LOG_DOWNLOAD ON
-  LOG_CONFIGURE ON
-  LOG_BUILD ON)
+  GIT_TAG release-1.8.0)
 
-ExternalProject_Get_Property(googletest source_dir)
-set(GTEST_INCLUDE_DIRS ${source_dir}/googletest/include)
-
-ExternalProject_Get_Property(googletest binary_dir)
-set(GTEST_LIBRARY_PATH ${binary_dir}/googlemock/gtest/${CMAKE_FIND_LIBRARY_PREFIXES}gtest.a)
-set(GTEST_MAIN_LIBRARY_PATH ${binary_dir}/googlemock/gtest/${CMAKE_FIND_LIBRARY_PREFIXES}gtest_main.a)
-set(GTEST_LIBRARY gtest)
-set(GTEST_MAIN_LIBRARY gtest_main)
-set(GTEST_BOTH_LIBRARIES gtest gtest_main)
-
-add_library(${GTEST_LIBRARY} UNKNOWN IMPORTED)
-set_property(TARGET ${GTEST_LIBRARY} PROPERTY IMPORTED_LOCATION
-  ${GTEST_LIBRARY_PATH})
-add_dependencies(${GTEST_LIBRARY} googletest)
-
-add_library(${GTEST_MAIN_LIBRARY} UNKNOWN IMPORTED)
-set_property(TARGET ${GTEST_MAIN_LIBRARY} PROPERTY IMPORTED_LOCATION
-  ${GTEST_MAIN_LIBRARY_PATH})
-add_dependencies(${GTEST_MAIN_LIBRARY} googletest)
+BuildExternalProject_find_package(GTest)
 
 enable_testing()
 include_directories(${GTEST_INCLUDE_DIRS})
@@ -196,6 +173,10 @@ foreach(test_source ${TEST_SOURCES})
 endforeach()
 
 set(test_targets ${test_list})
+
+INCLUDE(ExternalProject)
+
+SET_DIRECTORY_PROPERTIES(PROPERTIES EP_PREFIX ${CMAKE_BINARY_DIR}/external)
 
 ExternalProject_Add(
   moxunit
