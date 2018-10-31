@@ -50,6 +50,11 @@ function [V,T,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
 %   amount of vectors in V is dependent on this tolerance. (default
 %   1e-3 * tol).
 %
+% opts.restart_upon_start: Perform a restart after the first projected
+%   problem is solved to reduce the size of the space. This is
+%   especially useful when restarting from a solution to a similar
+%   previous problem. (default: false).
+%
 % opts.restart_upon_convergence: Perform a restart upon convergence to
 %   reduce the size of the space. This is the same as doing a rank
 %   reduction as a post-processing step except that it will also
@@ -118,7 +123,6 @@ function [V,T,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
 
     restart_size = -1;
     restart_iterations = -1;
-    lanczos_iterations = 10;
     reduced_size = -1;
     expand = min(3, size(B, 2));
     mortho = false;
@@ -127,6 +131,7 @@ function [V,T,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
     projection_method = 1;
     restart_tolerance = 1e-3 * tol;
     restart_upon_convergence = true;
+    restart_upon_start = false;
     eigs_tol = [];
     nev = [];
     fast_orthogonalization = true;
@@ -202,6 +207,9 @@ function [V,T,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
         end
         if isfield(opts, 'restart_upon_convergence')
             restart_upon_convergence = opts.restart_upon_convergence;
+        end
+        if isfield(opts, 'restart_upon_start')
+            restart_upon_start = opts.restart_upon_start;
         end
         if isfield(opts, 'expand')
             expand = opts.expand;
@@ -444,10 +452,11 @@ function [V,T,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
             break;
         end
 
-        if (restart_iterations > 0 && iter_since_restart == restart_iterations) ...
-                || (isempty(H) && reduced_size > 0 && size(T,1) > reduced_size) ...
-                || (restart_size > 0 && size(T, 1) > restart_size) ...
-                || (converged && ~reduced)
+        if (i == 1 && restart_upon_start) ...
+               || (restart_iterations > 0 && iter_since_restart == restart_iterations) ...
+               || (isempty(H) && reduced_size > 0 && size(T,1) > reduced_size) ...
+               || (restart_size > 0 && size(T, 1) > restart_size) ...
+               || (converged && ~reduced)
 
             if reduced_size > 0 && reduced_size < size(V, 2)
                 if verbosity > 0
