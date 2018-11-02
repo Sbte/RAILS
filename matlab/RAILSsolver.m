@@ -314,7 +314,7 @@ function [V,T,res,iter,resvec,timevec,restart_data] = RAILSsolver(A, M, B, varar
     end
 
     if isempty(nev)
-        nev = expand * 2;
+        nev = expand;
     end
 
     MV = [];
