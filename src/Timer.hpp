@@ -94,12 +94,12 @@ public:
 
 #else
 
-#define RAILS_TIMER_START(args...) timer_start(args)
-#define RAILS_TIMER_END(args...) timer_end(args)
-#define RAILS_START_TIMER(args...) timer_start(args)
-#define RAILS_END_TIMER(args...) timer_end(args)
+#define RAILS_TIMER_START(args...) RAILS::timer_start(args)
+#define RAILS_TIMER_END(args...) RAILS::timer_end(args)
+#define RAILS_START_TIMER(args...) RAILS::timer_start(args)
+#define RAILS_END_TIMER(args...) RAILS::timer_end(args)
 #define RAILS_FUNCTION_TIMER(args...) RAILS::DestructibleTimer function_timer(args)
-#define RAILS_SAVE_PROFILES(args...) save_profiles(args)
+#define RAILS_SAVE_PROFILES(args...) RAILS::save_profiles(args)
 
 #endif
 
