@@ -6,6 +6,7 @@
 #endif
 
 #include <ctime>
+#include <sys/time.h>
 #include <string>
 
 namespace RAILS
@@ -27,9 +28,12 @@ public:
             MPI_Initialized(&mpiInit);
             if (mpiInit)
                 return MPI_Wtime();
-            else
 #endif
-                return (double) std::clock() / CLOCKS_PER_SEC;
+            time_t timer;
+            time(&timer);
+            struct timeval tp;
+            gettimeofday(&tp, NULL);
+            return (double) tp.tv_sec + tp.tv_usec / 1000000.0;
         }
         
     void ResetStartTime()
@@ -38,7 +42,7 @@ public:
     double ElapsedTime()
         {
             if (startTime_ > 0.0)
-                return (double) (wallTime() - startTime_);
+                return wallTime() - startTime_;
             else
                 return 0.0;
         }
