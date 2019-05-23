@@ -479,12 +479,12 @@ int StlWrapper::eigs(StlWrapper &v, StlWrapper &d,
     return info;
 }
 
-}
-
-RAILS::StlWrapper operator *(double d, RAILS::StlWrapper const &other)
+StlWrapper operator *(double d, StlWrapper const &other)
 {
     RAILS_FUNCTION_TIMER("StlWrapper", "double *");
-    RAILS::StlWrapper e(other);
+    StlWrapper e(other);
     e *= d;
     return e;
+}
+
 }

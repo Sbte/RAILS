@@ -127,7 +127,6 @@ TEST(LyapunovSolverTest, StlSolver)
     StlWrapper C = B.copy();
     C(n-1, 0) = 0.0;
     B -= C;
-    B = B;
 
     StlWrapper X(n,1);
     StlWrapper T;
@@ -198,7 +197,6 @@ void get_tridiagonal_problem(int n, StlWrapper &A, StlWrapper &B)
     StlWrapper C = B.copy();
     C(n-1, 0) = 0.0;
     B -= C;
-    B = B;
 }
 
 TEST(LyapunovSolverTest, StlSolverRestart)

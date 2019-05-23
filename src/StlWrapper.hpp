@@ -89,8 +89,8 @@ public:
 
 };
 
-}
+StlWrapper operator *(double d, StlWrapper const &other);
 
-RAILS::StlWrapper operator *(double d, RAILS::StlWrapper const &other);
+}
 
 #endif

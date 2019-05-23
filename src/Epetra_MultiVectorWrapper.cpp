@@ -426,13 +426,13 @@ Teuchos::RCP<Epetra_SerialDenseMatrix> MultiVectorToSerialDenseMatrix(
                             src.MyLength(), src.NumVectors()));
 }
 
-}
-
-RAILS::Epetra_MultiVectorWrapper operator *(
-    double d,RAILS::Epetra_MultiVectorWrapper const &other)
+Epetra_MultiVectorWrapper operator *(
+    double d, Epetra_MultiVectorWrapper const &other)
 {
     RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "double *");
-    RAILS::Epetra_MultiVectorWrapper e(other);
+    Epetra_MultiVectorWrapper e(other);
     e *= d;
     return e;
+}
+
 }

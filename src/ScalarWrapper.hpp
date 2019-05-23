@@ -63,16 +63,14 @@ public:
                 delete[] s_;
         }
 
-    ScalarWrapper &operator =(ScalarWrapper const &other)
+    ScalarWrapper &operator =(ScalarWrapper other)
         {
             if (!is_view_)
             {
-                ScalarWrapper tmp(other);
-                char *buffer = new char[sizeof(ScalarWrapper)];
-                memcpy(buffer, this, sizeof(ScalarWrapper));
-                memcpy(this, &tmp, sizeof(ScalarWrapper));
-                memcpy(&tmp, buffer, sizeof(ScalarWrapper));
-                delete[] buffer;
+                std::swap(s_, other.s_);
+                std::swap(is_view_, other.is_view_);
+                std::swap(size_, other.size_);
+                std::swap(capacity_, other.capacity_);
                 return *this;
             }
 
