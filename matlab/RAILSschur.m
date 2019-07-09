@@ -37,7 +37,8 @@ function [S, MS, BS, Sinv, Vtrans] = RAILSschur(A, M, B)
 
     BS = B(idx2,:);
 
-    if norm(B(idx1,:)) > sqrt(eps)
+    if norm(B(idx1,:), inf) > sqrt(eps)
+        BS = restrict(B);
         warning('B is not zero in the singular part');
     end
 
@@ -52,7 +53,25 @@ function [S, MS, BS, Sinv, Vtrans] = RAILSschur(A, M, B)
 
     Sinv = @(x) X2(A \ (Xreorder([zeros(size(A,1)-size(x,1), size(x,2)); x])));
 
-    Vtrans = @(V) Xreorder([-A11 \ (A12 * V); V]);
+    Vtrans = @(V) transform(V);
+
+    function y = restrict(x)
+        y = x(idx2,:)- A21 * (A11 \ x(idx1,:));
+    end
+
+    function y = prolongate(x)
+        y = Xreorder([-A11 \ (A12 * x); x]);
+    end
+
+    function y = transform(x)
+        if size(x, 1) == size(A, 1)
+            y = restrict(x);
+        elseif size(x, 1) == size(A22, 1)
+            y = prolongate(x);
+        else
+            error(['size of x =', num2str(size(x, 1))]);
+        end
+    end
 end 
 
 function y = transfun(x, f, tf, trans)
