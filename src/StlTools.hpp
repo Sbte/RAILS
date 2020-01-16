@@ -1,6 +1,7 @@
 #ifndef STLTOOLS_H
 #define STLTOOLS_H
 
+#include <cmath>
 #include <utility>
 #include <vector>
 #include <algorithm>
