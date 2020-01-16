@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8)
 project(RAILS C CXX)
 
+list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_SOURCE_DIR}/CMakeModules)
+
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
   message(STATUS "Using GNU compiler flags")
 
@@ -55,6 +57,7 @@ set(HEADERS ${HEADERS}
 
 find_package(BLAS REQUIRED)
 find_package(LAPACK REQUIRED)
+find_package(SLICOT REQUIRED)
 
 find_package(Trilinos QUIET)
 
@@ -98,7 +101,7 @@ include_directories(${PROJECT_SOURCE_DIR})
 set(BUILD_SHARED_LIBS ON)
 
 add_library(rails ${SOURCES})
-target_link_libraries(rails "slicot")
+target_link_libraries(rails ${SLICOT_LIB})
 target_link_libraries(rails ${BLAS_LIBRARIES})
 target_link_libraries(rails ${LAPACK_LIBRARIES})
 

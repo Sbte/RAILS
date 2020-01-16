@@ -1,0 +1,33 @@
+SET(SLICOT_LIB_SEARCH_PATHS
+        /lib/
+        /lib64/
+        /usr/lib/
+        /usr/lib64/
+        /usr/local/lib
+        /usr/local/lib64
+ )
+
+FIND_LIBRARY(SLICOT_LIB NAMES slicot slicot64 PATHS ${SLICOT_LIB_SEARCH_PATHS})
+
+SET(SLICOT_FOUND ON)
+
+#    Check libraries
+IF(NOT SLICOT_LIB)
+    SET(SLICOT_FOUND OFF)
+    MESSAGE(STATUS "Could not find SLICOT lib. Turning SLICOT off")
+ENDIF()
+
+IF (SLICOT_FOUND)
+  IF (NOT SLICOT_FIND_QUIETLY)
+      MESSAGE(STATUS "Found SLICOT libraries: ${SLICOT_LIB}")
+  ENDIF (NOT SLICOT_FIND_QUIETLY)
+ELSE (SLICOT_FOUND)
+  IF (SLICOT_FIND_REQUIRED)
+    MESSAGE(FATAL_ERROR "Could not find SLICOT")
+  ENDIF (SLICOT_FIND_REQUIRED)
+ENDIF (SLICOT_FOUND)
+
+MARK_AS_ADVANCED(
+    SLICOT_LIB
+    SLICOT
+)
