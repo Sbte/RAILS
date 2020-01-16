@@ -2,6 +2,7 @@
 
 #include "TestHelpers.hpp"
 
+#include <cmath>
 #include "src/StlWrapper.hpp"
 
 #ifdef ENABLE_TRILINOS
