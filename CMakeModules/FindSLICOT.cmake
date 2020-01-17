@@ -1,33 +1,44 @@
-SET(SLICOT_LIB_SEARCH_PATHS
-        /lib/
-        /lib64/
-        /usr/lib/
-        /usr/lib64/
-        /usr/local/lib
-        /usr/local/lib64
- )
+# - Find the SLICOT library
+#
+# This module defines
+#  SLICOT_LIBRARIES, the libraries to link against to use SLICOT.
+#  SLICOT_FOUND, If false, do not try to use SLICOT.
+# also defined, but not for general use are
+#  SLICOT_LIBRARY, where to find the SLICOT library.
 
-FIND_LIBRARY(SLICOT_LIB NAMES slicot slicot64 PATHS ${SLICOT_LIB_SEARCH_PATHS})
+#=============================================================================
+# Copyright 2010, Martin Koehler
+# http://www-user.tu-chemnitz.de/~komart/
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file Copyright.txt for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
 
-SET(SLICOT_FOUND ON)
+if (WIN32)
+	set(_libdir ENV LIB)
+elseif (APPLE)
+	set(_libdir ENV DYLD_LIBRARY_PATH)
+else ()
+	set(_libdir ENV LD_LIBRARY_PATH)
+endif ()
 
-#    Check libraries
-IF(NOT SLICOT_LIB)
-    SET(SLICOT_FOUND OFF)
-    MESSAGE(STATUS "Could not find SLICOT lib. Turning SLICOT off")
-ENDIF()
+set(SLICOT_NAMES slicot)
+#set(SLICOT_PATH /usr/local/lib /usr/lib )
+find_library(SLICOT_LIBRARY NAMES ${SLICOT_NAMES} PATHS ${_libdir} )
 
-IF (SLICOT_FOUND)
-  IF (NOT SLICOT_FIND_QUIETLY)
-      MESSAGE(STATUS "Found SLICOT libraries: ${SLICOT_LIB}")
-  ENDIF (NOT SLICOT_FIND_QUIETLY)
-ELSE (SLICOT_FOUND)
-  IF (SLICOT_FIND_REQUIRED)
-    MESSAGE(FATAL_ERROR "Could not find SLICOT")
-  ENDIF (SLICOT_FIND_REQUIRED)
-ENDIF (SLICOT_FOUND)
+if (SLICOT_LIBRARY)
+	SET(SLICOT_LIBRARIES ${SLICOT_LIBRARY} ${LAPACK_LIBRARIES})
+	SET(SLICOT_FOUND true)
+endif (SLICOT_LIBRARY)
 
-MARK_AS_ADVANCED(
-    SLICOT_LIB
-    SLICOT
-)
+
+# handle the QUIETLY and REQUIRED arguments and set SLICOT_FOUND to TRUE if
+# all listed variables are TRUE
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(SLICOT  DEFAULT_MSG SLICOT_LIBRARY )
+
+mark_as_advanced(SLICOT_LIBRARY )

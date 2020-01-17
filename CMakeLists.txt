@@ -102,7 +102,7 @@ include_directories(${PROJECT_SOURCE_DIR})
 set(BUILD_SHARED_LIBS ON)
 
 add_library(rails ${SOURCES})
-target_link_libraries(rails ${SLICOT_LIB})
+target_link_libraries(rails ${SLICOT_LIBRARIES})
 target_link_libraries(rails ${BLAS_LIBRARIES})
 target_link_libraries(rails ${LAPACK_LIBRARIES})
 
