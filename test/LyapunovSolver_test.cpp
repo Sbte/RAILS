@@ -248,6 +248,7 @@ TEST(LyapunovSolverTest, StlSolverMinimize)
 
     ParameterList params;
     params.set("Minimize solution space", false);
+    params.set("Tolerance", 1e-8);
     solver.set_parameters(params);
 
     int ret = solver.solve(X, T);
