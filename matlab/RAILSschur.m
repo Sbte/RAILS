@@ -35,39 +35,39 @@ function [S, MS, BS, Sinv, Vtrans] = RAILSschur(A, M, B)
         MS = M(idx2, idx2);
     end
 
-    BS = B(idx2,:);
+    BS = B(idx2, :);
 
-    if norm(B(idx1,:), inf) > sqrt(eps)
+    if norm(B(idx1, :), inf) > sqrt(eps)
         BS = restrict(B);
         warning('B is not zero in the singular part');
     end
 
     idxr = [idx1; idx2];
-    idxl = zeros(size(A,1),1);
-    for i=1:size(A,1)
+    idxl = zeros(size(A, 1), 1);
+    for i=1:size(A, 1)
         idxl(i) = find(idxr==i);
     end
 
-    Xreorder = @(x) x(idxl,:);
-    X2 = @(x) x(idx2,:);
+    Xreorder = @(x) x(idxl, :);
+    X2 = @(x) x(idx2, :);
 
-    Sinv = @(x) X2(A \ (Xreorder([zeros(size(A,1)-size(x,1), size(x,2)); x])));
+    Sinv = @(x) X2(A \ (Xreorder([zeros(size(A, 1) - size(x, 1), size(x, 2)); x])));
 
-    Vtrans = @(V) transform(V);
+    Vtrans = @(V) transform(V, A, A11, A12, A21, A22, idx1, idx2, Xreorder);
 
-    function y = restrict(x)
-        y = x(idx2,:)- A21 * (A11 \ x(idx1,:));
+    function y = restrict(x, A, A11, A21, idx1, idx2)
+        y = x(idx2, :)- A21 * (A11 \ x(idx1, :));
     end
 
-    function y = prolongate(x)
+    function y = prolongate(x, A, A11, A12, Xreorder)
         y = Xreorder([-A11 \ (A12 * x); x]);
     end
 
-    function y = transform(x)
+    function y = transform(x, A, A11, A12, A21, A22, idx1, idx2, Xreorder)
         if size(x, 1) == size(A, 1)
-            y = restrict(x);
+            y = restrict(x, A, A11, A21, idx1, idx2);
         elseif size(x, 1) == size(A22, 1)
-            y = prolongate(x);
+            y = prolongate(x, A, A11, A12, Xreorder);
         else
             error(['size of x =', num2str(size(x, 1))]);
         end
