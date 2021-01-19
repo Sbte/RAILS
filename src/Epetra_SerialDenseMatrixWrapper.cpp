@@ -57,9 +57,9 @@ Epetra_SerialDenseMatrixWrapper::Epetra_SerialDenseMatrixWrapper(Epetra_SerialDe
 
 Epetra_SerialDenseMatrixWrapper Epetra_SerialDenseMatrixWrapper::transpose() const
 {
-    Epetra_SerialDenseMatrixWrapper tmp = std::move(*this);
-    tmp.transpose_ = !tmp.transpose_;
-    return tmp;
+    Epetra_SerialDenseMatrixWrapper out = std::move(*this);
+    out.transpose_ = !out.transpose_;
+    return out;
 }
 
 Epetra_SerialDenseMatrixWrapper &Epetra_SerialDenseMatrixWrapper::operator =(
