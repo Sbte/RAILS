@@ -140,7 +140,22 @@ TYPED_TEST(GenericDenseMatrixWrapperTest, View)
 
     // double *raw = &this->D(0, 0); // Doesn't work with Epetra
     this->D.resize(2, 2);
+
+    for (int i = 0; i < 2; ++i)
+        for (int j = 0; j < 2; ++j)
+        {
+            ASSERT_EQ(2.0, this->A(i, j));
+            ASSERT_EQ(1.0, this->D(i, j));
+        }
+
     this->D.view() = this->A;
+
+    for (int i = 0; i < 2; ++i)
+        for (int j = 0; j < 2; ++j)
+        {
+            ASSERT_EQ(2.0, this->D(i, j));
+        }
+
     this->D.resize(10, 10);
 
     for (int i = 0; i < 2; ++i)

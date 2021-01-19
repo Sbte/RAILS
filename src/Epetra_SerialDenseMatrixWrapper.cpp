@@ -48,9 +48,9 @@ Epetra_SerialDenseMatrixWrapper::Epetra_SerialDenseMatrixWrapper(int m, int n)
 
 Epetra_SerialDenseMatrixWrapper::Epetra_SerialDenseMatrixWrapper(Epetra_SerialDenseMatrixWrapper &&other)
     :
-    ptr_(std::move(other.ptr_)),
-    is_view_(std::move(other.is_view_)),
-    transpose_(std::move(other.transpose_))
+    ptr_(other.ptr_),
+    is_view_(other.is_view_),
+    transpose_(other.transpose_)
 {
     RAILS_FUNCTION_TIMER("Epetra_SerialDenseMatrixWrapper", "constructor 3");
 }
