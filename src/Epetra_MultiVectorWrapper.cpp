@@ -71,6 +71,19 @@ Epetra_MultiVectorWrapper::Epetra_MultiVectorWrapper(int m, int n)
     ptr_ = Teuchos::rcp(new Epetra_MultiVector(map, n));
 }
 
+Epetra_MultiVectorWrapper::Epetra_MultiVectorWrapper(Epetra_MultiVectorWrapper &&other)
+    :
+    ptr_(other.ptr_),
+    ptr_allocated_(other.ptr_allocated_),
+    capacity_(other.capacity_),
+    size_(other.size_),
+    orthogonalized_(other.orthogonalized_),
+    is_view_(other.is_view_),
+    transpose_(other.transpose_)
+{
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "constructor 6");
+}
+
 Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator =(
     Epetra_MultiVectorWrapper &other)
 {

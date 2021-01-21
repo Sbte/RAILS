@@ -39,6 +39,7 @@ public:
     Epetra_MultiVectorWrapper(Teuchos::RCP<Epetra_MultiVector> ptr);
     Epetra_MultiVectorWrapper(Epetra_MultiVectorWrapper const &other);
     Epetra_MultiVectorWrapper(Epetra_MultiVectorWrapper const &other, int n);
+    Epetra_MultiVectorWrapper(Epetra_MultiVectorWrapper &&other);
 
     virtual ~Epetra_MultiVectorWrapper() {}
 
