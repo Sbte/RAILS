@@ -24,6 +24,11 @@ public:
         Epetra_MultiVectorWrapper(std::forward<Epetra_MultiVectorWrapper>(other))
         {}
 
+    TestableEpetra_MultiVectorWrapper(TestableEpetra_MultiVectorWrapper const &other)
+        :
+        Epetra_MultiVectorWrapper(other)
+        {}
+
     TestableEpetra_MultiVectorWrapper(TestableEpetra_MultiVectorWrapper &&other)
         :
         Epetra_MultiVectorWrapper(std::forward<Epetra_MultiVectorWrapper>(other))
