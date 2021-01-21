@@ -347,8 +347,7 @@ Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::view(int m, int n) const
 Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::copy() const
 {
     RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "copy");
-    Epetra_MultiVectorWrapper out(*this);
-    return out;
+    return *this;
 }
 
 Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::transpose() const

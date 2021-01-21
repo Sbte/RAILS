@@ -361,8 +361,7 @@ StlWrapper StlWrapper::view(int m, int n) const
 StlWrapper StlWrapper::copy() const
 {
     RAILS_FUNCTION_TIMER("StlWrapper", "copy");
-    StlWrapper out(*this);
-    return out;
+    return *this;
 }
 
 void StlWrapper::push_back(StlWrapper const &other)
