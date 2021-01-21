@@ -122,6 +122,25 @@ Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator =(
     return *this;
 }
 
+Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator =(
+    Epetra_MultiVectorWrapper &&other)
+{
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "= 3");
+    if (!is_view_)
+    {
+        ptr_ = other.ptr_;
+        size_ = other.size_;
+        orthogonalized_ = other.orthogonalized_;
+        transpose_ = other.transpose_;
+        return *this;
+    }
+
+    assert(N() == other.N());
+
+    other.ptr_->ExtractCopy(ptr_->Values(), ptr_->MyLength());
+    return *this;
+}
+
 Epetra_MultiVectorWrapper &Epetra_MultiVectorWrapper::operator =(double other)
 {
     RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "= 3");

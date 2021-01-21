@@ -45,6 +45,7 @@ public:
 
     Epetra_MultiVectorWrapper &operator =(Epetra_MultiVectorWrapper &other);
     Epetra_MultiVectorWrapper &operator =(Epetra_MultiVectorWrapper const &other);
+    Epetra_MultiVectorWrapper &operator =(Epetra_MultiVectorWrapper &&other);
 
     Epetra_MultiVectorWrapper &operator =(double other);
 
