@@ -19,6 +19,16 @@ public:
         Epetra_MultiVectorWrapper(other)
         {}
 
+    TestableEpetra_MultiVectorWrapper(Epetra_MultiVectorWrapper &&other)
+        :
+        Epetra_MultiVectorWrapper(std::forward<Epetra_MultiVectorWrapper>(other))
+        {}
+
+    TestableEpetra_MultiVectorWrapper(TestableEpetra_MultiVectorWrapper &&other)
+        :
+        Epetra_MultiVectorWrapper(std::forward<Epetra_MultiVectorWrapper>(other))
+        {}
+
     TestableEpetra_MultiVectorWrapper(int m, int n)
         :
         Epetra_MultiVectorWrapper(m, n)
@@ -32,6 +42,11 @@ public:
     Epetra_MultiVectorWrapper &operator =(TestableEpetra_MultiVectorWrapper const &other)
         {
             return Epetra_MultiVectorWrapper::operator =(other);
+        }
+
+    Epetra_MultiVectorWrapper &operator =(TestableEpetra_MultiVectorWrapper &&other)
+        {
+            return Epetra_MultiVectorWrapper::operator =(std::forward<Epetra_MultiVectorWrapper>(other));
         }
 
     Epetra_MultiVectorWrapper &operator =(double other)
