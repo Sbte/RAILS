@@ -352,9 +352,9 @@ Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::copy() const
 
 Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::transpose() const
 {
-    Epetra_MultiVectorWrapper tmp(*this);
-    tmp.transpose_ = !tmp.transpose_;
-    return tmp;
+    Epetra_MultiVectorWrapper out(*this);
+    out.transpose_ = !out.transpose_;
+    return out;
 }
 
 void Epetra_MultiVectorWrapper::push_back(Epetra_MultiVectorWrapper const &other, int m)
