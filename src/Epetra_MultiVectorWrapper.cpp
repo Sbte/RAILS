@@ -150,9 +150,9 @@ Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::operator +(
     Epetra_MultiVectorWrapper const &other) const
 {
     RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "+");
-    Epetra_MultiVectorWrapper e(*this);
-    e += other;
-    return e;
+    Epetra_MultiVectorWrapper out(*this);
+    out += other;
+    return out;
 }
 
 Epetra_MultiVectorWrapper Epetra_MultiVectorWrapper::operator *(
@@ -429,9 +429,9 @@ Epetra_MultiVectorWrapper operator *(
     double d, Epetra_MultiVectorWrapper const &other)
 {
     RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "double *");
-    Epetra_MultiVectorWrapper e(other);
-    e *= d;
-    return e;
+    Epetra_MultiVectorWrapper out(other);
+    out *= d;
+    return out;
 }
 
 }

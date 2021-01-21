@@ -160,9 +160,9 @@ StlWrapper &StlWrapper::operator +=(StlWrapper const &other)
 StlWrapper StlWrapper::operator +(StlWrapper const &other) const
 {
     RAILS_FUNCTION_TIMER("StlWrapper", "+");
-    StlWrapper e(*this);
-    e += other;
-    return e;
+    StlWrapper out(*this);
+    out += other;
+    return out;
 }
 
 StlWrapper StlWrapper::operator *(StlWrapper const &other) const
@@ -481,9 +481,9 @@ int StlWrapper::eigs(StlWrapper &v, StlWrapper &d,
 StlWrapper operator *(double d, StlWrapper const &other)
 {
     RAILS_FUNCTION_TIMER("StlWrapper", "double *");
-    StlWrapper e(other);
-    e *= d;
-    return e;
+    StlWrapper out(other);
+    out *= d;
+    return out;
 }
 
 }
