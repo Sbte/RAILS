@@ -38,6 +38,8 @@ Epetra_MultiVectorWrapper::Epetra_MultiVectorWrapper(Epetra_MultiVectorWrapper c
     RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "constructor 2");
     if (!other.ptr_.is_null())
         ptr_ = Teuchos::rcp(new Epetra_MultiVector(*other.ptr_));
+    capacity_ = other.capacity_;
+    size_ = other.size_;
     orthogonalized_ = other.orthogonalized_;
     transpose_ = other.transpose_;
 }
