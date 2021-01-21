@@ -21,13 +21,15 @@ Epetra_MultiVectorWrapper::Epetra_MultiVectorWrapper()
     orthogonalized_(0),
     is_view_(false),
     transpose_(false)
-{}
+{
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "constructor 1");
+}
 
 Epetra_MultiVectorWrapper::Epetra_MultiVectorWrapper(Teuchos::RCP<Epetra_MultiVector> ptr)
     :
     Epetra_MultiVectorWrapper()
 {
-    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "constructor 1");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "constructor 2");
     ptr_ = ptr;
 }
 
@@ -35,7 +37,7 @@ Epetra_MultiVectorWrapper::Epetra_MultiVectorWrapper(Epetra_MultiVectorWrapper c
     :
     Epetra_MultiVectorWrapper()
 {
-    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "constructor 2");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "constructor 3");
     if (!other.ptr_.is_null())
         ptr_ = Teuchos::rcp(new Epetra_MultiVector(*other.ptr_));
     capacity_ = other.capacity_;
@@ -48,7 +50,7 @@ Epetra_MultiVectorWrapper::Epetra_MultiVectorWrapper(Epetra_MultiVectorWrapper c
     :
     Epetra_MultiVectorWrapper()
 {
-    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "constructor 3");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "constructor 4");
     size_ = n;
     capacity_ = n;
     if (!other.ptr_.is_null())
@@ -59,7 +61,7 @@ Epetra_MultiVectorWrapper::Epetra_MultiVectorWrapper(int m, int n)
     :
     Epetra_MultiVectorWrapper()
 {
-    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "constructor 3");
+    RAILS_FUNCTION_TIMER("Epetra_MultiVectorWrapper", "constructor 5");
     size_ = n;
     capacity_ = n;
 
