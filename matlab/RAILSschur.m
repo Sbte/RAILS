@@ -26,8 +26,12 @@ function [S, MS, BS, Sinv, Vtrans] = RAILSschur(A, M, B)
     A21 = A(idx2, idx1);
     A22 = A(idx2, idx2);
 
-    AS = @(x) A22 * x - A21 * (A11 \ (A12 * x));
-    ASt = @(x) A22' * x - A12' * (A11' \ (A21' * x));
+    [L, U, P, Q, R] = lu(A11);
+    A11inv = @(x)  Q * (U \ (L \ (P * (R \ x))));
+    A11invt = @(x) R' \ (P' * (L' \ (U' \ (Q' * x))));
+
+    AS = @(x) A22 * x - A21 * (A11inv(A12 * x));
+    ASt = @(x) A22' * x - A12' * (A11invt(A21' * x));
     S = @(y, varargin) transfun(y, AS, ASt, varargin{:});
 
     MS = [];
@@ -53,21 +57,21 @@ function [S, MS, BS, Sinv, Vtrans] = RAILSschur(A, M, B)
 
     Sinv = @(x) X2(A \ (Xreorder([zeros(size(A, 1) - size(x, 1), size(x, 2)); x])));
 
-    Vtrans = @(V) transform(V, A, A11, A12, A21, A22, idx1, idx2, Xreorder);
+    Vtrans = @(V) transform(V, A, A11inv, A12, A21, A22, idx1, idx2, Xreorder);
 
-    function y = restrict(x, A, A11, A21, idx1, idx2)
-        y = x(idx2, :)- A21 * (A11 \ x(idx1, :));
+    function y = restrict(x, A, A11inv, A21, idx1, idx2)
+        y = x(idx2, :)- A21 * A11inv(x(idx1, :));
     end
 
-    function y = prolongate(x, A, A11, A12, Xreorder)
-        y = Xreorder([-A11 \ (A12 * x); x]);
+    function y = prolongate(x, A, A11inv, A12, Xreorder)
+        y = Xreorder([-A11inv(A12 * x); x]);
     end
 
-    function y = transform(x, A, A11, A12, A21, A22, idx1, idx2, Xreorder)
+    function y = transform(x, A, A11inv, A12, A21, A22, idx1, idx2, Xreorder)
         if size(x, 1) == size(A, 1)
-            y = restrict(x, A, A11, A21, idx1, idx2);
+            y = restrict(x, A, A11inv, A21, idx1, idx2);
         elseif size(x, 1) == size(A22, 1)
-            y = prolongate(x, A, A11, A12, Xreorder);
+            y = prolongate(x, A, A11inv, A12, Xreorder);
         else
             error(['size of x =', num2str(size(x, 1))]);
         end
