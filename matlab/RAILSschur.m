@@ -1,5 +1,5 @@
-function [S, MS, BS, Sinv, Vtrans] = RAILSschur(A, M, B)
-% [S, MS, BS, Sinv, Vtrans] = RAILSschur(A, M, B)
+function [S, MS, BS, Sinv, Vtrans] = RAILSschur(A, M, B, factorize)
+% [S, MS, BS, Sinv, Vtrans] = RAILSschur(A, M, B, factorize)
 %
 % Used for problems with a singular M. After this, RAILSsolver can
 % be used as
@@ -11,7 +11,9 @@ function [S, MS, BS, Sinv, Vtrans] = RAILSschur(A, M, B)
 % opts.Ainv = Sinv;
 %
 % However, it is better to adjust this method in such a way that it
-% uses a factorization/iterative method that is suitable for your problem.
+% uses a factorization/iterative method that is suitable for your
+% problem. As a default, we supply the 'factorize' parameter, which
+% does this for you if set to true.
 %
 % The solution to the original problem, instead of the solution to
 % the problem reduced to the nonsingular part of M, can be found
@@ -26,9 +28,9 @@ function [S, MS, BS, Sinv, Vtrans] = RAILSschur(A, M, B)
     A21 = A(idx2, idx1);
     A22 = A(idx2, idx2);
 
-    [L, U, P, Q, R] = lu(A11);
-    A11inv = @(x)  Q * (U \ (L \ (P * (R \ x))));
-    A11invt = @(x) R' \ (P' * (L' \ (U' \ (Q' * x))));
+    [L11, U11, P11, Q11, R11] = lu(A11);
+    A11inv = @(x)  Q11 * (U11 \ (L11 \ (P11 * (R11 \ x))));
+    A11invt = @(x) R11' \ (P11' * (L11' \ (U11' \ (Q11' * x))));
 
     AS = @(x) A22 * x - A21 * (A11inv(A12 * x));
     ASt = @(x) A22' * x - A12' * (A11invt(A21' * x));
@@ -56,6 +58,10 @@ function [S, MS, BS, Sinv, Vtrans] = RAILSschur(A, M, B)
     X2 = @(x) x(idx2, :);
 
     Sinv = @(x) X2(A \ (Xreorder([zeros(size(A, 1) - size(x, 1), size(x, 2)); x])));
+    if nargin > 3 && factorize
+        [L, U, P, Q] = lu(A);
+        Sinv = @(x) X2(Q * (U \ (L \ (P * (Xreorder([zeros(size(A, 1) - size(x, 1), size(x, 2)); x]))))));
+    end
 
     Vtrans = @(V) transform(V, A, A11inv, A12, A21, A22, idx1, idx2, Xreorder);
 

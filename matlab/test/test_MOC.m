@@ -19,30 +19,67 @@ function test_MOC_Erik(t)
 
     res = 0;
 
-    % Add the nullspace to the matrix as border
-    A2 = sparse(n+2, n+2);
-    A2(1:n, 1:n) = A;
-    for j = 0:n-1
-        if (mod(j, 6) == 3)
-            if mod((mod(floor(j / 6), 4) + mod(floor(floor(j / 6) / 4), 16)), 2) == 0
-                A2(n+1, j+1) = 1;
-                A2(j+1, n+1) = 1;
-            else
-                A2(n+2, j+1) = 1;
-                A2(j+1, n+2) = 1;
-            end
-        end
-    end
-
-    M2 = sparse(n+2, n+2);
-    M2(1:n, 1:n) = M;
-
-    B2 = sparse(n+2, size(B,2));
-    B2(1:n, 1:size(B,2)) = B;
+    [A2,M2,B2] = add_border(A, M, B);
 
     % Solve the Schur complement system
     [S, MS, BS, Sinv, Vtrans] = RAILSschur(A2, M2, B2);
     [V, T] = RAILSsolver(S, MS, BS, 1000, 1e-3);
+
+    res = norm(S(V)*T*(V'*MS') + (MS*V)*(S(V)*T)' + BS*BS', 'fro');
+    t.assertLessThan(res, 1E-3);
+
+    V = Vtrans(V);
+    V = V(1:n,:);
+
+    res = norm(A*V*T*V'*M' + M*V*T*V'*A' + B*B', 'fro');
+    t.assertLessThan(res, 1E-3);
+end
+
+function test_MOC_inv(t)
+    [A,M,B] = get_MOC_data();
+
+    n = size(A, 1);
+    t.assertEqual(n, 8*8*4*6);
+
+    res = 0;
+
+    [A2,M2,B2] = add_border(A, M, B);
+
+    % Solve the Schur complement system
+    [S, MS, BS, Sinv, Vtrans] = RAILSschur(A2, M2, B2);
+
+    opts.projection_method = 2.2;
+    opts.Ainv = Sinv;
+
+    [V, T] = RAILSsolver(S, MS, BS, 1000, 1e-3, opts);
+
+    res = norm(S(V)*T*(V'*MS') + (MS*V)*(S(V)*T)' + BS*BS', 'fro');
+    t.assertLessThan(res, 1E-3);
+
+    V = Vtrans(V);
+    V = V(1:n,:);
+
+    res = norm(A*V*T*V'*M' + M*V*T*V'*A' + B*B', 'fro');
+    t.assertLessThan(res, 1E-3);
+end
+
+function test_MOC_factorize(t)
+    [A,M,B] = get_MOC_data();
+
+    n = size(A, 1);
+    t.assertEqual(n, 8*8*4*6);
+
+    res = 0;
+
+    [A2,M2,B2] = add_border(A, M, B);
+
+    % Solve the Schur complement system
+    [S, MS, BS, Sinv, Vtrans] = RAILSschur(A2, M2, B2, true);
+
+    opts.projection_method = 2.2;
+    opts.Ainv = Sinv;
+
+    [V, T] = RAILSsolver(S, MS, BS, 1000, 1e-3, opts);
 
     res = norm(S(V)*T*(V'*MS') + (MS*V)*(S(V)*T)' + BS*BS', 'fro');
     t.assertLessThan(res, 1E-3);
@@ -95,4 +132,29 @@ function [A,M,B] = get_MOC_data()
 
     % Spatially correlated noise
     B = 0.1 * F;
+end
+
+function [A2, M2, B2] = add_border(A, M, B)
+    % Add the nullspace to the matrix as border
+
+    n = size(A, 1);
+    A2 = sparse(n+2, n+2);
+    A2(1:n, 1:n) = A;
+    for j = 0:n-1
+        if (mod(j, 6) == 3)
+            if mod((mod(floor(j / 6), 4) + mod(floor(floor(j / 6) / 4), 16)), 2) == 0
+                A2(n+1, j+1) = 1;
+                A2(j+1, n+1) = 1;
+            else
+                A2(n+2, j+1) = 1;
+                A2(j+1, n+2) = 1;
+            end
+        end
+    end
+
+    M2 = sparse(n+2, n+2);
+    M2(1:n, 1:n) = M;
+
+    B2 = sparse(n+2, size(B,2));
+    B2(1:n, 1:size(B,2)) = B;
 end
