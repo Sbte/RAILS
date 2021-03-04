@@ -262,7 +262,7 @@ TYPED_TEST(GenericMultiVectorWrapperTest, Dot2)
             for (int i = 0; i < this->a.M(); ++i)
                 sum += this->a(i, j) * this->b(i, k);
 
-            EXPECT_DOUBLE_EQ(sum, c(j, k));
+            EXPECT_NEAR(sum, c(j, k), 1e-15);
         }
     }
 }

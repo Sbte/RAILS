@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.5)
 project(RAILS C CXX)
 set(CMAKE_CXX_STANDARD 11)
 
+if (APPLE AND NOT DEFINED ENV{TRILINOS_DIR} AND NOT DEFINED Trilinos_DIR)
+  # By default look in the homebrew install directory
+  set (Trilinos_DIR /usr/local/opt/trilinos/lib/cmake/Trilinos/)
+endif ()
+
 list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_SOURCE_DIR}/cmake)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")

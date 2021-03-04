@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, test ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: 'ubuntu-20.04'
+            env:
+              CC: gcc
+              CXX: g++
+              FC: gfortran
+          - os: 'macos-latest'
+            env:
+              CC: gcc
+              CXX: g++
+              FC: gfortran
+
+    runs-on: ${{ matrix.os }}
+    env: ${{ matrix.env }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install dependencies (Linux)
+        run: |
+          sudo apt-get install gfortran libslicot-dev octave liboctave-dev
+        if: matrix.os == 'ubuntu-20.04'
+
+      - name: Install dependencies (MacOS)
+        run: |
+          brew tap nlesc/nlesc
+          brew install nlesc/nlesc/trilinos nlesc/nlesc/slicot
+        if: matrix.os == 'macos-latest'
+
+      - name: Install RAILS
+        run: |
+          mkdir build
+          cd build
+          cmake -DCMAKE_INSTALL_PREFIX=$HOME/local ..
+          make VERBOSE=1
+          make check
