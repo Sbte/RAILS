@@ -44,7 +44,7 @@ function [S, MS, BS, Sinv, Vtrans] = RAILSschur(A, M, B, factorize)
     BS = B(idx2, :);
 
     if norm(B(idx1, :), inf) > sqrt(eps)
-        BS = restrict(B);
+        BS = restrict(B, A, A11inv, A21, idx1, idx2);
         warning('B is not zero in the singular part');
     end
 
